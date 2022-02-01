@@ -1,0 +1,456 @@
+---
+title: "PCIT-CoS-Waitlist RCT Paper 1: DPICS Child Compliance, Controlling for ASD"
+author: "Nancy Briggs"
+date: "31 JAN 2021"
+output:
+  html_document:
+    toc: true
+    toc_depth: 6
+    toc_float: true
+---
+
+
+### DPICS Child Compliance, Controlling for ASD {.tabset .tabset-fade .tabset-pills}
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+library(lme4)
+library(tidyverse)
+library(tidyselect)
+library(SASmarkdown)
+library(nlme)
+library(emmeans)
+library(multcomp)
+library(kableExtra)
+library(ggplot2)
+library(lmerTest)
+library(DHARMa)
+
+options(warnPartialMatchAttr = FALSE, 
+  warnPartialMatchDollar = FALSE,
+  warnPartialMatchArgs = FALSE)
+
+```
+
+
+```{r, echo=FALSE}
+# Data 
+# Import data
+# recoding for CBCL and totals done in SPSS before bringing data in to R
+
+data <- read.csv("../data_prep.csv", fileEncoding="UTF-8-BOM")
+names(data) <- tolower(names(data))
+
+# keep relevant demographic and outcome variables
+
+data <- data %>%
+  dplyr::select(id:treatment_time_mins, dobchild, sexchild, numbhousehold, incfamily,
+                #DPICS Labelled Praise
+                parent_lp_perc_total_time_1, parent_lp_perc_total_time_2, parent_lp_perc_total_time_3,
+                #DPICS Negative Talk
+                parent_nta_perc_total_time_1, parent_nta_perc_total_time_2, parent_nta_perc_total_time_3,
+                #BCAP
+                prebcap_risk, post_bcap_risk, fu_bcap_risk,
+                #BCAP Lie scale
+                prebcap_lie, post_bcap_lie, fu_bcap_lie,
+                
+                # Child Ext Behav
+                cbclext_pre_total,cbclext_post_total,cbclext_fu_total,
+
+                # CBCL Internalising Behav
+                cbclint_pre_total,cbclint_post_total,cbclint_fu_total,
+                
+                #Child Compliance
+                total_co_perc_time_1,total_co_perc_time_2,total_co_perc_time_3
+                
+                # others, but not essential for paper
+                #3. Child Temperament (ECBQ)
+                #4. Child social-emotional functioning - #1: Brief Infant Toddler Social Emotional Assessment (BITSEA)
+                #5. Child social-emotional functioning - #2: Child Devereux Early Childhood Assessment (DECA)
+                
+                )
+
+
+### import total time
+time <- read.csv("../data_prep_DPiCStime.csv", fileEncoding="UTF-8-BOM")
+names(time) <- tolower(names(time))
+time <- time %>%
+  dplyr::select(id, parent_total_verbalisations_time_1, parent_total_lp_time_1, 
+                  parent_total_nta_time_1, total_eff_commands_time_1, 
+                  child_co_total_time_1, child_nc_total_time_1, 
+                  total_nc_perc_time_1, 
+                  parent_total_verbalisations_time_2, parent_total_lp_time_2, 
+                  parent_total_nta_time_2, total_eff_commands_time_2, 
+                  child_co_total_time_2, child_nc_total_time_2, 
+                  total_nc_perc_time_2, 
+                  parent_total_verbalisations_time_3, parent_total_lp_time_3, 
+                  parent_total_nta_time_3, total_eff_commands_time_3, 
+                  child_co_total_time_3, child_nc_total_time_3, 
+                  total_nc_perc_time_3	)
+
+# Join
+data <- left_join(data, time, by="id")
+# there is one case in g3 waitlist that has infoor for T3.  recode compliance 
+# for that person to NA.
+data$total_co_perc_time_3[data$group==3] <- NA
+data$child_co_total_time_3[data$group==3] <- NA
+
+```
+
+
+
+
+#### Descriptives
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#Child Compliance
+#total_co_perc_time_1,total_co_perc_time_2,total_co_perc_time_3
+
+desctable <- data %>%
+  group_by(group, asdcase) %>%
+  mutate(score1 = case_when( 
+    total_co_perc_time_1 == -9 ~ NA_real_,  #assign missing values to zeros
+    TRUE ~ total_co_perc_time_1)) %>%
+  mutate(score2 = case_when( 
+    total_co_perc_time_2 == -9 ~ NA_real_,  #assign missing values to zeros
+    TRUE ~ total_co_perc_time_2)) %>%
+  mutate(score3 = case_when( 
+    total_co_perc_time_3 == -9 ~ NA_real_,  #assign missing values to zeros
+    TRUE ~ total_co_perc_time_3)) %>%
+  summarise(n1 = sum(!is.na(score1)) , 
+            mean1=mean(total_co_perc_time_1, na.rm = T ),
+            sd1=sd(total_co_perc_time_1, na.rm = T ),
+            median1=median(total_co_perc_time_1, na.rm = T ),
+            min1=min(total_co_perc_time_1, na.rm = T ),
+            max1=max(total_co_perc_time_1, na.rm = T ),
+            
+            n2 = sum(!is.na(score2)) , 
+            mean2=mean(total_co_perc_time_2, na.rm = T ),
+            sd2=sd(total_co_perc_time_2, na.rm = T ),
+            median2=median(total_co_perc_time_2, na.rm = T ),
+            min2=min(total_co_perc_time_2, na.rm = T ),
+            max2=max(total_co_perc_time_2, na.rm = T ),
+            
+            n3 = sum(!is.na(score3)) , 
+            mean3=mean(total_co_perc_time_3, na.rm = T ),
+            sd3=sd(total_co_perc_time_3, na.rm = T ),
+            median3=median(total_co_perc_time_3, na.rm = T ),
+            min3=min(total_co_perc_time_3, na.rm = T ),
+            max3=max(total_co_perc_time_3, na.rm = T )  ) %>%
+  pivot_longer(cols = -c(group,asdcase) ,  
+                names_to = c('.value', 'time'), 
+                    names_pattern = '(.*)(\\d+)') %>%
+  arrange(asdcase, group, time) %>%
+  relocate(asdcase, group, time)
+
+  # remove blank lines
+  desctable <- filter(desctable,n>=0)
+  
+write.csv(desctable,"desctable_asd.csv", row.names = TRUE)
+
+```
+
+
+
+
+```{r, echo=FALSE}
+desctable %>%
+           kbl() %>%
+           kable_styling()
+```
+
+Note that with the number of ASD cases, it is unlikely that a model with the group*time *ASD interaction will run at all. 
+
+```{r, echo=FALSE}
+#Child Compliance
+#total_co_perc_time_1,total_co_perc_time_2,total_co_perc_time_3
+
+# Histograms
+# plot
+p <- data %>%
+  dplyr::select(id,group, total_co_perc_time_1, total_co_perc_time_2, total_co_perc_time_3) %>%
+  pivot_longer( cols = starts_with("total_co_perc_time_"), names_prefix = "time", 
+                names_to="t", values_to="outcome") %>%
+  mutate(time = ifelse(t == "total_co_perc_time_1",  1,
+                ifelse(t == "total_co_perc_time_2", 2, 3))) 
+  
+
+  
+hist<-ggplot(p, aes(x=outcome) )+
+  geom_histogram(alpha=0.6, binwidth = 5) +
+  xlab("Child Compliance Percentage") +
+  ylab("Frequency") +
+  facet_wrap(group~time)
+
+group.labs <- c("PCIT-T", "COS-P", "Waitlist")
+names(group.labs) <- c("1", "2", "3")
+
+# New facet label names for group variable
+time.labs <- c("Pre", "Post","FollowUp")
+names(time.labs) <- c("1", "2","3")
+# Create the plot
+hist + theme_minimal() +
+  facet_grid(
+  group ~ time, 
+  labeller = labeller(group = group.labs, time = time.labs) )
+
+```
+
+
+#### Model & Results
+
+A generalized linear mixed model (GLMM) with random effect for individual and fixed effects of group, time and ASD and the interaction was run on the number of LP responses in the total number of verbalizations. A binomial distribution was specifed with a logit link. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2. Assumptions on the residuals were examined using simulated residuals (see below).
+
+
+```{r, echo=FALSE}
+#  analysis
+
+dat <- data %>%
+  dplyr::select(id,group,asdcase, 
+                total_eff_commands_time_1, 
+                total_eff_commands_time_2, 
+                total_eff_commands_time_3) %>%
+  pivot_longer( cols = starts_with("total_eff_commands_time_"), 
+                names_prefix = "time", 
+                names_to="t", values_to="effcommands") %>%
+  mutate(time = ifelse(t == "total_eff_commands_time_1",  1,
+                ifelse(t == "total_eff_commands_time_2", 2, 3))) 
+dat1 <- data %>%
+  dplyr::select(id,group, 
+                child_co_total_time_1,
+                child_co_total_time_2,
+                child_co_total_time_3) %>%
+  pivot_longer( cols = starts_with("child_co_total_time_"), 
+                names_prefix = "time", 
+                names_to="t", values_to="co") %>%
+  mutate(time = ifelse(t == "child_co_total_time_1",  1,
+                ifelse(t == "child_co_total_time_2", 2, 3))) 
+
+p <- left_join(x=dat,y=dat1, by=c("id","time","group")) 
+
+p$time<- as.factor(p$time)
+p$group<- as.factor(p$group)
+p$asdcase<- as.factor(p$asdcase)
+
+
+result0<-glmer(cbind(co, effcommands-co) ~ (1 | id), data=p, family=binomial)
+result0_5<-glmer(cbind(co, effcommands-co) ~ asdcase + (1 | id), data=p, family=binomial)
+result1<-glmer(cbind(co, effcommands-co) ~ asdcase + group + (1 | id), data=p, family=binomial)
+result2<-glmer(cbind(co, effcommands-co) ~ asdcase + group + time + (1 | id), data=p, family=binomial)
+result3<-glmer(cbind(co, effcommands-co) ~ asdcase + group + time +group*time + (1 | id), data=p, family=binomial)
+```
+
+The model with asdcase*group*time does not converge. We will leave it out.
+
+```{r}
+result4<-glmer(cbind(co, effcommands-co) ~ asdcase*group*time + (1 | id), data=p, family=binomial)
+summary(result4)
+```
+
+
+This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit.
+
+```{r, echo=FALSE}
+anovatab<-anova(result0,result0_5,result1,result2,result3,result4)
+
+anovatab <-anovatab %>%
+           mutate(Effect = ifelse(npar == 2, "Intercept",
+                           ifelse(npar == 3, "ASD",
+                           ifelse(npar == 5, "ASD + Group",
+                           ifelse(npar == 7, "ASD + Group + Time",
+                           ifelse(npar==10, "ASD + Group*Time",
+                                  "ASD*Group*Time")))))) %>%
+           relocate(Effect) 
+anovatab %>%
+           kbl() %>%
+           kable_styling()
+```
+
+
+###### Assuming result4
+```{r}
+summary(result4)
+```
+
+
+
+#### Estimated Means & Change
+
+Estimated means for each Treatment and Time are presented. In addition, within-group
+change between time points is presented with 95% CIs.
+
+
+```{r, warning=FALSE}
+# type="response" means that the emms are transformed and presented on the orginal scale
+# This website has a nice demonstration of emmeans with GLMM https://cran.r-project.org/web/packages/emmeans/vignettes/transformations.html
+
+result.change  <- emmeans(result4, "time", by = c("group","asdcase"), type = "response")
+# Differences give ODDS RATIOS
+result.change.d <-pairs(result.change)
+summary(result.change)
+confint(result.change)
+confint(result.change.d)
+
+
+```
+
+
+
+```{r, echo=FALSE}
+result.emm <- emmeans(result4, "time", by = c("group","asdcase"), type = "response")
+result.means <- as.data.frame(result.emm)
+result.means <-  
+  result.means %>%
+  mutate(time1= ifelse(group==1 & time==1,  .9,   ## jitter on x axis
+                ifelse(group==1 & time==2, 1.9,       
+                ifelse(group==1 & time==3, 2.9,       
+                ifelse(group==2 & time==1, 1.0,
+                ifelse(group==2 & time==2, 2.0,       
+                ifelse(group==2 & time==3, 3.0,
+                ifelse(group==3 & time==1, 1.1,
+                ifelse(group==3 & time==2, 2.1,       
+                3.1)))))))))
+
+
+
+
+# labels for facet columns (lie TV groups)
+result.means$asdcase <- factor(result.means$asdcase, levels = c("0", "1"), 
+                  labels = c("No ASD", "ASD") )
+lp1 <- ggplot(data=result.means, aes(x=time1, y=prob, group=group, shape=group, colour=group)) + geom_line(aes(linetype=group)) + geom_point(size=2) +
+    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL, color=group)) +
+  #must define these the same so that only 1 legend is shown
+  scale_colour_discrete(name  ="Group",
+                            breaks=c(1,2,3),
+                            labels=c("PCIT-T", "CoS-P","Waitlist")) +
+  scale_shape_discrete(name  ="Group",
+                            breaks=c(1,2,3),
+                            labels=c("PCIT-T", "CoS-P","Waitlist")) +   
+  scale_linetype_manual(name="Group",
+                      values =c("solid","dashed","dotted"),
+                      breaks=c(1,2,3),
+                      labels=c("PCIT-T", "CoS-P","Waitlist")) +
+scale_x_continuous("Measurement",breaks = c(1, 2, 3)) +
+  scale_y_continuous("Estimated Means (95% CI)") +
+theme_classic() + facet_grid(.~asdcase)
+
+lp1
+  
+```
+
+
+####  Hypothesis 1 Note I DID NOT SPECIFY ANYTHING FOr the 3WAY INTERACTION
+
+We hypothesize that from baseline (‘T1’) to post-treatment/waitlist (‘T2’) there will be a gradient effect, whereby parent-child dyads who receive PCIT-T
+will show the greatest gains and parent-child dyads who
+receive no treatment will show the least gains. For the outcome, then, the 
+null hypothesis is:
+
+$H_0:  \text {mean change}(\text{PCIT-T}) = \text {mean change}(\text{CoS-P}) = \text {mean change}(\text{Waitlist})$
+$H_A: \text {mean change}(\text{PCIT-T}) > \text {mean change}(\text{CoS-P}) > \text {mean change}(\text{Waitlist})$
+
+
+This is a joint hypothesis test.
+
+First, confirming that the ordering of the means is as hypothesized:
+
+```{r, echo=FALSE}
+#confint(result.change.d)
+# df= Inf is ok
+```
+
+so, change from t1 to t2 is represented as an OR.  They way these results are presented, a value >1 means that there is an *decrease* from T1 to T2.  So, for PCIT-T, the OR=3.954, indicating that the odds of an NTA action in the total verbalisations is much larger by a factor of 3.954 at T1 relative to T2.  Alternatively, we can take the reciprocal
+
+$\frac{1}{3.9544} = 0.25288$
+
+and the CI limits:
+
+$\frac{1}{5.18} = 0.1930502$
+
+$\frac{1}{3.017} = 0.3314551$
+
+Here, the odds of an NTA verbalisation are 0.25 times that at time 2 than time 1 for PCIT-T (odds reduced by 75%).  
+
+Now, to get the p-value associated with the joint hypothesis.
+
+# ```{r}
+# ## Specify contrast matrices
+# # Hyp1 is 1 df test
+# # could use alternative="less" ir alternative="greater" in glht
+# hyp1   <- matrix(c(0, 0, 0,0, 0,0, -1,0,0 ),1)
+# # Hyp2 is 1 df test, 
+# hyp2   <- matrix(c(0, 0, 0,0, 0,1, 0,1,0 ),1)
+# 
+# 
+# # hypF is combined 2df test. Yes!
+# h<-rbind(hyp1,hyp2)
+# hypF <- as.matrix(h)
+# GlobalF <- glht(result3, linfct = hypF, test = Ftest())
+# GlobalF$linfct
+# summary(GlobalF, test = Ftest())
+# 
+# #also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+# 
+# ```
+
+p<0.05 so this hypothesis is supported.
+
+
+#### Hypothesis 2
+
+There will be a gradient of size of change from T2 to T3 such that the change in the PCIT-T group > the change in the CoS-P group.  This isn't really a gradient; it's just 1 hypothesis.
+
+First, the change in PCITT and COSP from time 2 to time 3:
+
+# ```{r, echo=FALSE}
+# result.change
+# confint(result.change.d)
+# ```
+
+
+
+
+# ```{r}
+# ## Specify contrast matrices
+# # Hyp1 is 1 df test
+# # could use alternative="less" ir alternative="greater" in glht
+# hyp2   <- matrix(c(0, 0, 0,0, 0,0, -1,0,1 ),1)
+# hyp2F <- glht(result3, linfct = hyp2)
+# summary(hyp2F)
+# #also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+# 
+# ```
+
+p<0.05, so this null is rejected. There is a difference in the estimated mean proportion of NTA verbalisations between PCITT and COSP at T3.
+
+
+#### Residuals
+
+
+Before interpretation, we should examine model assumptions.
+
+For this model (A generalized linear mixed model with binomial distribution and logit link, with random effect for individual), we have to use a different residual than for a linear mixed model. These are simulated residuals, using the DHARMa package in R (citation below).
+
+Under H0 (perfect model, no violations of assumptions), we would expect a stra1ght line in the QQplot. The residuals against the fitted values should show no obvious pattern or outliers. 
+
+There are no violations of assumptions.
+
+```{r}
+
+library(DHARMa)
+
+simulationOutput <- simulateResiduals(fittedModel = result4, plot = F)
+
+plot(simulationOutput)
+
+
+citation("DHARMa")
+```
+
+
+
+```{r}
+rm(list = ls())
+```

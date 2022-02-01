@@ -1,0 +1,840 @@
+---
+title: "PCIT-CoS-Waitlist RCT Paper 1: BCAP, Lie Score (Time Varying)"
+author: "Nancy Briggs"
+date: "05 JAN 2021"
+output:
+  html_document:
+    toc: true
+    toc_depth: 6
+    toc_float: true
+---
+
+
+### BCAP {.tabset .tabset-fade .tabset-pills}
+
+This is an analysis of BCAP, with the time-varying covariate of lie included in the model. I did not include tests of Hypothesis 1 & 2, as I am not sure how to do that in the presence of a lie*group *time interaction.
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(lme4)
+
+library(tidyverse)
+library(tidyselect)
+library(SASmarkdown)
+library(nlme)
+library(emmeans)
+library(multcomp)
+library(kableExtra)
+library(ggplot2)
+library(lmerTest)
+
+
+options(warnPartialMatchAttr = FALSE, 
+  warnPartialMatchDollar = FALSE,
+  warnPartialMatchArgs = FALSE)
+
+```
+
+```{r, echo=FALSE}
+# Data 
+# Import data
+# recoding for CBCL and totals done in SPSS before bringing data in to R
+
+data <- read.csv("../data_prep.csv", fileEncoding="UTF-8-BOM")
+names(data) <- tolower(names(data))
+
+# keep relevant demographic and outcome variables
+
+data <- data %>%
+  dplyr::select(id:treatment_time_mins, dobchild, sexchild, numbhousehold, incfamily,
+                #DPICS Labelled Praise
+                parent_lp_perc_total_time_1, parent_lp_perc_total_time_2, parent_lp_perc_total_time_3,
+                #DPICS Negative Talk
+                parent_nta_perc_total_time_1, parent_nta_perc_total_time_2, parent_nta_perc_total_time_3,
+                #BCAP
+                prebcap_risk, post_bcap_risk, fu_bcap_risk,
+                #BCAP Lie scale
+                prebcap_lie, post_bcap_lie, fu_bcap_lie,
+                
+                # Child Ext Behav
+                cbclext_pre_total,cbclext_post_total,cbclext_fu_total,
+
+                # CBCL Internalising Behav
+                cbclint_pre_total,cbclint_post_total,cbclint_fu_total,
+                
+                #Child Compliance
+                total_co_perc_time_1,total_co_perc_time_2,total_co_perc_time_3
+                
+                # others, but not essential for paper
+                #3. Child Temperament (ECBQ)
+                #4. Child social-emotional functioning - #1: Brief Infant Toddler Social Emotional Assessment (BITSEA)
+                #5. Child social-emotional functioning - #2: Child Devereux Early Childhood Assessment (DECA)
+                
+                )
+
+
+```
+
+
+
+
+#### Descriptives
+
+```{r, echo=FALSE}
+ #BCAP  prebcap_risk, post_bcap_risk, fu_bcap_risk,
+#BCAP Lie scale prebcap_lie, post_bcap_lie, fu_bcap_lie,
+
+data$prebcap_risk<-as.double(data$prebcap_risk)
+data$post_bcap_risk<-as.double(data$post_bcap_risk)
+data$fu_bcap_risk<-as.double(data$fu_bcap_risk)
+data$prebcap_lie<-as.double(data$prebcap_lie)
+data$post_bcap_lie<-as.double(data$post_bcap_lie)
+data$fu_bcap_lie<-as.double(data$fu_bcap_lie)
+
+desctable <- data %>%
+  group_by(group) %>%
+  rename(bcaprisk_pre = prebcap_risk) %>%
+  rename(bcaprisk_post = post_bcap_risk) %>%
+  rename(bcaprisk_fu = fu_bcap_risk) %>%
+  mutate(score1 = case_when( 
+    bcaprisk_pre == -9 ~ NA_real_,       #assign missing values to -9
+    TRUE ~ bcaprisk_pre)) %>%
+  mutate(score2 = case_when( 
+    bcaprisk_post == -9 ~ NA_real_,   #assign missing values to -9
+    TRUE ~ bcaprisk_post)) %>%
+  mutate(score3 = case_when( 
+    bcaprisk_fu == -9 ~ NA_real_,     #assign missing values to -9
+    TRUE ~ bcaprisk_fu)) %>%
+  summarise(n1 = sum(!is.na(score1)) , 
+            mean1=mean(cbclint_pre_total, na.rm = T ),
+            sd1=sd(cbclint_pre_total, na.rm = T ),
+            median1=median(cbclint_pre_total, na.rm = T ),
+            min1=min(cbclint_pre_total, na.rm = T ),
+            max1=max(cbclint_pre_total, na.rm = T ),
+            
+            n2 = sum(!is.na(score2)) , 
+            mean2=mean(cbclint_post_total, na.rm = T ),
+            sd2=sd(cbclint_post_total, na.rm = T ),
+            median2=median(cbclint_post_total, na.rm = T ),
+            min2=min(cbclint_post_total, na.rm = T ),
+            max2=max(cbclint_post_total, na.rm = T ),
+            
+            n3 = sum(!is.na(score3)) , 
+            mean3=mean(cbclint_fu_total, na.rm = T ),
+            sd3=sd(cbclint_fu_total, na.rm = T ),
+            median3=median(cbclint_fu_total, na.rm = T ),
+            min3=min(cbclint_fu_total, na.rm = T ),
+            max3=max(cbclint_fu_total, na.rm = T )  ) %>%
+  pivot_longer(cols = -group,  
+                names_to = c('.value', 'time'), 
+                    names_pattern = '(.*)(\\d+)')
+
+write.csv(desctable,"desctable.csv", row.names = TRUE)
+
+
+desctable_lie <- data %>%
+  group_by(group) %>%
+  rename(bcaplie_pre = prebcap_lie) %>%
+  rename(bcaplie_post = post_bcap_lie) %>%
+  rename(bcaplie_fu = fu_bcap_lie) %>%
+  mutate(score1 = case_when( 
+    bcaplie_pre == -9 ~ NA_real_,     #assign missing values to zeros
+    TRUE ~ bcaplie_pre)) %>%
+  mutate(score2 = case_when( 
+    bcaplie_post == -9 ~ NA_real_,     #assign missing values to zeros
+    TRUE ~ bcaplie_post)) %>%
+  mutate(score3 = case_when( 
+    bcaplie_fu == -9 ~ NA_real_,     #assign missing values to zeros
+    TRUE ~ bcaplie_fu)) %>%
+  summarise(n1 = sum(!is.na(score1)) , 
+            mean1=mean(bcaplie_pre, na.rm = T ),
+            sd1=sd(bcaplie_pre, na.rm = T ),
+            median1=median(bcaplie_pre, na.rm = T ),
+            min1=min(bcaplie_pre, na.rm = T ),
+            max1=max(bcaplie_pre, na.rm = T ),
+            
+            n2 = sum(!is.na(score2)) , 
+            mean2=mean(bcaplie_post, na.rm = T ),
+            sd2=sd(bcaplie_post, na.rm = T ),
+            median2=median(bcaplie_post, na.rm = T ),
+            min2=min(bcaplie_post, na.rm = T ),
+            max2=max(bcaplie_post, na.rm = T ),
+            
+            n3 = sum(!is.na(score3)) , 
+            mean3=mean(bcaplie_fu, na.rm = T ),
+            sd3=sd(bcaplie_fu, na.rm = T ),
+            median3=median(bcaplie_fu, na.rm = T ),
+            min3=min(bcaplie_fu, na.rm = T ),
+            max3=max(bcaplie_fu, na.rm = T )  ) %>%
+  pivot_longer(cols = -group,  
+                names_to = c('.value', 'time'), 
+                    names_pattern = '(.*)(\\d+)')
+
+write.csv(desctable_lie,"desctable_lie.csv", row.names = TRUE)
+
+```
+```{r, echo=FALSE}
+#BCAP  prebcap_risk, post_bcap_risk, fu_bcap_risk,
+#BCAP Lie scale prebcap_lie, post_bcap_lie, fu_bcap_lie,
+
+
+
+
+data$prebcap_risk<-as.double(data$prebcap_risk)
+data$post_bcap_risk<-as.double(data$post_bcap_risk)
+data$fu_bcap_risk<-as.double(data$fu_bcap_risk)
+data$prebcap_lie<-as.double(data$prebcap_lie)
+data$post_bcap_lie<-as.double(data$post_bcap_lie)
+data$fu_bcap_lie<-as.double(data$fu_bcap_lie)
+
+desctable_nomissing <- data %>%
+  group_by(group) %>%
+  rename(bcaprisk_pre = prebcap_risk) %>%
+  rename(bcaprisk_post = post_bcap_risk) %>%
+  rename(bcaprisk_fu = fu_bcap_risk) %>%
+  mutate(score1 = case_when( 
+    bcaprisk_pre == -9 ~ NA_real_,       #assign missing values to -9
+    TRUE ~ bcaprisk_pre)) %>%
+  mutate(score2 = case_when( 
+    bcaprisk_post == -9 ~ NA_real_,   #assign missing values to -9
+    TRUE ~ bcaprisk_post)) %>%
+  mutate(score3 = case_when( 
+    bcaprisk_fu == -9 ~ NA_real_,     #assign missing values to -9
+    TRUE ~ bcaprisk_fu)) 
+
+desctable_nomissing$bcaprisk_pre[is.na(desctable_nomissing$prebcap_lie)]<-NA
+desctable_nomissing$bcaprisk_post[is.na(desctable_nomissing$post_bcap_lie)]<-NA
+desctable_nomissing$bcaprisk_fu[is.na(desctable_nomissing$fu_bcap_lie)]<-NA
+
+desctable_nomissing$score1[is.na(desctable_nomissing$prebcap_lie)]<-NA
+desctable_nomissing$score2[is.na(desctable_nomissing$post_bcap_lie)]<-NA
+desctable_nomissing$score3[is.na(desctable_nomissing$fu_bcap_lie)]<-NA
+
+
+desctable_nomissing <- desctable_nomissing %>%
+  group_by(group) %>%
+  summarise(n1 = sum(!is.na(score1)) , 
+            mean1=mean(cbclint_pre_total, na.rm = T ),
+            sd1=sd(cbclint_pre_total, na.rm = T ),
+            median1=median(cbclint_pre_total, na.rm = T ),
+            min1=min(cbclint_pre_total, na.rm = T ),
+            max1=max(cbclint_pre_total, na.rm = T ),
+            
+            n2 = sum(!is.na(score2)) , 
+            mean2=mean(cbclint_post_total, na.rm = T ),
+            sd2=sd(cbclint_post_total, na.rm = T ),
+            median2=median(cbclint_post_total, na.rm = T ),
+            min2=min(cbclint_post_total, na.rm = T ),
+            max2=max(cbclint_post_total, na.rm = T ),
+            
+            n3 = sum(!is.na(score3)) , 
+            mean3=mean(cbclint_fu_total, na.rm = T ),
+            sd3=sd(cbclint_fu_total, na.rm = T ),
+            median3=median(cbclint_fu_total, na.rm = T ),
+            min3=min(cbclint_fu_total, na.rm = T ),
+            max3=max(cbclint_fu_total, na.rm = T )  ) %>%
+  pivot_longer(cols = -group,  
+                names_to = c('.value', 'time'), 
+                    names_pattern = '(.*)(\\d+)')
+
+write.csv(desctable,"desctable_nomissing.csv", row.names = TRUE)
+
+
+
+
+
+data$prebcap_risk<-as.double(data$prebcap_risk)
+data$post_bcap_risk<-as.double(data$post_bcap_risk)
+data$fu_bcap_risk<-as.double(data$fu_bcap_risk)
+data$prebcap_lie<-as.double(data$prebcap_lie)
+data$post_bcap_lie<-as.double(data$post_bcap_lie)
+data$fu_bcap_lie<-as.double(data$fu_bcap_lie)
+
+
+desctable_nomissing_lie <- data %>%
+  group_by(group) %>%
+  rename(bcaplie_pre = prebcap_lie) %>%
+  rename(bcaplie_post = post_bcap_lie) %>%
+  rename(bcaplie_fu = fu_bcap_lie) %>%
+  mutate(score1 = case_when( 
+    bcaplie_pre == -9 ~ NA_real_,     #assign missing values to zeros
+    TRUE ~ bcaplie_pre)) %>%
+  mutate(score2 = case_when( 
+    bcaplie_post == -9 ~ NA_real_,     #assign missing values to zeros
+    TRUE ~ bcaplie_post)) %>%
+  mutate(score3 = case_when( 
+    bcaplie_fu == -9 ~ NA_real_,     #assign missing values to zeros
+    TRUE ~ bcaplie_fu))
+
+desctable_nomissing_lie$bcaplie_pre[is.na(desctable_nomissing_lie$prebcap_risk)]<-NA
+desctable_nomissing_lie$bcaplie_post[is.na(desctable_nomissing_lie$post_bcap_risk)]<-NA
+desctable_nomissing_lie$bcaplie_fu[is.na(desctable_nomissing_lie$fu_bcap_risk)]<-NA
+
+desctable_nomissing_lie$score1[is.na(desctable_nomissing_lie$prebcap_risk)]<-NA
+desctable_nomissing_lie$score2[is.na(desctable_nomissing_lie$post_bcap_risk)]<-NA
+desctable_nomissing_lie$score3[is.na(desctable_nomissing_lie$fu_bcap_risk)]<-NA
+
+desctable_nomissing_lie <- desctable_nomissing_lie %>%
+  summarise(n1 = sum(!is.na(score1)) , 
+            mean1=mean(bcaplie_pre, na.rm = T ),
+            sd1=sd(bcaplie_pre, na.rm = T ),
+            median1=median(bcaplie_pre, na.rm = T ),
+            min1=min(bcaplie_pre, na.rm = T ),
+            max1=max(bcaplie_pre, na.rm = T ),
+            
+            n2 = sum(!is.na(score2)) , 
+            mean2=mean(bcaplie_post, na.rm = T ),
+            sd2=sd(bcaplie_post, na.rm = T ),
+            median2=median(bcaplie_post, na.rm = T ),
+            min2=min(bcaplie_post, na.rm = T ),
+            max2=max(bcaplie_post, na.rm = T ),
+            
+            n3 = sum(!is.na(score3)) , 
+            mean3=mean(bcaplie_fu, na.rm = T ),
+            sd3=sd(bcaplie_fu, na.rm = T ),
+            median3=median(bcaplie_fu, na.rm = T ),
+            min3=min(bcaplie_fu, na.rm = T ),
+            max3=max(bcaplie_fu, na.rm = T )  ) %>%
+  pivot_longer(cols = -group,  
+                names_to = c('.value', 'time'), 
+                    names_pattern = '(.*)(\\d+)')
+
+write.csv(desctable_nomissing_lie,"desctable_nomissing_lie.csv", row.names = TRUE)
+
+
+```
+
+
+##### BCAP Risk descriptives
+##### All valid BCAP values included
+```{r, echo=FALSE}
+desctable %>%
+           kbl() %>%
+           kable_styling()
+```
+
+
+
+##### BCAP Lie descriptives
+```{r, echo=FALSE}
+desctable_lie %>%
+           kbl() %>%
+           kable_styling()
+```
+
+##### BCAP values, no missing BACP or Lie values
+```{r, echo=FALSE}
+desctable_nomissing %>%
+           kbl() %>%
+           kable_styling()
+```
+
+##### BCAP Lie values, no missing BACP or Lie values
+```{r, echo=FALSE}
+desctable_nomissing_lie %>%
+           kbl() %>%
+           kable_styling()
+```
+
+
+
+```{r, echo=FALSE}
+
+# Histograms
+# plot
+p <- data %>%
+    dplyr::select(id,group, 
+                  prebcap_risk, post_bcap_risk, fu_bcap_risk, prebcap_lie) %>%
+  rename(bcaprisk_pre = prebcap_risk) %>%
+  rename(bcaprisk_post = post_bcap_risk) %>%
+  rename(bcaprisk_fu = fu_bcap_risk) %>%
+  pivot_longer( cols = c(-id,-group, -prebcap_lie), 
+                names_prefix = "bcaprisk_", 
+                names_to="t", values_to="outcome") %>% 
+  mutate(time = ifelse(t == "pre",  1,
+                ifelse(t == "post", 2, 3))) 
+plie <- data %>%
+    dplyr::select(id,group, 
+                  prebcap_lie, post_bcap_lie, fu_bcap_lie) %>%
+  rename(bcaplie_pre = prebcap_lie) %>%
+  rename(bcaplie_post = post_bcap_lie) %>%
+  rename(bcaplie_fu = fu_bcap_lie) %>%
+  pivot_longer( cols = c(-id,-group), 
+                names_prefix = "bcaplie_", 
+                names_to="t", values_to="lie") %>% 
+  mutate(time = ifelse(t == "pre",  1,
+                ifelse(t == "post", 2, 3)))
+
+p <- full_join(x=p,y=plie) 
+# need all models fit to the same data  Since some lie values are missing, then need to exclude them.
+p$outcome[is.na(p$lie)]<-NA
+p<- p %>% drop_na(outcome)
+
+
+hist0<-ggplot(p, aes(x=outcome) )+
+  geom_histogram(alpha=0.6, binwidth = 5) +
+  xlab("BCAP Risk") +
+  ylab("Frequency") 
+hist0 +   theme_minimal()
+
+hist<-ggplot(p, aes(x=outcome) )+
+  geom_histogram(alpha=0.6, binwidth = 5) +
+  xlab("BCAP Risk") +
+  ylab("Frequency") +
+  facet_wrap(group~time)
+
+group.labs <- c("PCIT-T", "COS-P", "Waitlist")
+names(group.labs) <- c("1", "2", "3")
+
+# New facet label names for group variable
+time.labs <- c("Pre", "Post","FollowUp")
+names(time.labs) <- c("1", "2","3")
+# Create the plot
+hist + theme_minimal() +
+  facet_grid(
+  group ~ time, 
+  labeller = labeller(group = group.labs, time = time.labs) )
+
+
+
+
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#Plots to visualise the relationship between TVC (lie) and outcome
+
+p1<- p %>%
+  filter(group==1)
+# Pre-specify some variables to make the following code more generic
+d  <- p1
+x  <- 'time'
+y1 <- 'outcome'
+y2 <- 'lie'
+
+#-----------------------------------------------------------------------------
+# Rescale the second y axis by 
+#   - subtracting its minimum value (to set it to start at 0)
+#   - scaling so that it has the same range as the 'y1' variable
+#   - offsettting it by the minimum value of y1
+#-----------------------------------------------------------------------------
+a            <- range(d[[y1]])
+b            <- range(d[[y2]])
+scale_factor <- diff(a)/diff(b)
+d[[y2]]      <- ((d[[y2]] - b[1]) * scale_factor) + a[1]
+#-----------------------------------------------------------------------------
+# Need to define the second axis transformation to be the inverse of the data
+# transformation to everything cancels out appropriately
+#-----------------------------------------------------------------------------
+trans <- ~ ((. - a[1]) / scale_factor) + b[1]
+
+#-----------------------------------------------------------------------------
+# tell the y axis to set up a scaled secondary axis with the given transform
+#-----------------------------------------------------------------------------
+ggplot(d) +
+  geom_point(aes_string(x, y1)) +
+  geom_line(aes_string(x, y1)) + 
+  geom_point(aes_string(x, y2), col='red') + 
+  geom_line(aes_string(x, y2), col='red') + 
+  scale_y_continuous(sec.axis = sec_axis(trans=trans, name=y2)) +
+      facet_wrap(~id) + 
+  theme(  legend.position="bottom")+
+  scale_x_continuous("Measurement",breaks = c(1, 2, 3)) +
+   labs(title = "BCAP Risk (black) & Lie (red) Scores",
+        subtitle ="PCITT")
+
+
+
+
+
+p2<- p %>%
+  filter(group==2)
+# Pre-specify some variables to make the following code more generic
+d  <- p2
+x  <- 'time'
+y1 <- 'outcome'
+y2 <- 'lie'
+#-----------------------------------------------------------------------------
+# Rescale the second y axis by 
+#   - subtracting its minimum value (to set it to start at 0)
+#   - scaling so that it has the same range as the 'y1' variable
+#   - offsettting it by the minimum value of y1
+#-----------------------------------------------------------------------------
+a            <- range(d[[y1]])
+b            <- range(d[[y2]])
+scale_factor <- diff(a)/diff(b)
+d[[y2]]      <- ((d[[y2]] - b[1]) * scale_factor) + a[1]
+#-----------------------------------------------------------------------------
+# Need to define the second axis transformation to be the inverse of the data
+# transformation to everything cancels out appropriately
+#-----------------------------------------------------------------------------
+trans <- ~ ((. - a[1]) / scale_factor) + b[1]
+
+#-----------------------------------------------------------------------------
+# tell the y axis to set up a scaled secondary axis with the given transform
+#-----------------------------------------------------------------------------
+ggplot(d) +
+  geom_point(aes_string(x, y1)) +
+  geom_line(aes_string(x, y1)) + 
+  geom_point(aes_string(x, y2), col='red') + 
+  geom_line(aes_string(x, y2), col='red') + 
+  scale_y_continuous(sec.axis = sec_axis(trans=trans, name=y2)) +
+      facet_wrap(~id) + 
+  theme(  legend.position="bottom")+
+  scale_x_continuous("Measurement",breaks = c(1, 2, 3)) +
+   labs(title = "BCAP Risk (black) & Lie (red) Scores",
+        subtitle ="COSP")
+
+
+
+
+p3<- p %>%
+  filter(group==3)
+# Pre-specify some variables to make the following code more generic
+d  <- p3
+x  <- 'time'
+y1 <- 'outcome'
+y2 <- 'lie'
+#-----------------------------------------------------------------------------
+# Rescale the second y axis by 
+#   - subtracting its minimum value (to set it to start at 0)
+#   - scaling so that it has the same range as the 'y1' variable
+#   - offsettting it by the minimum value of y1
+#-----------------------------------------------------------------------------
+a            <- range(d[[y1]])
+b            <- range(d[[y2]])
+scale_factor <- diff(a)/diff(b)
+d[[y2]]      <- ((d[[y2]] - b[1]) * scale_factor) + a[1]
+#-----------------------------------------------------------------------------
+# Need to define the second axis transformation to be the inverse of the data
+# transformation to everything cancels out appropriately
+#-----------------------------------------------------------------------------
+trans <- ~ ((. - a[1]) / scale_factor) + b[1]
+
+#-----------------------------------------------------------------------------
+# tell the y axis to set up a scaled secondary axis with the given transform
+#-----------------------------------------------------------------------------
+ggplot(d) +
+  geom_point(aes_string(x, y1)) +
+  geom_line(aes_string(x, y1)) + 
+  geom_point(aes_string(x, y2), col='red') + 
+  geom_line(aes_string(x, y2), col='red') + 
+  scale_y_continuous(sec.axis = sec_axis(trans=trans, name=y2)) +
+      facet_wrap(~id) + 
+  theme(  legend.position="bottom")+
+  scale_x_continuous("Measurement",breaks = c(1, 2, 3)) +
+   labs(title = "BCAP Risk (black) & Lie (red) Scores",
+        subtitle ="Waitlist")
+
+
+
+```
+
+
+#### Model & Results
+
+A linear mixed model with random effect for individual and fixed effects of group, time and the interaction was run, and the time-varying covariate of BCAP lie score included as predictor. This results in an analysis sample of N=153. Estimated marginal means were obtained for low, mean and high lie scores, and plots for a person who showed *consistent* low, mean or high lie scores is presented.
+
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#  analysis
+# need all models fit to the same data  Since some lie values are missing, then need to exclude them.
+
+dat <- p 
+dat$outcome[is.na(dat$lie)]<-NA
+dat<- dat %>% drop_na(outcome)
+
+
+dat$time<- as.factor(dat$time)
+dat$group<- as.factor(dat$group)
+
+result0<-lmer(outcome ~ (1 | id), dat, na.action=na.omit)
+result1<-lmer(outcome ~ lie + (1 | id), dat)
+result2<-lmer(outcome ~ lie + group + (1 | id), dat)
+result3<-lmer(outcome ~ lie + group + time + (1 | id), dat)
+result4<-lmer(outcome ~ lie + group*time + lie + (1 | id), dat)
+result5<-lmer(outcome ~ lie*group*time + lie + (1 | id), dat)
+
+```
+
+
+
+
+This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. As you can see, the model with the lie*group *time interaction showed significant imporement over the model with a min effect of lie and the group*time interaction (p<0.001) .
+
+```{r, echo=FALSE}
+anovatab<-anova(result0,result1,result2,result3,result4,result5)
+
+anovatab <-anovatab %>%
+           mutate(Effect = ifelse(npar == 3, "Intercept",
+                           ifelse(npar == 4, "Lie",
+                           ifelse(npar == 6, "Lie + Group",
+                           ifelse(npar == 8, "Lie + Group + Time", 
+                           ifelse(npar == 11, "Lie + Group* Time", 
+                                  "Lie*Group* Time")))))) %>%
+           relocate(Effect) 
+anovatab %>%
+           kbl() %>%
+           kable_styling()
+```
+
+
+
+```{r}
+summary(result5)
+```
+
+
+
+#### Estimated Means & Change
+
+For the three-way interaction, I obtained estimates ofmeans for each group*time combination, at low, mean and high lie scores.  That is, at each time point, I calculated the mean lie score, and a low lie value is 1 sd below the mean for that
+timepoint.  Then I plotted the group*time interaction for a person who showed consistent (across all 3 timepoints), low / mean / high values of lie score. Obviously, there is the possibility of people jumping around in their lie score so that, for example, they my show a high value (above the mean at T1), but perhaps show the mean score atT2 and T3.  But I can't make a plot for all possibilities.
+
+Estimated means for each Treatment and Time are presented. In addition, within-group
+change between time points is presented with 95% CIs.
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+# use means of lie scale at each timeppoint to calculate the EMS for risk
+lie1 <- mean(dat$lie[dat$time==1])
+lie2 <- mean(dat$lie[dat$time==2])
+lie3 <- mean(dat$lie[dat$time==3])
+
+result.change  <- emmeans(result5, pairwise ~ time + lie, by = "group", 
+                          at = list(lie = c(lie1,lie2,lie3)) )
+result.change.d <-pairs(result.change)
+
+# Extract the correctvalues (meaning the EMMS based on the correct lie mean)
+means<-transform(result.change, CI.width = upper.CL - lower.CL)
+means <- means %>%
+         filter(time==1 & lie==lie1 | 
+                time==2 & lie==lie2 | 
+                time==3 & lie==lie3) %>%
+         mutate(lie=as.numeric(lie), 
+                group=as.integer(group),
+                time=as.numeric(time)) %>%
+         dplyr::select(-c("contrast"))  %>%
+         mutate(lieTV=1)   ## low lie at each time point
+
+# low lie score
+# use means of lie scale at each timepoint to calculate the EMS for risk
+lielow1 <- mean(dat$lie[dat$time==1]) - sd(dat$lie[dat$time==1])
+lielow2 <- mean(dat$lie[dat$time==2]) - sd(dat$lie[dat$time==2])
+lielow3 <- mean(dat$lie[dat$time==3]) - sd(dat$lie[dat$time==3])
+
+result.change.low  <- emmeans(result5, pairwise ~ time + lie, by = "group", 
+                          at = list(lie = c(lielow1,lielow2,lielow3)) )
+result.change.d.low  <-pairs(result.change.low )
+
+# Extract the correctvalues (meaning the EMMS based on the correct lie mean)
+means.low <-transform(result.change.low , CI.width = upper.CL - lower.CL)
+means.low  <- means.low  %>%
+         filter(time==1 & lie==lielow1 | 
+                time==2 & lie==lielow2 | 
+                time==3 & lie==lielow3) %>%
+         mutate(lie=as.numeric(lie), 
+                group=as.integer(group),
+                time=as.numeric(time)) %>%
+         dplyr::select(-c("contrast")) %>%
+         mutate(lieTV=0)   ## mean lie at each time point
+
+# high lie score
+# use means of lie scale at each timepoint to calculate the EMS for risk
+liehi1 <- mean(dat$lie[dat$time==1]) + sd(dat$lie[dat$time==1])
+liehi2 <- mean(dat$lie[dat$time==2]) + sd(dat$lie[dat$time==2])
+liehi3 <- mean(dat$lie[dat$time==3]) + sd(dat$lie[dat$time==3])
+
+result.change.hi  <- emmeans(result5, pairwise ~ time + lie, by = "group", 
+                          at = list(lie = c(liehi1,liehi2,liehi3)) )
+result.change.d.hi  <-pairs(result.change.hi )
+
+# Extract the correctvalues (meaning the EMMS based on the correct lie mean)
+means.hi <-transform(result.change.hi , CI.width = upper.CL - lower.CL)
+means.hi  <- means.hi  %>%
+         filter(time==1 & lie==liehi1 | 
+                time==2 & lie==liehi2 | 
+                time==3 & lie==liehi3) %>%
+         mutate(lie=as.numeric(lie), 
+                group=as.integer(group),
+                time=as.numeric(time)) %>%
+         dplyr::select(-c("contrast")) %>%
+         mutate(lieTV=2)   ## high lie at each time point
+
+
+liemeans <- rbind(means.low, means, means.hi)
+
+
+```
+
+
+
+Means, assuming consistently low, average or high lie scores
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+liemeans %>%
+           kbl(digits=3) %>%
+           kable_styling()
+
+
+liemeans <-  
+  liemeans %>%
+  mutate(time1= ifelse(group==1 & time==1,  .9,   ## jitter on x axis
+                ifelse(group==1 & time==2, 1.9,       
+                ifelse(group==1 & time==3, 2.9,       
+                ifelse(group==2 & time==1, 1.0,
+                ifelse(group==2 & time==2, 2.0,       
+                ifelse(group==2 & time==3, 3.0,
+                ifelse(group==3 & time==1, 1.1,
+                ifelse(group==3 & time==2, 2.1,       
+                3.1)))))))))
+
+
+liemeans <- liemeans %>%
+  dplyr::mutate(group=as.factor(group)) %>%
+  dplyr::mutate(lieTV=as.factor(lieTV))
+
+# labels for facet columns (lie TV groups)
+liemeans$lieTV <- factor(liemeans$lieTV, levels = c("0", "1", "2"), 
+                  labels = c("Low Lie Score", "Mean Lie Score", "High Lie Score"))
+
+Lieplot <- ggplot(data=liemeans, aes(x=time1, y=emmean, group=group, shape=group, colour=group)) + geom_line(aes(linetype=group)) + geom_point(size=2) +
+    geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL, color=group)) +
+  #must define these the same so that only 1 legend is shown
+  scale_colour_discrete(name  ="Group",
+                            breaks=c(1,2,3),
+                            labels=c("PCIT-T", "CoS-P","Waitlist")) +
+  scale_shape_discrete(name  ="Group",
+                            breaks=c(1,2,3),
+                            labels=c("PCIT-T", "CoS-P","Waitlist")) +   
+  scale_linetype_manual(name="Group",
+                      values =c("solid","dashed","dotted"),
+                      breaks=c(1,2,3),
+                      labels=c("PCIT-T", "CoS-P","Waitlist")) +
+scale_x_continuous("Measurement",breaks = c(1, 2, 3)) +
+  scale_y_continuous("Estimated Means (95% CI)") +
+theme_classic() + theme(legend.position = "top") + 
+  facet_grid(.~lieTV)
+
+Lieplot
+
+
+```
+It appears that the effect of lie score is especially pronounced at time 1, for the COS-P group. You can see that the estimated mean for the COSP group at time 1 in the high group is very high, and quickly decreases whereas that doesn't happen in the Low or Mean groups, nor is it as pronounced in the other groups.
+
+
+<!-- #### Hypothesis 1 -->
+
+<!-- We hypothesize that from baseline (‘T1’) to post-treatment/waitlist (‘T2’) there will be a gradient effect, whereby parent-child dyads who receive PCIT-T -->
+<!-- will show the greatest gains and parent-child dyads who -->
+<!-- receive no treatment will show the least gains. For the outcome, then, the  -->
+<!-- null hypothesis is: -->
+
+<!-- $H_0: mean(\text{PCIT-T}) = mean(\text{CoS-P}) = mean(\text{Waitlist})$ -->
+<!-- $H_A: mean(\text{PCIT-T}) > mean(\text{CoS-P}) > mean(\text{Waitlist})$ -->
+
+<!-- This is a joint hypothesis test. -->
+
+<!-- First, confirming that the ordering of the means is as hypothesized: -->
+
+<!-- ```{r, echo=FALSE} -->
+<!-- result.change.d -->
+<!-- ``` -->
+
+<!-- So, the mean change for PCITT > COSP > Waitlist. -->
+
+<!-- Now, to get the p-value associated with the joint hypothesis. -->
+
+
+<!-- ```{r, echo=FALSE, warning=FALSE} -->
+
+<!-- ## Specify contrast matrices -->
+<!-- # Hyp1 is 1 df test -->
+<!-- # could use alternative="less" ir alternative="greater" in glht -->
+<!-- hyp1   <- matrix(c(0, 0, -1,0, 0,0, -1,0,0 ),1) -->
+<!-- # Hyp2 is 1 df test,  -->
+<!-- hyp2   <- matrix(c(0, 0,  1,-1, 0,0, 1,-1,0 ),1) -->
+
+<!-- # hypF is combined 2df test. Yes! -->
+<!-- h<-rbind(hyp1,hyp2) -->
+<!-- hypF <- as.matrix(h) -->
+<!-- GlobalF <- glht(result3, linfct = hypF, test = Ftest()) -->
+<!-- GlobalF$linfct -->
+<!-- summary(GlobalF, test = Ftest()) -->
+
+<!-- #also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html -->
+
+<!-- ``` -->
+
+<!-- p>0.05, so we cannot reject the null hypothesis. -->
+
+
+<!-- #### Hypothesis 2 -->
+
+<!-- There will be a gradient of size of change from T2 to T3 such that the change in the PCIT-T group > the change in the CoS-P group.  This isn't really a gradient; it's just 1 hypothesis. -->
+
+<!-- First, the changw in PCITT and COSP from time 2 to time 3: -->
+
+<!-- ```{r, echo=FALSE} -->
+<!-- result.change.d -->
+<!-- ``` -->
+
+<!-- There is greater change in PCITT( -1.16) than in COSP (1.87) -->
+
+
+<!-- ```{r, echo=FALSE, warning=FALSE} -->
+
+<!-- ## Specify contrast matrices -->
+<!-- # Hyp1 is 1 df test -->
+<!-- # could use alternative="less" ir alternative="greater" in glht -->
+<!-- hyp2   <- matrix(c(0, 0,  0,0, 0,0, -1,0,1 ),1) -->
+<!-- hyp2F <- glht(result3, linfct = hyp2) -->
+<!-- summary(hyp2F) -->
+<!-- #also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html -->
+
+<!-- ``` -->
+
+<!-- p>0.05, so we do not have enough evidence to suggest that the change from t2 to t3 in PCITT is greater than the change in COSP. -->
+
+
+
+
+
+#### Residuals
+
+QQ plot does show some deviation from normality. You can see in the histogram that the tails are long on both ends, but there is symmetry.
+
+```{r, echo=FALSE, warning=FALSE}
+plot(result5)
+
+qqnorm(residuals(result5))
+qqline(residuals(result5), col="red")
+
+hist((residuals(result5)))
+
+
+# plot residuals against predictors
+
+ggplot(data.frame(x1=dat$group,pearson=residuals(result5,type="pearson")),
+       aes(x=x1,y=pearson)) +
+  geom_point() +
+  theme_bw()
+
+ggplot(data.frame(x2=dat$time,pearson=residuals(result5,type="pearson")),
+       aes(x=x2,y=pearson)) +
+  geom_point() +
+  theme_bw()
+
+ggplot(data.frame(x2=dat$lie,pearson=residuals(result5,type="pearson")),
+       aes(x=x2,y=pearson)) +
+  geom_point() +
+  theme_bw()
+
+```
+
+```{r}
+rm(list = ls())
+```
