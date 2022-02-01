@@ -1,0 +1,194 @@
+---
+title: "PCIT-CoS-Waitlist RCT Paper 1: Parent & Child Behaviour Outcomes"
+author: "Nancy Briggs"
+date: "05 JAN 2021"
+output:
+  html_document:
+    toc: true
+    toc_depth: 6
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+library(tidyverse)
+library(tidyselect)
+library(SASmarkdown)
+library(nlme)
+library(emmeans)
+library(multcomp)
+library(kableExtra)
+library(ggplot2)
+
+
+
+options(warnPartialMatchAttr = FALSE, 
+  warnPartialMatchDollar = FALSE,
+  warnPartialMatchArgs = FALSE)
+
+```
+
+# Intro
+
+This document contains the results for the analyses described in [Kohlhoff et al (2020)](https://doi.org/10.1186/s40359-020-00457-7). Outcomes are for Paper 1, Parent & Child Behaviour Outcomes.
+
+Analyses were done in R. 
+
+R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+
+
+## Description of the RCT
+
+This study is a block-randomized, longitudinal RCT to evaluate the efficacy of Parent Child Interaction Therapy (PCIT-T) for children aged 14-24 months with disruptive behaviors. Ninety children were randomized to one of three treatment arms: PCIT-T, Circle of Security-Parenting (CoS-P) or Waitlist Control. Outcomes of interest arem
+
+- Parents
+  - Observed Positive Parenting (DPICS Labelled Praise, % of total parent verbalisations)
+  - Observed Negative Parenting (DPICS Negative Tale, % of total parent verbalisations)
+  - Child abuse potential (BCAP)
+
+- Children
+   - Child Externalising Behaviour (CBCL)
+   - Child Internalising Behaviour (CBCL)
+   - Child Temperament (ECBQ Fear)
+   - Child Temperament (ECBQ Shyness)
+   - Child Social-Emotional Functioning (BITSEA)
+   - Child Social-Emotional Functioning (DECA)
+   - Child Compliance (DPICS Child Compliance, % of total parent effective commands)
+
+
+
+## Study design
+
+Families referred to the Karitane Toddle Clinic (KTC) with children aged 14-24 months were randomised toone of 3 treatment arms: PCIT-T, CS-P or Waitlist.  All participants completed Baseline (T1) measures.  PCIT-T and CoS-P groups participated in the interventions and them provided post-treatment (T2) assessments 8 weeks after T1. For the Waitlist group, their T2 measurement occurred 8 weeks after T1, but with no intervention (post-waitlist). T3 assessments were measured 4 months after the end of treatment.
+
+## Hypotheses
+
+We thus hypothesize that from baseline (‘T1’) to
+post-treatment/waitlist (‘T2’) there will be a gradient
+effect, whereby parent-child dyads who receive PCIT-T
+will show the greatest gains and parent-child dyads who
+receive no treatment will show the least gains with respect
+to the following variables:
+
+  * Improved parenting capacity through increased 
+    + increased labeled praise of the child
+    + increased parenting sensitivity
+    + increased parent sense of competence in managing negative toddler emotions
+    + increased parent mentalizing about the child
+    + increased parent emotion regulation
+    + decreased negative statements directed toward the child
+    + decreased parent sense of caregiving helplessness
+    + decreased child abuse potential
+    + decreased parental stress
+    
+  * Improved child outcomes through
+    + increased emotion regulation maturity
+    + increased social-emotional functioning including initiative, relationship functioning and self-regulation
+    + increased attachment security
+    + decreased externalizing behavior
+
+
+Second, we expect that for the two active treatment conditions, this gradient effect will be maintained at a 4-month post-treatment follow-up, whereby parent-child dyads that receive PCIT-T will show superior outcomes on all variables compared to parent-child dyads where the parent received COS-P.
+
+
+## General Statistical Approach
+
+Analyses will be done on an intention-to-treat principle. Results with p-values < 0.05 will be considered significant -- Multiple Comparisons?  Estimates of treatment effects will be presented with 95% confidence intervals.
+
+In general, a linear mixed model will be used to analyse the data at T2 & T3. A random effect of individual will be specified, and fixed effects of measurement time and treatment group and their interaction will be included.
+
+Twisk J, Bosman L, Hoekstra T, Rijnhart J, Welten M, Heymans M. (2018) Different ways to estimate treatment effects in randomised controlled trials. Contemporary Clinical Trials Communications, 10, 80-85, https://doi.org/10.1016/j.conctc.2018.03.008.
+
+
+
+Stated hypotheses are:
+
+1. There will be a gradient of size of change from T1 to T2 such that the mean in the PCIT-T group > the mean in the CoS-P group > the mean in the Waitlist group.
+
+Estimates of the change from T1 to T2 within each group will be obtained along with 95% CI.  In addition, an overall test of the difference in change between PCIT-T and CoS-P and between CoS-P and Waitlist will be performed. 
+<!-- (CONTRAST statement in SAS, including both ESTIMATE codes.) -->
+
+
+2. There will be a gradient of size of change from T2 to T3 such that the change in the PCIT-T group > the change in the CoS-P group.
+
+Estimates of the change from T2 to T3 within each group will be obtained along with 95% CI.  In addition, an overall test of the difference in change between PCIT-T and CoS-P and between CoS-P and Waitlist will be performed. 
+<!-- (CONTRAST statement in SAS, including both ESTIMATE codes.) -->
+
+```{r, echo=FALSE}
+# Setting up output tables for summary at end.
+# Table 1 demographics total and within group
+# Descriptives for outcomes by group
+# ANOVA Unadjusted
+# EMM Unadjusted
+# ANOVA Adjusted for ASDcase
+# EMM Adjusted for ASDcase
+# (?) ANOVA Adjusting for ASDcase & Total Therapy Time
+# (?) EMM Adjusting for ASDcase & Total Therapy Time
+
+```
+
+# Analyses Unadjusted
+
+<!-- Note: add in this if needed to get pvalues for coefficients -->
+
+<!-- library(lmerTest) -->
+<!-- m.test <- as(result7,"merModLmerTest") -->
+<!-- print(summary(m.test,ddf="lme4"),correlation=FALSE) -->
+<!-- print(summary(m.test,ddf="Satterthwaite"),correlation=FALSE) -->
+
+```{r, child="CBCLExt/analysis.Rmd"}
+#DONE 25Jan2022
+```
+
+```{r, child="CBCLInt/analysis.Rmd"}
+#DONE 25Jan2022
+```
+
+```{r, child="BCAP/analysis.rmd"}
+```
+
+```{r, child="BCAP/analysis_lie_TV.rmd"}
+#DONE 31Jan2022
+```
+
+```{r, child="BCAP/analysis_baselineLie.rmd"}
+#DONE 25Jan2022
+```
+
+```{r, child="DPICSlp/analysis.rmd"}
+#DONE 31Jan2022
+```
+
+```{r, child="DPICSnta/analysis.rmd"}
+#DONE 31Jan2022
+```
+
+
+```{r, child="DPICSco/analysis.rmd"}
+#DONE 01Feb2022
+```
+
+
+# Analyses Adjusted for ASD
+```{r, child="CBCLExt/analysisASD.Rmd"}
+#DONE 25Jan2022
+```
+
+```{r, child="CBCLInt/analysisASD.Rmd"}
+#DONE 25Jan2022
+```
+
+```{r, child="DPICSlp/analysis_asd.rmd"}
+#DONE 31Jan2022
+```
+
+```{r, child="DPICSnta/analysis_asd.rmd"}
+#DONE 31Jan2022
+```
+
+```{r, child="DPICSco/analysis_ASD.rmd"}
+#DONE 01Feb2022
+```
+
