@@ -10,7 +10,8 @@ output:
 ---
 
 
-### DPICS NTA  {.tabset .tabset-fade .tabset-pills}
+<!-- ### DPICS NTA  {.tabset .tabset-fade .tabset-pills} -->
+### DPICS NTA 
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)

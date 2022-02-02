@@ -138,57 +138,63 @@ Estimates of the change from T2 to T3 within each group will be obtained along w
 <!-- print(summary(m.test,ddf="lme4"),correlation=FALSE) -->
 <!-- print(summary(m.test,ddf="Satterthwaite"),correlation=FALSE) -->
 
-```{r, child="CBCLExt/analysis.Rmd"}
-#DONE 25Jan2022
-```
+<!-- ![CBCL Externalizing](CBCLExt/analysis.html) -->
+<!-- ![CBCL Internalizing](CBCLInt/analysis.html) -->
 
-```{r, child="CBCLInt/analysis.Rmd"}
-#DONE 25Jan2022
-```
+![BCAP](BCAP/analysis.html)
 
-```{r, child="BCAP/analysis.rmd"}
-```
+<!-- ```{r, child="CBCLExt/analysis.Rmd"} -->
+<!-- #DONE 25Jan2022 -->
+<!-- ``` -->
 
-```{r, child="BCAP/analysis_lie_TV.rmd"}
-#DONE 31Jan2022
-```
+<!-- ```{r, child="CBCLInt/analysis.Rmd"} -->
+<!-- #DONE 25Jan2022 -->
+<!-- ``` -->
 
-```{r, child="BCAP/analysis_baselineLie.rmd"}
-#DONE 25Jan2022
-```
+<!-- ```{r, child="BCAP/analysis.rmd"} -->
+<!-- ``` -->
 
-```{r, child="DPICSlp/analysis.rmd"}
-#DONE 31Jan2022
-```
+<!-- ```{r, child="BCAP/analysis_lie_TV.rmd"} -->
+<!-- #DONE 31Jan2022 -->
+<!-- ``` -->
 
-```{r, child="DPICSnta/analysis.rmd"}
-#DONE 31Jan2022
-```
+<!-- ```{r, child="BCAP/analysis_baselineLie.rmd"} -->
+<!-- #DONE 25Jan2022 -->
+<!-- ``` -->
+
+<!-- ```{r, child="DPICSlp/analysis.rmd"} -->
+<!-- #DONE 31Jan2022 -->
+<!-- ``` -->
+
+<!-- ```{r, child="DPICSnta/analysis.rmd"} -->
+<!-- #DONE 31Jan2022 -->
+<!-- ``` -->
 
 
-```{r, child="DPICSco/analysis.rmd"}
-#DONE 01Feb2022
-```
+<!-- ```{r, child="DPICSco/analysis.rmd"} -->
+<!-- #DONE 01Feb2022 -->
+<!-- ``` -->
 
 
 # Analyses Adjusted for ASD
-```{r, child="CBCLExt/analysisASD.Rmd"}
-#DONE 25Jan2022
-```
 
-```{r, child="CBCLInt/analysisASD.Rmd"}
-#DONE 25Jan2022
-```
+<!-- ```{r, child="CBCLExt/analysisASD.Rmd"} -->
+<!-- #DONE 25Jan2022 -->
+<!-- ``` -->
 
-```{r, child="DPICSlp/analysis_asd.rmd"}
-#DONE 31Jan2022
-```
+<!-- ```{r, child="CBCLInt/analysisASD.Rmd"} -->
+<!-- #DONE 25Jan2022 -->
+<!-- ``` -->
 
-```{r, child="DPICSnta/analysis_asd.rmd"}
-#DONE 31Jan2022
-```
+<!-- ```{r, child="DPICSlp/analysis_asd.rmd"} -->
+<!-- #DONE 31Jan2022 -->
+<!-- ``` -->
 
-```{r, child="DPICSco/analysis_ASD.rmd"}
-#DONE 01Feb2022
-```
+<!-- ```{r, child="DPICSnta/analysis_asd.rmd"} -->
+<!-- #DONE 31Jan2022 -->
+<!-- ``` -->
+
+<!-- ```{r, child="DPICSco/analysis_ASD.rmd"} -->
+<!-- #DONE 01Feb2022 -->
+<!-- ``` -->
 
