@@ -1,7 +1,7 @@
 ---
 title: "PCIT-CoS-Waitlist RCT Paper 1: DPICS Child Compliance"
 author: "Nancy Briggs"
-date: "05 JAN 2021"
+date: "`r Sys.date()`"
 output:
   html_document:
     toc: true
@@ -15,6 +15,10 @@ output:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+options(warnPartialMatchAttr = FALSE, 
+  warnPartialMatchDollar = FALSE,
+  warnPartialMatchArgs = FALSE)
+options(warn=1)
 
 library(lme4)
 library(tidyverse)
@@ -29,10 +33,6 @@ library(lmerTest)
 library(DHARMa)
 library(effectsize)
 library(boot)
-
-options(warnPartialMatchAttr = FALSE, 
-  warnPartialMatchDollar = FALSE,
-  warnPartialMatchArgs = FALSE)
 
 ```
 
