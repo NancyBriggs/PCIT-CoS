@@ -1,5 +1,5 @@
 ---
-title: "PCIT-CoS-Waitlist RCT Paper 1: CBCL Externalising, Controlling for ASD"
+title: "PCIT-CoS-Waitlist RCT Paper 1: CCQ Parenting Self-Efficacy, Controlling for ASD"
 author: "Nancy Briggs"
 date: "05 JAN 2021"
 output:
@@ -10,7 +10,7 @@ output:
 ---
 
 
-### CBCL Externalising Adjusting for ASD {.tabset .tabset-fade .tabset-pills}
+### CCQ Parenting Self-Efficacy Adjusting for ASD {.tabset .tabset-fade .tabset-pills}
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -27,6 +27,8 @@ library(kableExtra)
 library(ggplot2)
 library(lmerTest)
 library(effectsize)
+library(effectsize)
+library(boot)
 
 options(warnPartialMatchAttr = FALSE, 
   warnPartialMatchDollar = FALSE,
@@ -62,12 +64,15 @@ data <- data %>%
                 cbclint_pre_total,cbclint_post_total,cbclint_fu_total,
                 
                 #Child Compliance
-                total_co_perc_time_1,total_co_perc_time_2,total_co_perc_time_3
+                total_co_perc_time_1,total_co_perc_time_2,total_co_perc_time_3,
                 
                 # others, but not essential for paper
                 #3. Child Temperament (ECBQ)
                 #4. Child social-emotional functioning - #1: Brief Infant Toddler Social Emotional Assessment (BITSEA)
                 #5. Child social-emotional functioning - #2: Child Devereux Early Childhood Assessment (DECA)
+                 #CQQ self Effic.
+                pre_ccq_a_topse_mean, post_ccq_a_topse_mean ,fu_ccq_a_topse_mean 
+
                 
                 )
 
@@ -86,34 +91,34 @@ data <- data %>%
 desctable <- data %>%
   group_by(asdcase, group) %>%
   mutate(score1 = case_when( 
-    cbclext_pre_total == -9 ~ NA_real_,          #assign missing values to zeros
-    TRUE ~ cbclext_pre_total)) %>%
+    pre_ccq_a_topse_mean == -9 ~ NA_real_,          #assign missing values to zeros
+    TRUE ~ pre_ccq_a_topse_mean)) %>%
   mutate(score2 = case_when( 
-    cbclext_post_total == -9 ~ NA_real_,         #assign missing values to zeros
-    TRUE ~ cbclext_post_total)) %>%
+    post_ccq_a_topse_mean == -9 ~ NA_real_,         #assign missing values to zeros
+    TRUE ~ post_ccq_a_topse_mean)) %>%
   mutate(score3 = case_when( 
-    cbclext_fu_total == -9 ~ NA_real_,           #assign missing values to zeros
-    TRUE ~ cbclext_fu_total)) %>%
+    fu_ccq_a_topse_mean == -9 ~ NA_real_,           #assign missing values to zeros
+    TRUE ~ fu_ccq_a_topse_mean)) %>%
   summarise(n1 = sum(!is.na(score1)) , 
-            mean1=mean(cbclext_pre_total, na.rm = T ),
-            sd1=sd(cbclext_pre_total, na.rm = T ),
-            median1=median(cbclext_pre_total, na.rm = T ),
-            min1=min(cbclext_pre_total, na.rm = T ),
-            max1=max(cbclext_pre_total, na.rm = T ),
+            mean1=mean(pre_ccq_a_topse_mean, na.rm = T ),
+            sd1=sd(pre_ccq_a_topse_mean, na.rm = T ),
+            median1=median(pre_ccq_a_topse_mean, na.rm = T ),
+            min1=min(pre_ccq_a_topse_mean, na.rm = T ),
+            max1=max(pre_ccq_a_topse_mean, na.rm = T ),
             
             n2 = sum(!is.na(score2)) , 
-            mean2=mean(cbclext_post_total, na.rm = T ),
-            sd2=sd(cbclext_post_total, na.rm = T ),
-            median2=median(cbclext_post_total, na.rm = T ),
-            min2=min(cbclext_post_total, na.rm = T ),
-            max2=max(cbclext_post_total, na.rm = T ),
+            mean2=mean(post_ccq_a_topse_mean, na.rm = T ),
+            sd2=sd(post_ccq_a_topse_mean, na.rm = T ),
+            median2=median(post_ccq_a_topse_mean, na.rm = T ),
+            min2=min(post_ccq_a_topse_mean, na.rm = T ),
+            max2=max(post_ccq_a_topse_mean, na.rm = T ),
             
             n3 = sum(!is.na(score3)) , 
-            mean3=mean(cbclext_fu_total, na.rm = T ),
-            sd3=sd(cbclext_fu_total, na.rm = T ),
-            median3=median(cbclext_fu_total, na.rm = T ),
-            min3=min(cbclext_fu_total, na.rm = T ),
-            max3=max(cbclext_fu_total, na.rm = T )  ) %>%
+            mean3=mean(fu_ccq_a_topse_mean, na.rm = T ),
+            sd3=sd(fu_ccq_a_topse_mean, na.rm = T ),
+            median3=median(fu_ccq_a_topse_mean, na.rm = T ),
+            min3=min(fu_ccq_a_topse_mean, na.rm = T ),
+            max3=max(fu_ccq_a_topse_mean, na.rm = T )  ) %>%
   pivot_longer(cols = -c(group,asdcase),  
                 names_to = c('.value', 'time'), 
                     names_pattern = '(.*)(\\d+)')
@@ -135,17 +140,18 @@ desctable %>%
 # Histograms
 # plot
 p <- data %>%
-  dplyr::select(id,group, cbclext_pre_total,cbclext_post_total,cbclext_fu_total) %>%
-  pivot_longer( cols = starts_with("cbclext_"), names_prefix = "cbclext_", 
+  dplyr::select(id,group, pre_ccq_a_topse_mean, post_ccq_a_topse_mean ,fu_ccq_a_topse_mean) %>%
+  pivot_longer( cols = c("pre_ccq_a_topse_mean", "post_ccq_a_topse_mean", "fu_ccq_a_topse_mean"),  names_prefix = "ccqa_", 
                 names_to="t", values_to="outcome") %>%
-  mutate(time = ifelse(t == "pre_total",  1,
-                ifelse(t == "post_total", 2, 3))) 
+  mutate(time = ifelse(t == "pre_ccq_a_topse_mean",  1,
+                ifelse(t == "post_ccq_a_topse_mean", 2, 3))) 
   
+
 
   
 hist<-ggplot(p, aes(x=outcome) )+
-  geom_histogram(alpha=0.6, binwidth = 5) +
-  xlab("CBCL Externalising") +
+  geom_histogram(alpha=0.6, binwidth = 1) +
+  xlab("CCQ Parenting Self-Efficacy") +
   ylab("Frequency") +
   facet_wrap(group~time)
 
@@ -170,12 +176,13 @@ A linear mixed model with random effect for individual and fixed effects of grou
 ```{r, echo=FALSE, warning=FALSE}
 #  analysis
 dat <- data %>%
-  dplyr::select(id,group,asdcase,   
-                cbclext_pre_total,cbclext_post_total,cbclext_fu_total) %>%
-  pivot_longer( cols = starts_with("cbclext_"), names_prefix = "cbclext_", 
+  dplyr::select(id,group, asdcase, pre_ccq_a_topse_mean, post_ccq_a_topse_mean ,fu_ccq_a_topse_mean) %>%
+  pivot_longer( cols = c("pre_ccq_a_topse_mean", "post_ccq_a_topse_mean", "fu_ccq_a_topse_mean"),  names_prefix = "ccqa_", 
                 names_to="t", values_to="outcome") %>%
-  mutate(time = ifelse(t == "pre_total",  1,
-                       ifelse(t == "post_total", 2, 3))) 
+  mutate(time = ifelse(t == "pre_ccq_a_topse_mean",  1,
+                ifelse(t == "post_ccq_a_topse_mean", 2, 3))) 
+  
+
 
 dat$time<- as.factor(dat$time)
 dat$group<- as.factor(dat$group)
@@ -211,7 +218,7 @@ anovatab %>%
            kable_styling()
 ```
 
-There is no evidence that ASD moderates the 2-way group*time interaction the 3-way interaction (p=0.493). 
+There is no evidence that ASD moderates the 2-way group*time interaction (the 3-way interaction p=0.254). 
 
 Model3, the model with Group*Time, adjusted by ASD will be the model I use for Estimated Means.
 
@@ -302,8 +309,7 @@ summary(hyp2F)
 
 ```
 
-p>0.05, so we do not have enough evidence to suggest that the change from t2 to t3 in PCITT is greater than the change in COSP, adjusting for ASD diagnosis.
-
+p>0.05.
 
 
 #### Residuals
@@ -311,7 +317,7 @@ p>0.05, so we do not have enough evidence to suggest that the change from t2 to 
 Assumptions of the model are met.
 
 ```{r, echo=FALSE, warning=FALSE}
-plot(result3)
+plot(result3,form = resid(., type = "pearson") ~ predict(., re.form = NA) )
 
 qqnorm(residuals(result3))
 qqline(residuals(result3), col="red")

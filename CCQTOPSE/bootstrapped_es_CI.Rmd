@@ -126,7 +126,7 @@ boot_es_group <- function(mod){
   pooledsd<- sd_pooled(t1_1, t1_2, t1_3)
 }
 
-numsim <- 500
+numsim <- 600
 seed=100
 groupd <-
   bootMer(fit_mixed, boot_contrasts, nsim = numsim, verbose=FALSE, seed=seed) # R = 599 at least
