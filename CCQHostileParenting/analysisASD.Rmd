@@ -1,0 +1,356 @@
+---
+title: "PCIT-CoS-Waitlist RCT Paper 1: CCQ Hostile Parenting, Controlling for ASD"
+author: "Nancy Briggs"
+date: "05 JAN 2021"
+output:
+  html_document:
+    toc: true
+    toc_depth: 6
+    toc_float: true
+---
+
+
+### CCQ Hostile Parenting Adjusting for ASD {.tabset .tabset-fade .tabset-pills}
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(lme4)
+
+library(tidyverse)
+library(tidyselect)
+library(SASmarkdown)
+library(nlme)
+library(emmeans)
+library(multcomp)
+library(kableExtra)
+library(ggplot2)
+library(lmerTest)
+library(effectsize)
+library(effectsize)
+library(boot)
+
+options(warnPartialMatchAttr = FALSE, 
+  warnPartialMatchDollar = FALSE,
+  warnPartialMatchArgs = FALSE)
+
+```
+
+```{r, echo=FALSE}
+# Data 
+# Import data
+# recoding for CBCL and totals done in SPSS before bringing data in to R
+
+data <- read.csv("../data_prep.csv", fileEncoding="UTF-8-BOM")
+names(data) <- tolower(names(data))
+
+# keep relevant demographic and outcome variables
+
+data <- data %>%
+  dplyr::select(id:treatment_time_mins, dobchild, sexchild, numbhousehold, incfamily,
+                #DPICS Labelled Praise
+                parent_lp_perc_total_time_1, parent_lp_perc_total_time_2, parent_lp_perc_total_time_3,
+                #DPICS Negative Talk
+                parent_nta_perc_total_time_1, parent_nta_perc_total_time_2, parent_nta_perc_total_time_3,
+                #BCAP
+                prebcap_risk, post_bcap_risk, fu_bcap_risk,
+                #BCAP Lie scale
+                prebcap_lie, post_bcap_lie, fu_bcap_lie,
+                
+                # Child Ext Behav
+                cbclext_pre_total,cbclext_post_total,cbclext_fu_total,
+
+                # CBCL Internalising Behav
+                cbclint_pre_total,cbclint_post_total,cbclint_fu_total,
+                
+                #Child Compliance
+                total_co_perc_time_1,total_co_perc_time_2,total_co_perc_time_3,
+                
+                # others, but not essential for paper
+                #3. Child Temperament (ECBQ)
+                #4. Child social-emotional functioning - #1: Brief Infant Toddler Social Emotional Assessment (BITSEA)
+                #5. Child social-emotional functioning - #2: Child Devereux Early Childhood Assessment (DECA)
+                 #CQQ self Effic.
+                pre_ccq_a_topse_mean, post_ccq_a_topse_mean ,fu_ccq_a_topse_mean , 
+
+                # CCQ Caregiving Helplessness
+                pre_chqd_mean, post_chqd_mean, fu_chqd_mean,
+                
+                # CCQ Hostil Parenting
+                pre_ccqc_mean, post_ccqc_mean, fu_ccqc_mean
+
+                
+                )
+
+
+```
+
+
+
+
+#### Descriptives
+
+```{r, echo=FALSE, warning=FALSE}
+#   pre_ccqc_mean, post_ccqc_mean, fu_ccqc_mean
+
+
+desctable <- data %>%
+  group_by(asdcase, group) %>%
+  mutate(score1 = case_when( 
+    pre_ccqc_mean == -9 ~ NA_real_,          #assign missing values to zeros
+    TRUE ~ pre_ccqc_mean)) %>%
+  mutate(score2 = case_when( 
+    post_ccqc_mean == -9 ~ NA_real_,         #assign missing values to zeros
+    TRUE ~ post_ccqc_mean)) %>%
+  mutate(score3 = case_when( 
+    fu_ccqc_mean == -9 ~ NA_real_,           #assign missing values to zeros
+    TRUE ~ fu_ccqc_mean)) %>%
+  summarise(n1 = sum(!is.na(score1)) , 
+            mean1=mean(pre_ccqc_mean, na.rm = T ),
+            sd1=sd(pre_ccqc_mean, na.rm = T ),
+            median1=median(pre_ccqc_mean, na.rm = T ),
+            min1=min(pre_ccqc_mean, na.rm = T ),
+            max1=max(pre_ccqc_mean, na.rm = T ),
+            
+            n2 = sum(!is.na(score2)) , 
+            mean2=mean(post_ccqc_mean, na.rm = T ),
+            sd2=sd(post_ccqc_mean, na.rm = T ),
+            median2=median(post_ccqc_mean, na.rm = T ),
+            min2=min(post_ccqc_mean, na.rm = T ),
+            max2=max(post_ccqc_mean, na.rm = T ),
+            
+            n3 = sum(!is.na(score3)) , 
+            mean3=mean(fu_ccqc_mean, na.rm = T ),
+            sd3=sd(fu_ccqc_mean, na.rm = T ),
+            median3=median(fu_ccqc_mean, na.rm = T ),
+            min3=min(fu_ccqc_mean, na.rm = T ),
+            max3=max(fu_ccqc_mean, na.rm = T )  ) %>%
+  pivot_longer(cols = -c(group,asdcase),  
+                names_to = c('.value', 'time'), 
+                    names_pattern = '(.*)(\\d+)')
+
+write.csv(desctable,"desctable_asd.csv", row.names = TRUE)
+
+```
+
+```{r, echo=FALSE}
+desctable %>%
+           kbl(digits=3) %>%
+           kable_styling()
+```
+
+
+
+```{r, echo=FALSE}
+#   pre_ccqc_mean, post_ccqc_mean, fu_ccqc_mean
+# Histograms
+# plot
+p <- data %>%
+  dplyr::select(id,group, pre_ccqc_mean, post_ccqc_mean, fu_ccqc_mean) %>%
+  pivot_longer( cols = c("pre_ccqc_mean", "post_ccqc_mean", "fu_ccqc_mean"),  names_prefix = "ccqc_", 
+                names_to="t", values_to="outcome") %>%
+  mutate(time = ifelse(t == "pre_ccqc_mean",  1,
+                ifelse(t == "post_ccqc_mean", 2, 3))) 
+  
+
+
+  
+hist<-ggplot(p, aes(x=outcome) )+
+  geom_histogram(alpha=0.6, binwidth = 1) +
+  xlab("CCQ Caregiving Helplessness") +
+  ylab("Frequency") +
+  facet_wrap(group~time)
+
+group.labs <- c("PCIT-T", "COS-P", "Waitlist")
+names(group.labs) <- c("1", "2", "3")
+
+# New facet label names for group variable
+time.labs <- c("Pre", "Post","FollowUp")
+names(time.labs) <- c("1", "2","3")
+# Create the plot
+hist + theme_minimal() +
+  facet_grid(
+  group ~ time, 
+  labeller = labeller(group = group.labs, time = time.labs) )
+
+```
+
+#### Model & Results
+
+A linear mixed model with random effect for individual and fixed effects of group, time and the interaction was run. ASD status was then entered into the model as a main effect and then the 3-way interaction. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2.
+
+```{r, echo=FALSE, warning=FALSE}
+#  analysis
+dat <- data %>%
+  dplyr::select(id,group, asdcase, pre_ccqc_mean, post_ccqc_mean, fu_ccqc_mean) %>%
+  pivot_longer( cols = c("pre_ccqc_mean", "post_ccqc_mean", "fu_ccqc_mean"),  names_prefix = "ccqc_", 
+                names_to="t", values_to="outcome") %>%
+  mutate(time = ifelse(t == "pre_ccqc_mean",  1,
+                ifelse(t == "post_ccqc_mean", 2, 3))) 
+  
+
+
+dat$time<- as.factor(dat$time)
+dat$group<- as.factor(dat$group)
+dat$asdcase<- as.factor(dat$asdcase)
+
+result0<-lmer(outcome ~ (1 | id), dat)
+result0_5 <- lmer(outcome ~ asdcase + (1 | id), dat)
+result1<-lmer(outcome ~ asdcase + group + (1 | id), dat)
+result2<-lmer(outcome ~ asdcase + group + time + (1 | id), dat)
+result3<-lmer(outcome ~ asdcase + group*time + (1 | id), dat)
+result4<-lmer(outcome ~ asdcase*group*time + (1 | id), dat)
+
+
+```
+
+
+
+
+This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is no evidence that the pattern of change over time is different between the groups (p=0.591).
+
+```{r, echo=FALSE}
+anovatab<-anova(result0,result0_5,result1,result2,result3,result4)
+
+anovatab <-anovatab %>%
+           mutate(Effect = ifelse(npar == 3, "Intercept",
+                           ifelse(npar == 4, "ASD",
+                           ifelse(npar == 5, "ASD + Group",
+                           ifelse(npar == 8, "ASD + Group + Time",
+                           ifelse(npar == 11, "ASD + Group + Time + Group*Time","Group* Time*ASD")))))) %>%
+           relocate(Effect) 
+anovatab %>%
+           kbl(digits=3) %>%
+           kable_styling()
+```
+
+There is no evidence that ASD moderates the 2-way group*time interaction (the 3-way interaction p=0.254). 
+
+Model3, the model with Group*Time, adjusted by ASD will be the model I use for Estimated Means.
+
+```{r}
+summary(result3)
+```
+
+
+
+#### Estimated Means & Change
+
+Estimated means for each Treatment and Time (adjusted by ASD status) are presented. In addition, within-group
+change between time points is presented with 95% CIs.
+
+
+```{r child='bootstrapped_es_CI.Rmd'}
+```
+
+
+
+#### Hypothesis 1
+
+We hypothesize that from baseline (‘T1’) to post-treatment/waitlist (‘T2’) there will be a gradient effect, whereby parent-child dyads who receive PCIT-T
+will show the greatest gains and parent-child dyads who
+receive no treatment will show the least gains. For the outcome, then, the 
+null hypothesis is:
+
+$H_0:  \text {mean change}(\text{PCIT-T}) = \text {mean change}(\text{CoS-P}) = \text {mean change}(\text{Waitlist})$
+$H_A: \text {mean change}(\text{PCIT-T}) > \text {mean change}(\text{CoS-P}) > \text {mean change}(\text{Waitlist})$
+
+This is a joint hypothesis test.
+
+First, confirming that the ordering of the means is as hypothesized:
+
+```{r, echo=FALSE}
+result.change  <- emmeans(result3, "time", by = "group")
+result.change.d <-pairs(result.change)
+result.change.d
+```
+
+The ordering is not as expected.
+
+Now, to get the p-value associated with the joint hypothesis.
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp1   <- matrix(c(0, 0, 0,0, 0,0, -1,0,0 ),1)
+# Hyp2 is 1 df test, 
+hyp2   <- matrix(c(0, 0, 0,0, 0,1, 0,1,0 ),1)
+
+# hypF is combined 2df test. Yes!
+h<-rbind(hyp1,hyp2)
+hypF <- as.matrix(h)
+GlobalF <- glht(result3, linfct = hypF, test = Ftest())
+GlobalF$linfct
+summary(GlobalF, test = Ftest())
+
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+```
+
+p>0.05, so this joint null hypothesis is not rejected.
+
+
+#### Hypothesis 2
+
+There will be a gradient of size of change from T2 to T3 such that the change in the PCIT-T group > the change in the CoS-P group.  This isn't really a gradient; it's just 1 hypothesis.
+
+First, the change in PCITT and COSP from time 2 to time 3:
+
+```{r, echo=FALSE}
+result.change.d
+```
+
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp2   <- matrix(c(0, 0, 0,0, 0,0, -1,0,1 ),1)
+hyp2F <- glht(result3, linfct = hyp2)
+summary(hyp2F)
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+```
+
+p>0.05.
+
+
+#### Residuals
+
+Assumptions of the model are met.
+
+```{r, echo=FALSE, warning=FALSE}
+plot(result3,form = resid(., type = "pearson") ~ predict(., re.form = NA) )
+
+qqnorm(residuals(result3))
+qqline(residuals(result3), col="red")
+
+# plot residuals against predictors
+dat <- na.omit(dat)
+ggplot(data.frame(x1=dat$group,pearson=residuals(result3,type="pearson")),
+       aes(x=x1,y=pearson)) +
+  geom_point() +
+  theme_bw()
+
+ggplot(data.frame(x2=dat$time,pearson=residuals(result3,type="pearson")),
+       aes(x=x2,y=pearson)) +
+  geom_point() +
+  theme_bw()
+
+dat <- na.omit(dat)
+ggplot(data.frame(x2=dat$asdcase,pearson=residuals(result3,type="pearson")),
+       aes(x=x2,y=pearson)) +
+  geom_point() +
+  theme_bw()
+
+
+```
+
+```{r}
+rm(list = ls())
+```

@@ -1,0 +1,406 @@
+---
+title: "PCIT-CoS-Waitlist RCT Paper 1: PSI"
+author: "Nancy Briggs"
+date: "31 May 2022"
+output:
+  html_document:
+    toc: true
+    toc_depth: 6
+    toc_float: true
+---
+
+
+### PSI  {.tabset .tabset-fade .tabset-pills}
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(lme4)
+
+library(tidyverse)
+library(tidyselect)
+library(SASmarkdown)
+library(nlme)
+library(emmeans)
+library(multcomp)
+library(kableExtra)
+library(ggplot2)
+library(lmerTest)
+library(effectsize)
+library(boot)
+
+options(warnPartialMatchAttr = FALSE, 
+  warnPartialMatchDollar = FALSE,
+  warnPartialMatchArgs = FALSE)
+
+```
+
+
+```{r, echo=FALSE}
+# Data 
+# Import data
+# recoding for CBCL and totals done in SPSS before bringing data in to R
+
+data <- read.csv("../data_prep.csv", fileEncoding="UTF-8-BOM")
+names(data) <- tolower(names(data))
+
+# keep relevant demographic and outcome variables
+
+data <- data %>%
+  dplyr::select(id:treatment_time_mins, dobchild, sexchild, numbhousehold, incfamily,
+                #DPICS Labelled Praise
+                parent_lp_perc_total_time_1, parent_lp_perc_total_time_2, parent_lp_perc_total_time_3,
+                #DPICS Negative Talk
+                parent_nta_perc_total_time_1, parent_nta_perc_total_time_2, parent_nta_perc_total_time_3,
+                #BCAP
+                prebcap_risk, post_bcap_risk, fu_bcap_risk,
+                #BCAP Lie scale
+                prebcap_lie, post_bcap_lie, fu_bcap_lie,
+                
+                # Child Ext Behav
+                cbclext_pre_total,cbclext_post_total,cbclext_fu_total,
+
+                # CBCL Internalising Behav
+                cbclint_pre_total,cbclint_post_total,cbclint_fu_total,
+                
+                #Child Compliance
+                total_co_perc_time_1,total_co_perc_time_2,total_co_perc_time_3,
+                
+                # others, but not essential for paper
+                #3. Child Temperament (ECBQ)
+                #4. Child social-emotional functioning - #1: Brief Infant Toddler Social Emotional Assessment (BITSEA)
+                #5. Child social-emotional functioning - #2: Child Devereux Early Childhood Assessment (DECA)
+                
+                #psi
+                nichd_total_sensitivity,post_nichd_total_sensitivity,fu_nichd_total_sensitivity
+                
+                )
+
+# rename PSI vars
+data <- data %>%
+  mutate(totsens_pre = nichd_total_sensitivity) %>%
+  mutate(totsens_post = post_nichd_total_sensitivity) %>%
+  mutate(totsens_fu = fu_nichd_total_sensitivity) 
+
+```
+
+
+
+
+#### Descriptives
+
+```{r, echo=FALSE}
+
+desctable <- data %>%
+  group_by(group) %>%
+  summarise(n1 = sum(!is.na(totsens_pre)) , 
+            mean1=mean(totsens_pre, na.rm = T ),
+            sd1=sd(totsens_pre, na.rm = T ),
+            median1=median(totsens_pre, na.rm = T ),
+            min1=min(totsens_pre, na.rm = T ),
+            max1=max(totsens_pre, na.rm = T ),
+            
+            n2 = sum(!is.na(totsens_post)) , 
+            mean2=mean(totsens_post, na.rm = T ),
+            sd2=sd(totsens_post, na.rm = T ),
+            median2=median(totsens_post, na.rm = T ),
+            min2=min(totsens_post, na.rm = T ),
+            max2=max(totsens_post, na.rm = T ),
+            
+            n3 = sum(!is.na(totsens_fu)) , 
+            mean3=mean(totsens_fu, na.rm = T ),
+            sd3=sd(totsens_fu, na.rm = T ),
+            median3=median(totsens_fu, na.rm = T ),
+            min3=min(totsens_fu, na.rm = T ),
+            max3=max(totsens_fu, na.rm = T )  ) %>%
+  pivot_longer(cols = -group,  
+                names_to = c('.value', 'time'), 
+                    names_pattern = '(.*)(\\d+)')
+
+write.csv(desctable,"desctable.csv", row.names = TRUE)
+
+
+
+
+```
+
+```{r, echo=FALSE}
+desctable %>%
+           kbl(digits=3) %>%
+           kable_minimal()
+```
+
+_Excluding the Waitlist T3 observation_
+
+```{r, echo=FALSE}
+
+desctable <- data
+desctable$totsens_fu[desctable$group==3] <- NA
+
+desctable <- desctable %>%
+  group_by(group) %>%
+  summarise(n1 = sum(!is.na(totsens_pre)) , 
+            mean1=mean(totsens_pre, na.rm = T ),
+            sd1=sd(totsens_pre, na.rm = T ),
+            median1=median(totsens_pre, na.rm = T ),
+            min1=min(totsens_pre, na.rm = T ),
+            max1=max(totsens_pre, na.rm = T ),
+            
+            n2 = sum(!is.na(totsens_post)) , 
+            mean2=mean(totsens_post, na.rm = T ),
+            sd2=sd(totsens_post, na.rm = T ),
+            median2=median(totsens_post, na.rm = T ),
+            min2=min(totsens_post, na.rm = T ),
+            max2=max(totsens_post, na.rm = T ),
+            
+            n3 = sum(!is.na(totsens_fu)) , 
+            mean3=mean(totsens_fu, na.rm = T ),
+            sd3=sd(totsens_fu, na.rm = T ),
+            median3=median(totsens_fu, na.rm = T ),
+            min3=min(totsens_fu, na.rm = T ),
+            max3=max(totsens_fu, na.rm = T )  ) %>%
+  pivot_longer(cols = -group,  
+                names_to = c('.value', 'time'), 
+                    names_pattern = '(.*)(\\d+)')
+
+write.csv(desctable,"desctable_G3NA.csv", row.names = TRUE)
+
+
+
+
+```
+
+```{r, echo=FALSE}
+desctable %>%
+           kbl(digits=3) %>%
+           kable_minimal()
+```
+
+
+
+```{r, echo=FALSE}
+
+
+# Histograms
+# plot
+p <- data
+p$totsens_fu[p$group==3] <- NA
+p <- p %>%
+  dplyr::select(id,group, totsens_pre,totsens_post,totsens_fu) %>%
+  pivot_longer( cols = starts_with("totsens_"), names_prefix = "totsens_", 
+                names_to="t", values_to="outcome") %>%
+  mutate(time = ifelse(t == "pre",  1,
+                ifelse(t == "post", 2, 3))) 
+  
+
+  
+hist<-ggplot(p, aes(x=outcome) )+
+  geom_histogram(alpha=0.6, binwidth = 5) +
+  xlab("PSI") +
+  ylab("Frequency") +
+  facet_wrap(group~time)
+
+group.labs <- c("PCIT-T", "COS-P", "Waitlist")
+names(group.labs) <- c("1", "2", "3")
+
+# New facet label names for group variable
+time.labs <- c("Pre", "Post","FollowUp")
+names(time.labs) <- c("1", "2","3")
+# Create the plot
+hist + theme_minimal() +
+  facet_grid(
+  group ~ time, 
+  labeller = labeller(group = group.labs, time = time.labs) )
+
+```
+
+#### Model & Results
+
+A linear mixed model with random effect for individual and fixed effects of group, time and the interaction was run. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2.
+
+```{r, echo=FALSE, warning=FALSE}
+#  analysis
+dat <- data
+dat$totsens_fu[dat$group==3] <- NA
+
+dat <- dat %>%
+  dplyr::select(id,group, totsens_pre,totsens_post,totsens_fu) %>%
+  pivot_longer( cols = starts_with("totsens_"), names_prefix = "totsens_", 
+                names_to="t", values_to="outcome") %>%
+  mutate(time = ifelse(t == "pre",  1,
+                ifelse(t == "post", 2, 3))) 
+
+dat$time<- as.factor(dat$time)
+dat$group<- as.factor(dat$group)
+
+result0<-lmer(outcome ~ (1 | id), dat)
+result1<-lmer(outcome ~ group + (1 | id), dat)
+result2<-lmer(outcome ~ group + time + (1 | id), dat)
+result3<-lmer(outcome ~ group*time + (1 | id), dat)
+
+```
+
+
+
+
+This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is no evidence that the pattern of change over time is different between the groups (p=0.591).
+
+```{r, echo=FALSE}
+anovatab<-anova(result0,result1,result2,result3)
+
+anovatab <-anovatab %>%
+           mutate(Effect = ifelse(npar == 3, "Intercept",
+                           ifelse(npar == 5, "Group",
+                           ifelse(npar == 7, "Time",
+                           ifelse(npar == 10, "Group*Time",""))))) %>%
+           relocate(Effect) 
+anovatab %>%
+           kbl(digits=3) %>%
+           kable_styling()
+```
+
+
+
+```{r}
+summary(result3)
+```
+
+
+#### Estimated Means & Change
+
+Estimated means for each Treatment and Time are presented. In addition, within-group
+change between time points is presented with 95% CIs.
+
+
+```{r child='bootstrapped_es_CI.Rmd'}
+```
+
+
+#### Hypothesis 1
+
+We hypothesize that from baseline (‘T1’) to post-treatment/waitlist (‘T2’) there will be a gradient effect, whereby parent-child dyads who receive PCIT-T
+will show the greatest gains and parent-child dyads who
+receive no treatment will show the least gains. For the outcome, then, the 
+null hypothesis is:
+
+$H_0:  \text {mean change}(\text{PCIT-T}) = \text {mean change}(\text{CoS-P}) = \text {mean change}(\text{Waitlist})$
+$H_A: \text {mean change}(\text{PCIT-T}) > \text {mean change}(\text{CoS-P}) > \text {mean change}(\text{Waitlist})$
+
+This is a joint hypothesis test.
+
+First, confirming that the ordering of the means is as hypothesized:
+
+```{r, echo=FALSE}
+result.change.d
+```
+
+Now, to get the p-value associated with the joint hypothesis.
+
+```{r, echo=FALSE, warning=FALSE}
+
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp1   <- matrix(c(0, 0,0, 0,0, -1,0,0 ),1)
+# Hyp2 is 1 df test, 
+hyp2   <- matrix(c(0, 0,0, 0,1, 0,1,0 ),1)
+
+# hypF is combined 2df test. Yes!
+h<-rbind(hyp1,hyp2)
+hypF <- as.matrix(h)
+GlobalF <- glht(result3, linfct = hypF, test = Ftest())
+GlobalF$linfct
+summary(GlobalF, test = Ftest())
+
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+```
+
+PCITT Change=10.55 > COSP change=6.69 > Waitlist change=1.20
+
+So, the mean change for PCITT > COSP > Waitlist, but the pvalue>0.05. We fail to reject Hypothesis 1.
+
+But I think it is Ok to look at the individual differences between change in G1 vs G2, G1 vs G3:
+
+_PCITT vs CosP change from T1 to T2_
+
+```{r}
+# PCITT vs CosP
+hypF <- as.matrix(hyp1)
+GlobalF <- glht(result3, linfct = hypF, test = Ftest())
+GlobalF$linfct
+summary(GlobalF, test = Ftest())
+```
+
+_PCITT vs Waitlist change from T1 to T2_
+
+```{r}
+# PCITT vs WL
+
+hyp3   <- matrix(c(0, 0,1, 0,0, 0,1,0),1)
+hypF <- as.matrix(hyp3)
+GlobalF <- glht(result3, linfct = hypF, test = Ftest())
+GlobalF$linfct
+summary(GlobalF, test = Ftest())
+```
+
+
+
+#### Hypothesis 2
+
+There will be a gradient of size of change from T2 to T3 such that the change in the PCIT-T group > the change in the CoS-P group.  This isn't really a gradient; it's just 1 hypothesis.
+
+First, the change in PCITT and COSP from time 2 to time 3:
+
+```{r, echo=FALSE}
+result.change.d
+```
+
+There is greater change in PCITT( -.9791) than in COSP (-0.0431)
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp2   <- matrix(c(0, 0,0, 0,0, -1,0,1 ),1)
+hyp2F <- glht(result3, linfct = hyp2)
+summary(hyp2F)
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+```
+
+p>0.05, so we do not have enough evidence to suggest that the change from t2 to t3 in PCITT is greater than the change in COSP.
+
+
+
+
+#### Residuals
+
+Assumptions of the model are met.
+
+```{r, echo=FALSE, warning=FALSE}
+plot(result3)
+
+qqnorm(residuals(result3))
+qqline(residuals(result3), col="red")
+
+# plot residuals against predictors
+dat <- na.omit(dat)
+ggplot(data.frame(x1=dat$group,pearson=residuals(result3,type="pearson")),
+       aes(x=x1,y=pearson)) +
+  geom_point() +
+  theme_bw()
+
+ggplot(data.frame(x2=dat$time,pearson=residuals(result3,type="pearson")),
+       aes(x=x2,y=pearson)) +
+  geom_point() +
+  theme_bw()
+
+
+```
+
+```{r}
+rm(list = ls())
+```

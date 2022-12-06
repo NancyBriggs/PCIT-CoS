@@ -28,7 +28,8 @@ library(multcomp)
 library(kableExtra)
 library(ggplot2)
 library(lmerTest)
-
+library(effectsize)
+library(boot)
 
 options(warnPartialMatchAttr = FALSE, 
   warnPartialMatchDollar = FALSE,

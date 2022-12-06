@@ -27,6 +27,8 @@ library(kableExtra)
 library(ggplot2)
 library(lmerTest)
 library(DHARMa)
+library(effectsize)
+library(boot)
 
 options(warnPartialMatchAttr = FALSE, 
   warnPartialMatchDollar = FALSE,
@@ -108,6 +110,8 @@ data$child_co_total_time_3[data$group==3] <- NA
 ```{r, echo=FALSE}
 #Child Compliance
 #total_co_perc_time_1,total_co_perc_time_2,total_co_perc_time_3
+# One person on Waitlist has a value for FU.  set to NA
+data$total_co_perc_time_3[data$group==3] <- NA
          
 desctable <- data %>%
   group_by(group) %>%
@@ -156,7 +160,8 @@ write.csv(desctable,"desctable.csv", row.names = TRUE)
 ```{r, echo=FALSE}
 desctable %>%
            kbl() %>%
-           kable_styling()
+           kable_styling() %>%
+           footnote("One person in the Waitlist group had a value at Follow Up. It was set to missing.")
 ```
 
 
@@ -199,9 +204,9 @@ hist + theme_minimal() +
 
 #### Model & Results
 
-A generalized linear mixed model (GLMM) with random effect for individual and fixed effects of group, time and the interaction was run on the number of LP responses in the total number of verbalizations. A binomial distribution was specifed with a logit link. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2. Assumptions on the residuals were examined using simulated residuals (see below).
+A generalized linear mixed model (GLMM) with random effect for individual and fixed effects of group, time and the interaction was run on the number of LP responses in the total number of verbalizations. A binomial distribution was specified with a logit link. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2. Assumptions on the residuals were examined using simulated residuals (see below).
 
-TOTAL_eff_commands_TIME_1 is the demoninator, and CHILD_CO_total_TIME_1 is the numerator
+TOTAL_eff_commands_TIME_1 is the denominator, and CHILD_CO_total_TIME_1 is the numerator
 
 
 ```{r, echo=FALSE}

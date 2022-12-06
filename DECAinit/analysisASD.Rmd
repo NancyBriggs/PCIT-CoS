@@ -1,5 +1,5 @@
 ---
-title: "PCIT-CoS-Waitlist RCT Paper 1: DECA Self Regulation ASD"
+title: "PCIT-CoS-Waitlist RCT Paper 1: DECA Initiative ASD"
 author: "Nancy Briggs"
 date: "05 JAN 2021"
 output:
@@ -10,7 +10,7 @@ output:
 ---
 
 
-### DECA Self Regulation Adjusting for ASD {.tabset .tabset-fade .tabset-pills}
+### DECA Initiative Adjusting for ASD {.tabset .tabset-fade .tabset-pills}
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -26,7 +26,8 @@ library(multcomp)
 library(kableExtra)
 library(ggplot2)
 library(lmerTest)
-
+library(effectsize)
+library(boot)
 
 options(warnPartialMatchAttr = FALSE, 
   warnPartialMatchDollar = FALSE,
@@ -98,14 +99,14 @@ deca <- deca %>%
 data <- left_join(data, deca, by="id")
 
 
-data$time1_deca_t_selfreg_tscore <- as.numeric(data$time1_deca_t_selfreg_tscore )
-data$time2_deca_t_selfreg_tscore <- as.numeric(data$time2_deca_t_selfreg_tscore )
-data$time3_deca_t_selfreg_tscore <- as.numeric(data$time3_deca_t_selfreg_tscore )
+data$time1_deca_initiative_tscore_combined <- as.numeric(data$time1_deca_initiative_tscore_combined )
+data$time2_deca_initiative_tscore_combined <- as.numeric(data$time2_deca_initiative_tscore_combined )
+data$time3_deca_initiative_tscore_combined <- as.numeric(data$time3_deca_initiative_tscore_combined )
 
 data <- data %>%
-  rename(sr_1=time1_deca_t_selfreg_tscore) %>%
-  rename(sr_2=time2_deca_t_selfreg_tscore) %>%
-  rename(sr_3=time3_deca_t_selfreg_tscore)
+  rename(init_1=time1_deca_initiative_tscore_combined) %>%
+  rename(init_2=time2_deca_initiative_tscore_combined) %>%
+  rename(init_3=time3_deca_initiative_tscore_combined)
 ```
 
 
@@ -114,46 +115,48 @@ data <- data %>%
 #### Descriptives
 
 ```{r, echo=FALSE, warning=FALSE}
-               #Self reg
-                # time1_deca_t_selfreg_tscore, 
-                # time2_deca_t_selfreg_tscore, 
-                # time3_deca_t_selfreg_tscore, 
+                #initative
+                # time1_deca_initiative_tscore_combined,
+                # time2_deca_initiative_tscore_combined,
+                # time3_deca_initiative_tscore_combined,
                 # all renamed to init
+
 
 desctable <- data %>%
   group_by(asdcase,group) %>%
   mutate(score1 = case_when( 
-    sr_1 == -9 ~ NA_real_,          #assign missing values to zeros
-    TRUE ~ sr_1)) %>%
+    init_1 == -9 ~ NA_real_,          #assign missing values to zeros
+    TRUE ~ init_1)) %>%
   mutate(score2 = case_when( 
-    sr_2 == -9 ~ NA_real_,         #assign missing values to zeros
-    TRUE ~ sr_2)) %>%
+    init_2 == -9 ~ NA_real_,         #assign missing values to zeros
+    TRUE ~ init_2)) %>%
   mutate(score3 = case_when( 
-    sr_3 == -9 ~ NA_real_,           #assign missing values to zeros
-    TRUE ~ sr_3)) %>%
+    init_3 == -9 ~ NA_real_,           #assign missing values to zeros
+    TRUE ~ init_3)) %>%
   summarise(n1 = sum(!is.na(score1)) , 
-            mean1=mean(sr_1, na.rm = T ),
-            sd1=sd(sr_1, na.rm = T ),
-            median1=median(sr_1, na.rm = T ),
-            min1=min(sr_1, na.rm = T ),
-            max1=max(sr_1, na.rm = T ),
+            mean1=mean(init_1, na.rm = T ),
+            sd1=sd(init_1, na.rm = T ),
+            median1=median(init_1, na.rm = T ),
+            min1=min(init_1, na.rm = T ),
+            max1=max(init_1, na.rm = T ),
             
             n2 = sum(!is.na(score2)) , 
-            mean2=mean(sr_2, na.rm = T ),
-            sd2=sd(sr_2, na.rm = T ),
-            median2=median(sr_2, na.rm = T ),
-            min2=min(sr_2, na.rm = T ),
-            max2=max(sr_2, na.rm = T ),
+            mean2=mean(init_2, na.rm = T ),
+            sd2=sd(init_2, na.rm = T ),
+            median2=median(init_2, na.rm = T ),
+            min2=min(init_2, na.rm = T ),
+            max2=max(init_2, na.rm = T ),
             
             n3 = sum(!is.na(score3)) , 
-            mean3=mean(sr_3, na.rm = T ),
-            sd3=sd(sr_3, na.rm = T ),
-            median3=median(sr_3, na.rm = T ),
-            min3=min(sr_3, na.rm = T ),
-            max3=max(sr_3, na.rm = T )  ) %>%
+            mean3=mean(init_3, na.rm = T ),
+            sd3=sd(init_3, na.rm = T ),
+            median3=median(init_3, na.rm = T ),
+            min3=min(init_3, na.rm = T ),
+            max3=max(init_3, na.rm = T )  ) %>%
   pivot_longer(cols = -c(asdcase,group),  
                 names_to = c('.value', 'time'), 
                     names_pattern = '(.*)(\\d+)')
+
 
 write.csv(desctable,"desctable_asd.csv", row.names = TRUE)
 
@@ -172,11 +175,12 @@ desctable %>%
 # Histograms
 # plot
 p <- data %>%
-  dplyr::select(id,group, sr_1, sr_2, sr_3) %>%
-  pivot_longer( cols = starts_with("sr_"), names_prefix = "sr_", 
+  dplyr::select(id,group, init_1, init_2, init_3) %>%
+  pivot_longer( cols = starts_with("init_"), names_prefix = "init_", 
                 names_to="t", values_to="outcome") %>%
   mutate(time = ifelse(t == "1",  1,
                 ifelse(t == "2", 2, 3))) 
+
   
 hist<-ggplot(p, aes(x=outcome) )+
   geom_histogram(alpha=0.6, binwidth = 5) +
@@ -205,8 +209,8 @@ A linear mixed model with random effect for individual and fixed effects of grou
 ```{r, echo=FALSE, warning=FALSE}
 #  analysis
 dat <- data %>%
-  dplyr::select(id,group, asdcase, sr_1, sr_2, sr_3) %>%
-  pivot_longer( cols = starts_with("sr_"), names_prefix = "sr_", 
+  dplyr::select(id,group, asdcase, init_1, init_2, init_3) %>%
+  pivot_longer( cols = starts_with("init_"), names_prefix = "init_", 
                 names_to="t", values_to="outcome") %>%
   mutate(time = ifelse(t == "1",  1,
                 ifelse(t == "2", 2, 3))) 
@@ -261,53 +265,7 @@ Estimated means for each Treatment and Time (adjusted by ASD status) are present
 change between time points is presented with 95% CIs.
 
 
-```{r, echo=FALSE, warning=FALSE}
-
-result.change  <- emmeans(result3, "time", by = "group")
-result.change.d <-pairs(result.change)
-summary(result.change)
-confint(result.change.d)
-
-```
-
-
-
-```{r, echo=FALSE, warning=FALSE}
-
-result.emm <- emmeans(result3, ~group * time)
-result.means <- as.data.frame(result.emm)
-result.means <-  
-  result.means %>%
-  mutate(time1= ifelse(group==1 & time==1,  .9,   ## jitter on x axis
-                ifelse(group==1 & time==2, 1.9,       
-                ifelse(group==1 & time==3, 2.9,       
-                ifelse(group==2 & time==1, 1.0,
-                ifelse(group==2 & time==2, 2.0,       
-                ifelse(group==2 & time==3, 3.0,
-                ifelse(group==3 & time==1, 1.1,
-                ifelse(group==3 & time==2, 2.1,       
-                3.1)))))))))
-
-
-lp1 <- ggplot(data=result.means, aes(x=time1, y=emmean, group=group, shape=group, colour=group)) + geom_line(aes(linetype=group)) + geom_point(size=2) +
-    geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL, color=group)) +
-  #must define these the same so that only 1 legend is shown
-  scale_colour_discrete(name  ="Group",
-                            breaks=c(1,2,3),
-                            labels=c("PCIT-T", "CoS-P","Waitlist")) +
-  scale_shape_discrete(name  ="Group",
-                            breaks=c(1,2,3),
-                            labels=c("PCIT-T", "CoS-P","Waitlist")) +   
-  scale_linetype_manual(name="Group",
-                      values =c("solid","dashed","dotted"),
-                      breaks=c(1,2,3),
-                      labels=c("PCIT-T", "CoS-P","Waitlist")) +
-scale_x_continuous("Measurement",breaks = c(1, 2, 3)) +
-  scale_y_continuous("Estimated Means (95% CI)") +
-theme_classic() 
-
-lp1
-  
+```{r child='bootstrapped_es_CI.Rmd'}
 ```
 
 

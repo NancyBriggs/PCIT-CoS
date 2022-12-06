@@ -1,0 +1,276 @@
+---
+title: "PCIT-CoS-Waitlist RCT Paper 1:  Bootstrapping ES CIs"
+author: "Nancy Briggs"
+date: "05 JAN 2021"
+output:
+  html_document:
+    toc: true
+    toc_depth: 6
+    toc_float: true
+---
+
+
+
+##### Group mean difference at each timepoint
+
+Effect sizes all calculated by the pooled T1 SD of the outcome. Adjusted p-value from Bonferroni correction.
+
+```{r, echo=FALSE}
+result.mean  <- emmeans(result3, "group", by = "time")
+result.mean.d <-pairs(result.mean)
+result.mean.d.adj <-pairs(result.mean, adjust="bonferroni")
+
+# get baseline pooled SD
+
+# save each T1 measure for each group as a vector (pull)
+t1_1 <- dat %>%
+        filter(group==1 & time==1) %>%
+        dplyr::select(outcome) %>%
+        pull(outcome)
+t1_2 <- dat %>%
+        filter(group==2 & time==1) %>%
+        dplyr::select(outcome) %>%
+        pull(outcome)
+t1_3 <- dat %>%
+        filter(group==3 & time==1) %>%
+        dplyr::select(outcome) %>%
+        pull(outcome)
+pooledsd<- sd_pooled(t1_1, t1_2, t1_3)
+# save summary of differences as dataset
+s_groupdiffs<-summary(result.mean.d)
+ci<-confint(result.mean.d)
+s_groupdiffsadj<-summary(result.mean.d.adj)
+s_groupdiffsadj <- s_groupdiffsadj %>%
+        rename(p.value.adj=p.value)
+
+s_groupdiffs<- left_join(s_groupdiffs,s_groupdiffsadj)
+s_groupdiffs<- left_join(s_groupdiffs,ci)
+# calculate effect sizes
+s_groupdiffs$es=s_groupdiffs$estimate/pooledsd
+
+```
+
+```{r, echo=FALSE, message=FALSE}
+# bootstrapped percentile CIs for Effect sizes.
+fit_mixed <- lmer(outcome ~ group*time + (1 | id), dat)
+
+boot_contrasts <- function(mod){
+  # code for ucntion to get group differences at each time point
+  rg <- ref_grid(mod, mult.levs = rm_levels)
+  
+  # get the expected means:
+  em_ <- emmeans(rg, ~ group*time)
+  
+  # run pairwise tests between the treatment groups within each phase
+  c_ <- contrast(em_, "pairwise", by = 'time')
+  es_names <- c("t1_1v2", "t1_1v3", "t1_2v3",
+                 "t2_1v2", "t2_1v3", "t2_2v3",
+                 "t3_1v2", "t3_1v3", "t3_2v3")
+  diffs <- summary(c_)$estimate
+  names(diffs) <- es_names
+  
+  # run pairwise tests between the treatment groups within each phase
+  change_ <- contrast(em_, "pairwise", by = 'group')
+  ch_names <- c("g1_1v2", "g1_1v3", "g1_2v3",
+                 "g2_1v2", "g2_1v3", "g2_2v3",
+                 "g3_1v2", "g3_1v3", "g3_2v3")
+  change <- summary(change_)$estimate
+  names(change) <- ch_names  
+
+  return(diffs)
+
+}
+boot_contrasts_ch <- function(mod){
+  rg <- ref_grid(mod, mult.levs = rm_levels)
+  
+  # get the expected means:
+  em_ <- emmeans(rg, ~ group*time)
+  
+  # run pairwise tests between the treatment groups within each phase
+  c_ <- contrast(em_, "pairwise", by = 'time')
+  es_names <- c("t1_1v2", "t1_1v3", "t1_2v3",
+                 "t2_1v2", "t2_1v3", "t2_2v3",
+                 "t3_1v2", "t3_1v3", "t3_2v3")
+  diffs <- summary(c_)$estimate
+  names(diffs) <- es_names
+  
+  # run pairwise tests between the treatment groups within each phase
+  change_ <- contrast(em_, "pairwise", by = 'group')
+  ch_names <- c("g1_1v2", "g1_1v3", "g1_2v3",
+                 "g2_1v2", "g2_1v3", "g2_2v3",
+                 "g3_1v2", "g3_1v3", "g3_2v3")
+  change <- summary(change_)$estimate
+  names(change) <- ch_names  
+
+  return(change)
+
+}
+boot_es_group <- function(mod){
+  # get baseline pooled SD
+  d <- data.frame(outcome= mod@resp$y , mod@pp$X)
+  t1_1 <- d %>%
+    filter(group2==0 & group3==0 & time2==0 & time3==0 & group2.time2==0  
+           & group3.time2==0  & group2.time3==0 ) %>%
+    dplyr::select(outcome) %>%
+    pull(outcome)
+  t1_2 <- d %>%
+    filter(group2==1 & group3==0 & time2==0 & time3==0 & group2.time2==0  
+           & group3.time2==0  & group2.time3==0 ) %>%
+    dplyr::select(outcome) %>%
+    pull(outcome)
+  t1_3 <- d %>%
+    filter(group2==0 & group3==1 & time2==0 & time3==0 & group2.time2==0  
+           & group3.time2==0  & group2.time3==0 ) %>%
+    dplyr::select(outcome) %>%
+    pull(outcome)
+  pooledsd<- sd_pooled(t1_1, t1_2, t1_3)
+}
+
+numsim <- 500
+seed=100
+groupd <-
+  bootMer(fit_mixed, boot_contrasts, nsim = numsim, verbose=FALSE, seed=seed) # R = 599 at least
+changed <-
+  bootMer(fit_mixed, boot_contrasts_ch, nsim = numsim, verbose=FALSE, seed=seed) # R = 599 at least
+bootSD_results <- bootMer(fit_mixed, boot_es_group, nsim = numsim, verbose=FALSE, seed=seed) # R = 599 at least
+
+## extract the bootstrapped values as a data frame ... group differences
+bootdiffs<- as.data.frame(groupd)
+## extract the bootstrapped values as a data frame ... change differences
+bootchanges<- as.data.frame(changed)
+## extract the bootstrapped values as a data frame ... pooledSD
+bootSDs<- as.data.frame(bootSD_results)
+bootdiffs <- cbind(bootdiffs,bootchanges,bootSDs)
+#reshape long;
+es <- bootdiffs %>%
+  pivot_longer( cols = starts_with("t"),  
+                names_to="comparison", values_to="diff") %>%
+    pivot_longer( cols = starts_with("g"),  
+                names_to="comparison2", values_to="change") %>%
+  mutate(es=diff/V1) %>%
+  mutate(esch=change/V1) %>%
+  group_by(comparison)   %>%
+  summarise(es2_5  = ( quantile(es, c(0.025), na.rm=TRUE)),
+            es97_5 = quantile(es, c(0.975), na.rm=TRUE),
+            esch2_5  = ( quantile(esch, c(0.025), na.rm=TRUE)),
+            esch97_5 = quantile(esch, c(0.975), na.rm=TRUE))
+
+
+es_gpdiffs <- bootdiffs %>%
+  pivot_longer( cols = starts_with("t"),  
+                names_to="comparison", values_to="diff") %>%
+  mutate(es=diff/V1) %>%
+  group_by(comparison)   %>%
+  summarise(es2_5  = ( quantile(es, c(0.025), na.rm=TRUE)) ,
+            es97_5 = quantile(es, c(0.975), na.rm=TRUE) )
+
+es_change <- bootdiffs %>%
+    pivot_longer( cols = starts_with("g"),  
+                names_to="comparison", values_to="change") %>%
+  mutate(esch=change/V1) %>%
+  group_by(comparison)   %>%
+  summarise(esch2_5  = ( quantile(esch, c(0.025), na.rm=TRUE)),
+            esch97_5 = quantile(esch, c(0.975), na.rm=TRUE))
+
+
+s_groupdiffs<- cbind(s_groupdiffs,es_gpdiffs)
+
+s_groupdiffs %>%
+  dplyr::select(c(-comparison,-df)) %>%
+  kbl(digits=3,caption = "Group Differences at Each Time Point", 
+  col.names = c("Group Difference", "Time","Mean", "SE", "t","p","adj p",
+                  "Lower CL","Upper CL", "Effect Size", "Lower CL","Upper CL") )  %>%
+  kable_styling() %>%
+  add_footnote( c("Effect size scaled by pooled T1 SD", "ES 95% Bootstrapped Percentile CI limits","If you want a positive ES (and it is calculated as negative), be sure to switch the signs and positions of the lower and upper CIs."), notation = "symbol")
+```
+
+
+
+##### Change within each group
+
+```{r, echo=FALSE, warning=FALSE}
+
+result.change  <- emmeans(result3, "time", by = "group")
+result.change.d <-pairs(result.change)
+result.change.d.adj <-pairs(result.change, adjust="bonferroni")
+
+# get baseline pooled SD
+
+# save each T1 measure for each group as a vector (pull)
+t1_1 <- dat %>%
+        filter(group==1 & time==1) %>%
+        dplyr::select(outcome) %>%
+        pull(outcome)
+t1_2 <- dat %>%
+        filter(group==2 & time==1) %>%
+        dplyr::select(outcome) %>%
+        pull(outcome)
+t1_3 <- dat %>%
+        filter(group==3 & time==1) %>%
+        dplyr::select(outcome) %>%
+        pull(outcome)
+pooledsd<- sd_pooled(t1_1, t1_2, t1_3)
+# save summary of differences as dataset
+s<-summary(result.change.d)
+ci<-confint(result.change.d)
+sadj<-summary(result.change.d.adj)
+sadj <- sadj %>%
+        rename(p.value.adj=p.value)
+
+s<- left_join(s,sadj)
+s<- left_join(s,ci)
+# calculate effect sizes
+s$es=(s$estimate/pooledsd)
+
+
+s<- cbind(s,es_change)
+
+s %>%
+  dplyr::select(c(-comparison,-df)) %>%
+  kbl(digits=3,caption = "Within-Group Change and Effect Sizes", 
+  col.names = c("Change", "Group","Mean", "SE", "t","p","adj p",
+                  "Lower CL","Upper CL", "Effect Size", "Lower CL","Upper CL") )  %>%
+  kable_styling() %>%
+  add_footnote( c("Effect size scaled by pooled T1 SD", "ES 95% Bootstrapped Percentile CI limits","If you want a positive ES (and it is calculated as negative), be sure to switch the signs and positions of the lower and upper CIs."), notation = "symbol")
+
+```
+
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+result.emm <- emmeans(result3, ~group * time)
+result.means <- as.data.frame(result.emm)
+result.means <-  
+  result.means %>%
+  mutate(time1= ifelse(group==1 & time==1,  .9,   ## jitter on x axis
+                ifelse(group==1 & time==2, 1.9,       
+                ifelse(group==1 & time==3, 2.9,       
+                ifelse(group==2 & time==1, 1.0,
+                ifelse(group==2 & time==2, 2.0,       
+                ifelse(group==2 & time==3, 3.0,
+                ifelse(group==3 & time==1, 1.1,
+                ifelse(group==3 & time==2, 2.1,       
+                3.1)))))))))
+
+
+lp1 <- ggplot(data=result.means, aes(x=time1, y=emmean, group=group, shape=group, colour=group)) + geom_line(aes(linetype=group)) + geom_point(size=2) +
+    geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL, color=group)) +
+  #must define these the same so that only 1 legend is shown
+  scale_colour_discrete(name  ="Group",
+                            breaks=c(1,2,3),
+                            labels=c("PCIT-T", "CoS-P","Waitlist")) +
+  scale_shape_discrete(name  ="Group",
+                            breaks=c(1,2,3),
+                            labels=c("PCIT-T", "CoS-P","Waitlist")) +   
+  scale_linetype_manual(name="Group",
+                      values =c("solid","dashed","dotted"),
+                      breaks=c(1,2,3),
+                      labels=c("PCIT-T", "CoS-P","Waitlist")) +
+scale_x_continuous("Measurement",breaks = c(1, 2, 3)) +
+  scale_y_continuous("Estimated Means (95% CI)") +
+theme_classic() 
+
+lp1
+  
+```

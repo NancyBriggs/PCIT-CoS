@@ -1,6 +1,6 @@
 ﻿* Encoding: UTF-8.
 GET
-  FILE='C:\Users\Nancy\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\PCITT RCT main dataset 4.1.22.sav'.
+  FILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\PCITT RCT main dataset 4.1.22.sav'.
 DATASET NAME DataSet1 WINDOW=FRONT.
 
 DATASET ACTIVATE DataSet1.
@@ -37,7 +37,7 @@ FILTER OFF.
 USE ALL.
 SELECT IF (GROUP<999).
 EXECUTE.
-SAVE OUTFILE='C:\Users\Nancy\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep.sav'
+SAVE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep.sav'
   /COMPRESSED.
 
 
@@ -456,13 +456,410 @@ COMPUTE cbclint_fu_total=sum(fu_cbcl21,fu_cbcl46,fu_cbcl51,fu_cbcl79,fu_cbcl82,f
                 fu_cbcl67,fu_cbcl70,fu_cbcl71,fu_cbcl98).
 EXECUTE.
 
-SAVE OUTFILE='C:\Users\Nancy\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep.sav'
+*** Adding in CCQ recoding.
+* 1. reverse code items that need it. (Already done) .
+* 2. caculate the mean for each subscale.
+* 3. replace missing values with mean, unless all are missing then it's jst messing.
+* This is the same process as the CBCL above.
+
+* 2. calculated means.
+
+DATASET ACTIVATE DataSet1.
+COMPUTE pre_CCQ_A_TOPSE_mean =mean(preCCQA1, preCCQA2,  preCCQA3,  preCCQA4, preCCQA5,  preCCQA6, preCCQA7,  preCCQA8,  
+    preCCQA9,  preCCQA10, preCCQA11, preCCQA12_R).
+COMPUTE post_CCQ_A_TOPSE_mean =mean(post_CCQA1, post_CCQA2,  post_CCQA3,  post_CCQA4, post_CCQA5,  post_CCQA6, post_CCQA7,  
+    post_CCQA8,  post_CCQA9,  post_CCQA10, post_CCQA11, post_CCQA12_R).
+COMPUTE fu_CCQ_A_TOPSE_mean =mean(fu_CCQA1, fu_CCQA2,  fu_CCQA3,  fu_CCQA4, fu_CCQA5,  fu_CCQA6, fu_CCQA7,  
+fu_CCQA8,  fu_CCQA9,  fu_CCQA10, fu_CCQA11, fu_CCQA12_R).
+Execute.
+
+
+
+
+* Count the number of valid items.
+* If all items are missing, don't replace the indiviudal ones with the mean.
+* Those are jus missing values. 
+
+compute	ccq_count_pre	=0	.							
+if	~missing(	preCCQA1	)	ccq_count_pre	=	preCCQA1	+	1	.
+if	~missing(	preCCQA2	)	ccq_count_pre	=	preCCQA2	+	1	.
+if	~missing(	preCCQA3	)	ccq_count_pre	=	preCCQA3	+	1	.
+if	~missing(	preCCQA4	)	ccq_count_pre	=	preCCQA4	+	1	.
+if	~missing(	preCCQA5	)	ccq_count_pre	=	preCCQA5	+	1	.
+if	~missing(	preCCQA6	)	ccq_count_pre	=	preCCQA6	+	1	.
+if	~missing(	preCCQA7	)	ccq_count_pre	=	preCCQA7	+	1	.
+if	~missing(	preCCQA8	)	ccq_count_pre	=	preCCQA8	+	1	.
+if	~missing(	preCCQA9	)	ccq_count_pre	=	preCCQA9	+	1	.
+if	~missing(	preCCQA10	)	ccq_count_pre	=	preCCQA10	+	1	.
+if	~missing(	preCCQA11	)	ccq_count_pre	=	preCCQA11	+	1	.
+if	~missing(	preCCQA12_R)	ccq_count_pre	=	preCCQA12_R+	1	.
+
+compute	ccq_count_post	=0	.						
+if	~missing(	post_CCQA1	)	ccq_count_post	=	post_CCQA1	+	1	.
+if	~missing(	post_CCQA2	)	ccq_count_post	=	post_CCQA2	+	1	.
+if	~missing(	post_CCQA3	)	ccq_count_post	=	post_CCQA3	+	1	.
+if	~missing(	post_CCQA4	)	ccq_count_post	=	post_CCQA4	+	1	.
+if	~missing(	post_CCQA5	)	ccq_count_post	=	post_CCQA5	+	1	.
+if	~missing(	post_CCQA6	)	ccq_count_post	=	post_CCQA6	+	1	.
+if	~missing(	post_CCQA7	)	ccq_count_post	=	post_CCQA7	+	1	.
+if	~missing(	post_CCQA8	)	ccq_count_post	=	post_CCQA8	+	1	.
+if	~missing(	post_CCQA9	)	ccq_count_post	=	post_CCQA9	+	1	.
+if	~missing(	post_CCQA10	)	ccq_count_post	=	post_CCQA10	+	1	.
+if	~missing(	post_CCQA11	)	ccq_count_post	=	post_CCQA11	+	1	.
+if	~missing(	post_CCQA12_R	)	ccq_count_post	=	post_CCQA12_R	+	1	.
+compute	ccq_count_fu	=0	.						
+if	~missing(	FU_CCQA1	)	ccq_count_fu	=	FU_CCQA1	+	1	.
+if	~missing(	FU_CCQA2	)	ccq_count_fu	=	FU_CCQA2	+	1	.
+if	~missing(	FU_CCQA3	)	ccq_count_fu	=	FU_CCQA3	+	1	.
+if	~missing(	FU_CCQA4	)	ccq_count_fu	=	FU_CCQA4	+	1	.
+if	~missing(	FU_CCQA5	)	ccq_count_fu	=	FU_CCQA5	+	1	.
+if	~missing(	FU_CCQA6	)	ccq_count_fu	=	FU_CCQA6	+	1	.
+if	~missing(	FU_CCQA7	)	ccq_count_fu	=	FU_CCQA7	+	1	.
+if	~missing(	FU_CCQA8	)	ccq_count_fu	=	FU_CCQA8	+	1	.
+if	~missing(	FU_CCQA9	)	ccq_count_fu	=	FU_CCQA9	+	1	.
+if	~missing(	FU_CCQA10	)	ccq_count_fu	=	FU_CCQA10	+	1	.
+if	~missing(	FU_CCQA11	)	ccq_count_fu	=	FU_CCQA11	+	1	.
+if	~missing(	FU_CCQA12_R	)	ccq_count_fu	=	FU_CCQA12_R	+	1	.
+
+
+
+
+
+
+
+if (missing(	preCCQA1	) & 	ccq_count_pre	>0	)	preCCQA1	=	pre_CCQ_A_TOPSE_mean	.
+if (missing(	preCCQA2	) & 	ccq_count_pre	>0	)	preCCQA2	=	pre_CCQ_A_TOPSE_mean	.
+if (missing(	preCCQA3	) & 	ccq_count_pre	>0	)	preCCQA3	=	pre_CCQ_A_TOPSE_mean	.
+if (missing(	preCCQA4	) & 	ccq_count_pre	>0	)	preCCQA4	=	pre_CCQ_A_TOPSE_mean	.
+if (missing(	preCCQA5	) & 	ccq_count_pre	>0	)	preCCQA5	=	pre_CCQ_A_TOPSE_mean	.
+if (missing(	preCCQA6	) & 	ccq_count_pre	>0	)	preCCQA6	=	pre_CCQ_A_TOPSE_mean	.
+if (missing(	preCCQA7	) & 	ccq_count_pre	>0	)	preCCQA7	=	pre_CCQ_A_TOPSE_mean	.
+if (missing(	preCCQA8	) & 	ccq_count_pre	>0	)	preCCQA8	=	pre_CCQ_A_TOPSE_mean	.
+if (missing(	preCCQA9	) & 	ccq_count_pre	>0	)	preCCQA9	=	pre_CCQ_A_TOPSE_mean	.
+if (missing(	preCCQA10	) & 	ccq_count_pre	>0	)	preCCQA10	=	pre_CCQ_A_TOPSE_mean	.
+if (missing(	preCCQA11	) & 	ccq_count_pre	>0	)	preCCQA11	=	pre_CCQ_A_TOPSE_mean	.
+if (missing(	preCCQA12_R	) & 	ccq_count_pre	>0	)	preCCQA12_R	=	pre_CCQ_A_TOPSE_mean	.
+
+if (missing(	post_CCQA1	) & 	ccq_count_post	>0	)	post_CCQA1	=	post_CCQ_A_TOPSE_mean	.
+if (missing(	post_CCQA2	) & 	ccq_count_post	>0	)	post_CCQA2	=	post_CCQ_A_TOPSE_mean	.
+if (missing(	post_CCQA3	) & 	ccq_count_post	>0	)	post_CCQA3	=	post_CCQ_A_TOPSE_mean	.
+if (missing(	post_CCQA4	) & 	ccq_count_post	>0	)	post_CCQA4	=	post_CCQ_A_TOPSE_mean	.
+if (missing(	post_CCQA5	) & 	ccq_count_post	>0	)	post_CCQA5	=	post_CCQ_A_TOPSE_mean	.
+if (missing(	post_CCQA6	) & 	ccq_count_post	>0	)	post_CCQA6	=	post_CCQ_A_TOPSE_mean	.
+if (missing(	post_CCQA7	) & 	ccq_count_post	>0	)	post_CCQA7	=	post_CCQ_A_TOPSE_mean	.
+if (missing(	post_CCQA8	) & 	ccq_count_post	>0	)	post_CCQA8	=	post_CCQ_A_TOPSE_mean	.
+if (missing(	post_CCQA9	) & 	ccq_count_post	>0	)	post_CCQA9	=	post_CCQ_A_TOPSE_mean	.
+if (missing(	post_CCQA10	) & 	ccq_count_post	>0	)	post_CCQA10	=	post_CCQ_A_TOPSE_mean	.
+if (missing(	post_CCQA11	) & 	ccq_count_post	>0	)	post_CCQA11	=	post_CCQ_A_TOPSE_mean	.
+if (missing(	post_CCQA12_R	) & 	ccq_count_post	>0	)	post_CCQA12_R	=	post_CCQ_A_TOPSE_mean	.
+
+if (missing(	FU_CCQA1	) & 	ccq_count_fu	>0	)	FU_CCQA1	=	fu_CCQ_A_TOPSE_mean	.
+if (missing(	FU_CCQA2	) & 	ccq_count_fu	>0	)	FU_CCQA2	=	fu_CCQ_A_TOPSE_mean	.
+if (missing(	FU_CCQA3	) & 	ccq_count_fu	>0	)	FU_CCQA3	=	fu_CCQ_A_TOPSE_mean	.
+if (missing(	FU_CCQA4	) & 	ccq_count_fu	>0	)	FU_CCQA4	=	fu_CCQ_A_TOPSE_mean	.
+if (missing(	FU_CCQA5	) & 	ccq_count_fu	>0	)	FU_CCQA5	=	fu_CCQ_A_TOPSE_mean	.
+if (missing(	FU_CCQA6	) & 	ccq_count_fu	>0	)	FU_CCQA6	=	fu_CCQ_A_TOPSE_mean	.
+if (missing(	FU_CCQA7	) & 	ccq_count_fu	>0	)	FU_CCQA7	=	fu_CCQ_A_TOPSE_mean	.
+if (missing(	FU_CCQA8	) & 	ccq_count_fu	>0	)	FU_CCQA8	=	fu_CCQ_A_TOPSE_mean	.
+if (missing(	FU_CCQA9	) & 	ccq_count_fu	>0	)	FU_CCQA9	=	fu_CCQ_A_TOPSE_mean	.
+if (missing(	FU_CCQA10	) & 	ccq_count_fu	>0	)	FU_CCQA10	=	fu_CCQ_A_TOPSE_mean	.
+if (missing(	FU_CCQA11	) & 	ccq_count_fu	>0	)	FU_CCQA11	=	fu_CCQ_A_TOPSE_mean	.
+if (missing(	FU_CCQA12_R	) & 	ccq_count_fu	>0	)	FU_CCQA12_R	=	fu_CCQ_A_TOPSE_mean	.
+
+execute.
+
+* Compute subscale mean.
+COMPUTE pre_CCQ_A_TOPSE_mean =mean(preCCQA1, preCCQA2,  preCCQA3,  preCCQA4, preCCQA5,  preCCQA6, preCCQA7,  preCCQA8,  
+    preCCQA9,  preCCQA10, preCCQA11, preCCQA12_R).
+COMPUTE post_CCQ_A_TOPSE_mean =mean(post_CCQA1, post_CCQA2,  post_CCQA3,  post_CCQA4, post_CCQA5,  post_CCQA6, post_CCQA7,  
+    post_CCQA8,  post_CCQA9,  post_CCQA10, post_CCQA11, post_CCQA12_R).
+COMPUTE fu_CCQ_A_TOPSE_mean =mean(fu_CCQA1, fu_CCQA2,  fu_CCQA3,  fu_CCQA4, fu_CCQA5,  fu_CCQA6, fu_CCQA7,  
+fu_CCQA8,  fu_CCQA9,  fu_CCQA10, fu_CCQA11, fu_CCQA12_R).
+Execute.
+
+
+
+
+
+
+* Caregiving Helplessness (CCQ as well) .
+
+
+DATASET ACTIVATE DataSet1.
+COMPUTE pre_CHQ_mean =mean(preCCQD1,preCCQD2 ,preCCQD3,
+preCCQD4 ,preCCQD5 ,preCCQD6 ,preCCQD7).
+COMPUTE post_CHQ_mean =mean(post_CCQD1,post_CCQD2 ,post_CCQD3,
+post_CCQD4 ,post_CCQD5 ,post_CCQD6 ,post_CCQD7).
+COMPUTE fu_CHQ_mean =mean(fu_CCQD1,fu_CCQD2 ,fu_CCQD3,
+fu_CCQD4 ,fu_CCQD5 ,fu_CCQD6 ,fu_CCQD7).
+Execute.
+
+compute	ccq_count_pre	=0	.						
+if	~missing(	preCCQD1	)	ccq_count_pre	=	preCCQD1	+	1	.
+if	~missing(	preCCQD2	)	ccq_count_pre	=	preCCQD2	+	1	.
+if	~missing(	preCCQD3	)	ccq_count_pre	=	preCCQD3	+	1	.
+if	~missing(	preCCQD4	)	ccq_count_pre	=	preCCQD4	+	1	.
+if	~missing(	preCCQD5	)	ccq_count_pre	=	preCCQD5	+	1	.
+if	~missing(	preCCQD6	)	ccq_count_pre	=	preCCQD6	+	1	.
+if	~missing(	preCCQD7	)	ccq_count_pre	=	preCCQD7	+	1	.
+compute	ccq_count_post	=0	.						
+if	~missing(	post_CCQD1	)	ccq_count_post	=	post_CCQD1	+	1	.
+if	~missing(	post_CCQD2	)	ccq_count_post	=	post_CCQD2	+	1	.
+if	~missing(	post_CCQD3	)	ccq_count_post	=	post_CCQD3	+	1	.
+if	~missing(	post_CCQD4	)	ccq_count_post	=	post_CCQD4	+	1	.
+if	~missing(	post_CCQD5	)	ccq_count_post	=	post_CCQD5	+	1	.
+if	~missing(	post_CCQD6	)	ccq_count_post	=	post_CCQD6	+	1	.
+if	~missing(	post_CCQD7	)	ccq_count_post	=	post_CCQD7	+	1	.
+compute	ccq_count_fu	=0	.						
+if	~missing(	FU_CCQD1	)	ccq_count_fu	=	FU_CCQD1	+	1	.
+if	~missing(	FU_CCQD2	)	ccq_count_fu	=	FU_CCQD2	+	1	.
+if	~missing(	FU_CCQD3	)	ccq_count_fu	=	FU_CCQD3	+	1	.
+if	~missing(	FU_CCQD4	)	ccq_count_fu	=	FU_CCQD4	+	1	.
+if	~missing(	FU_CCQD5	)	ccq_count_fu	=	FU_CCQD5	+	1	.
+if	~missing(	FU_CCQD6	)	ccq_count_fu	=	FU_CCQD6	+	1	.
+if	~missing(	FU_CCQD7	)	ccq_count_fu	=	FU_CCQD7	+	1	.
+
+
+execute.
+
+
+
+if (missing(	preCCQD1	) & 	ccq_count_pre	>0	)	preCCQD1	=	pre_CHQ_mean	.
+if (missing(	preCCQD2	) & 	ccq_count_pre	>0	)	preCCQD2	=	pre_CHQ_mean	.
+if (missing(	preCCQD3	) & 	ccq_count_pre	>0	)	preCCQD3	=	pre_CHQ_mean	.
+if (missing(	preCCQD4	) & 	ccq_count_pre	>0	)	preCCQD4	=	pre_CHQ_mean	.
+if (missing(	preCCQD5	) & 	ccq_count_pre	>0	)	preCCQD5	=	pre_CHQ_mean	.
+if (missing(	preCCQD6	) & 	ccq_count_pre	>0	)	preCCQD6	=	pre_CHQ_mean	.
+if (missing(	preCCQD7	) & 	ccq_count_pre	>0	)	preCCQD7	=	pre_CHQ_mean	.
+
+if (missing(	post_CCQD1	) & 	ccq_count_post	>0	)	post_CCQD1	=	post_CHQ_mean	.
+if (missing(	post_CCQD2	) & 	ccq_count_post	>0	)	post_CCQD2	=	post_CHQ_mean	.
+if (missing(	post_CCQD3	) & 	ccq_count_post	>0	)	post_CCQD3	=	post_CHQ_mean	.
+if (missing(	post_CCQD4	) & 	ccq_count_post	>0	)	post_CCQD4	=	post_CHQ_mean	.
+if (missing(	post_CCQD5	) & 	ccq_count_post	>0	)	post_CCQD5	=	post_CHQ_mean	.
+if (missing(	post_CCQD6	) & 	ccq_count_post	>0	)	post_CCQD6	=	post_CHQ_mean	.
+if (missing(	post_CCQD7	) & 	ccq_count_post	>0	)	post_CCQD7	=	post_CHQ_mean	.
+
+if (missing(	FU_CCQD1	) & 	ccq_count_fu	>0	)	FU_CCQD1	=	fu_CHQ_mean	.
+if (missing(	FU_CCQD2	) & 	ccq_count_fu	>0	)	FU_CCQD2	=	fu_CHQ_mean	.
+if (missing(	FU_CCQD3	) & 	ccq_count_fu	>0	)	FU_CCQD3	=	fu_CHQ_mean	.
+if (missing(	FU_CCQD4	) & 	ccq_count_fu	>0	)	FU_CCQD4	=	fu_CHQ_mean	.
+if (missing(	FU_CCQD5	) & 	ccq_count_fu	>0	)	FU_CCQD5	=	fu_CHQ_mean	.
+if (missing(	FU_CCQD6	) & 	ccq_count_fu	>0	)	FU_CCQD6	=	fu_CHQ_mean	.
+if (missing(	FU_CCQD7	) & 	ccq_count_fu	>0	)	FU_CCQD7	=	fu_CHQ_mean	.
+ execute.
+COMPUTE pre_CHQD_mean =mean(preCCQD1,preCCQD2 ,preCCQD3,
+preCCQD4 ,preCCQD5 ,preCCQD6 ,preCCQD7).
+COMPUTE post_CHQD_mean =mean(post_CCQD1,post_CCQD2 ,post_CCQD3,
+post_CCQD4 ,post_CCQD5 ,post_CCQD6 ,post_CCQD7).
+COMPUTE fu_CHQD_mean =mean(fu_CCQD1,fu_CCQD2 ,fu_CCQD3,
+fu_CCQD4 ,fu_CCQD5 ,fu_CCQD6 ,fu_CCQD7).
+Execute.
+
+
+* Hostile Parenting .
+COMPUTE pre_CCQ_mean =mean(preCCQC1,preCCQC2 ,preCCQC3,
+preCCQC4 ,preCCQC5).
+COMPUTE post_CCQ_mean =mean(post_CCQC1,post_CCQC2 ,post_CCQC3,
+post_CCQC4 ,post_CCQC5).
+COMPUTE fu_CCQ_mean =mean(fu_CCQC1,fu_CCQC2 ,fu_CCQC3,
+fu_CCQC4 ,fu_CCQC5).
+
+compute	ccq_count_pre	 =0	.						
+if	~missing(	preCCQC1	)	ccq_count_pre	=	preCCQC1	+	1	.
+if	~missing(	preCCQC2	)	ccq_count_pre	=	preCCQC2	+	1	.
+if	~missing(	preCCQC3	)	ccq_count_pre	=	preCCQC3	+	1	.
+if	~missing(	preCCQC4	)	ccq_count_pre	=	preCCQC4	+	1	.
+if	~missing(	preCCQC5	)	ccq_count_pre	=	preCCQC5	+	1	.
+compute	ccq_count_post	 =0	.						
+if	~missing(	post_CCQC1	)	ccq_count_post	=	post_CCQC1	+	1	.
+if	~missing(	post_CCQC2	)	ccq_count_post	=	post_CCQC2	+	1	.
+if	~missing(	post_CCQC3	)	ccq_count_post	=	post_CCQC3	+	1	.
+if	~missing(	post_CCQC4	)	ccq_count_post	=	post_CCQC4	+	1	.
+if	~missing(	post_CCQC5	)	ccq_count_post	=	post_CCQC5	+	1	.
+compute	ccq_count_fu	 =0	.						
+if	~missing(	FU_CCQC1	)	ccq_count_fu	=	FU_CCQC1	+	1	.
+if	~missing(	FU_CCQC2	)	ccq_count_fu	=	FU_CCQC2	+	1	.
+if	~missing(	FU_CCQC3	)	ccq_count_fu	=	FU_CCQC3	+	1	.
+if	~missing(	FU_CCQC4	)	ccq_count_fu	=	FU_CCQC4	+	1	.
+if	~missing(	FU_CCQC5	)	ccq_count_fu	=	FU_CCQC5	+	1	.
+
+
+
+if (missing(	preCCQC1	) & 	ccq_count_pre	>0	)	preCCQC1	=	pre_CCQ_mean	.
+if (missing(	preCCQC2	) & 	ccq_count_pre	>0	)	preCCQC2	=	pre_CCQ_mean	.
+if (missing(	preCCQC3	) & 	ccq_count_pre	>0	)	preCCQC3	=	pre_CCQ_mean	.
+if (missing(	preCCQC4	) & 	ccq_count_pre	>0	)	preCCQC4	=	pre_CCQ_mean	.
+if (missing(	preCCQC5	) & 	ccq_count_pre	>0	)	preCCQC5	=	pre_CCQ_mean	.
+if (missing(	post_CCQC1	) & 	ccq_count_post	>0	)	post_CCQC1	=	post_CCQ_mean	.
+if (missing(	post_CCQC2	) & 	ccq_count_post	>0	)	post_CCQC2	=	post_CCQ_mean	.
+if (missing(	post_CCQC3	) & 	ccq_count_post	>0	)	post_CCQC3	=	post_CCQ_mean	.
+if (missing(	post_CCQC4	) & 	ccq_count_post	>0	)	post_CCQC4	=	post_CCQ_mean	.
+if (missing(	post_CCQC5	) & 	ccq_count_post	>0	)	post_CCQC5	=	post_CCQ_mean	.
+if (missing(	FU_CCQC1	) & 	ccq_count_fu	>0	)	FU_CCQC1	=	fu_CCQ_mean	.
+if (missing(	FU_CCQC2	) & 	ccq_count_fu	>0	)	FU_CCQC2	=	fu_CCQ_mean	.
+if (missing(	FU_CCQC3	) & 	ccq_count_fu	>0	)	FU_CCQC3	=	fu_CCQ_mean	.
+if (missing(	FU_CCQC4	) & 	ccq_count_fu	>0	)	FU_CCQC4	=	fu_CCQ_mean	.
+if (missing(	FU_CCQC5	) & 	ccq_count_fu	>0	)	FU_CCQC5	=	fu_CCQ_mean	.
+Execute.
+
+COMPUTE pre_CCQC_mean =mean(preCCQC1,preCCQC2 ,preCCQC3,
+preCCQC4 ,preCCQC5).
+COMPUTE post_CCQC_mean =mean(post_CCQC1,post_CCQC2 ,post_CCQC3,
+post_CCQC4 ,post_CCQC5).
+COMPUTE fu_CCQC_mean =mean(fu_CCQC1,fu_CCQC2 ,fu_CCQC3,
+fu_CCQC4 ,fu_CCQC5).
+
+
+* Parental Reflectiveness.
+Compute pre_CCQ_mean=mean( preCCQE1,	preCCQE2,	preCCQE3,	preCCQE4_R,	preCCQE5,	
+    preCCQE6,	preCCQE7,	preCCQE8,	preCCQE9_R,	preCCQE10,	preCCQE11,	preCCQE12,	preCCQE13,	
+    preCCQE14_R,	preCCQE15,	preCCQE16,	preCCQE17,	preCCQE18).
+Compute post_CCQ_mean=mean( post_CCQE1,	post_CCQE2,	post_CCQE3,	post_CCQE4_R,	post_CCQE5,	
+    post_CCQE6,	post_CCQE7,	post_CCQE8,	post_CCQE9_R,	post_CCQE10,	post_CCQE11,	post_CCQE12,	post_CCQE13,	
+    post_CCQE14_R,	post_CCQE15,	post_CCQE16,	post_CCQE17,	post_CCQE18).
+Compute fu_CCQ_mean=mean( fu_CCQE1,	fu_CCQE2,	fu_CCQE3,	fu_CCQE4_R,	fu_CCQE5,	
+    fu_CCQE6,	fu_CCQE7,	fu_CCQE8,	fu_CCQE9_R,	fu_CCQE10,	fu_CCQE11,	fu_CCQE12,	fu_CCQE13,	
+    fu_CCQE14_R,	fu_CCQE15,	fu_CCQE16,	fu_CCQE17,	fu_CCQE18).
+
+
+
+compute	ccq_count_pre	 =0	.						
+if	~missing(	preCCQE1	)	ccq_count_pre	=	preCCQE1	+	1	.
+if	~missing(	preCCQE2	)	ccq_count_pre	=	preCCQE2	+	1	.
+if	~missing(	preCCQE3	)	ccq_count_pre	=	preCCQE3	+	1	.
+if	~missing(	preCCQE4_R	)	ccq_count_pre	=	preCCQE4_R	+	1	.
+if	~missing(	preCCQE5	)	ccq_count_pre	=	preCCQE5	+	1	.
+if	~missing(	preCCQE6	)	ccq_count_pre	=	preCCQE6	+	1	.
+if	~missing(	preCCQE7	)	ccq_count_pre	=	preCCQE7	+	1	.
+if	~missing(	preCCQE8	)	ccq_count_pre	=	preCCQE8	+	1	.
+if	~missing(	preCCQE9_R	)	ccq_count_pre	=	preCCQE9_R	+	1	.
+if	~missing(	preCCQE10	)	ccq_count_pre	=	preCCQE10	+	1	.
+if	~missing(	preCCQE11	)	ccq_count_pre	=	preCCQE11	+	1	.
+if	~missing(	preCCQE12	)	ccq_count_pre	=	preCCQE12	+	1	.
+if	~missing(	preCCQE13	)	ccq_count_pre	=	preCCQE13	+	1	.
+if	~missing(	preCCQE14_R	)	ccq_count_pre	=	preCCQE14_R	+	1	.
+if	~missing(	preCCQE15	)	ccq_count_pre	=	preCCQE15	+	1	.
+if	~missing(	preCCQE16	)	ccq_count_pre	=	preCCQE16	+	1	.
+if	~missing(	preCCQE17	)	ccq_count_pre	=	preCCQE17	+	1	.
+if	~missing(	preCCQE18	)	ccq_count_pre	=	preCCQE18	+	1	.
+compute	ccq_count_post	 =0	.						
+if	~missing(	post_CCQE1	)	ccq_count_post	=	post_CCQE1	+	1	.
+if	~missing(	post_CCQE2	)	ccq_count_post	=	post_CCQE2	+	1	.
+if	~missing(	post_CCQE3	)	ccq_count_post	=	post_CCQE3	+	1	.
+if	~missing(	post_CCQE4_R	)	ccq_count_post	=	post_CCQE4_R	+	1	.
+if	~missing(	post_CCQE5	)	ccq_count_post	=	post_CCQE5	+	1	.
+if	~missing(	post_CCQE6	)	ccq_count_post	=	post_CCQE6	+	1	.
+if	~missing(	post_CCQE7	)	ccq_count_post	=	post_CCQE7	+	1	.
+if	~missing(	post_CCQE8	)	ccq_count_post	=	post_CCQE8	+	1	.
+if	~missing(	post_CCQE9_R	)	ccq_count_post	=	post_CCQE9_R	+	1	.
+if	~missing(	post_CCQE10	)	ccq_count_post	=	post_CCQE10	+	1	.
+if	~missing(	post_CCQE11	)	ccq_count_post	=	post_CCQE11	+	1	.
+if	~missing(	post_CCQE12	)	ccq_count_post	=	post_CCQE12	+	1	.
+if	~missing(	post_CCQE13	)	ccq_count_post	=	post_CCQE13	+	1	.
+if	~missing(	post_CCQE14_R	)	ccq_count_post	=	post_CCQE14_R	+	1	.
+if	~missing(	post_CCQE15	)	ccq_count_post	=	post_CCQE15	+	1	.
+if	~missing(	post_CCQE16	)	ccq_count_post	=	post_CCQE16	+	1	.
+if	~missing(	post_CCQE17	)	ccq_count_post	=	post_CCQE17	+	1	.
+if	~missing(	post_CCQE18	)	ccq_count_post	=	post_CCQE18	+	1	.
+compute	ccq_count_fu	 =0	.						
+if	~missing(	FU_CCQE1	)	ccq_count_fu	=	FU_CCQE1	+	1	.
+if	~missing(	FU_CCQE2	)	ccq_count_fu	=	FU_CCQE2	+	1	.
+if	~missing(	FU_CCQE3	)	ccq_count_fu	=	FU_CCQE3	+	1	.
+if	~missing(	FU_CCQE4_R	)	ccq_count_fu	=	FU_CCQE4_R	+	1	.
+if	~missing(	FU_CCQE5	)	ccq_count_fu	=	FU_CCQE5	+	1	.
+if	~missing(	FU_CCQE6	)	ccq_count_fu	=	FU_CCQE6	+	1	.
+if	~missing(	FU_CCQE7	)	ccq_count_fu	=	FU_CCQE7	+	1	.
+if	~missing(	FU_CCQE8	)	ccq_count_fu	=	FU_CCQE8	+	1	.
+if	~missing(	FU_CCQE9_R	)	ccq_count_fu	=	FU_CCQE9_R	+	1	.
+if	~missing(	FU_CCQE10	)	ccq_count_fu	=	FU_CCQE10	+	1	.
+if	~missing(	FU_CCQE11	)	ccq_count_fu	=	FU_CCQE11	+	1	.
+if	~missing(	FU_CCQE12	)	ccq_count_fu	=	FU_CCQE12	+	1	.
+if	~missing(	FU_CCQE13	)	ccq_count_fu	=	FU_CCQE13	+	1	.
+if	~missing(	FU_CCQE14_R	)	ccq_count_fu	=	FU_CCQE14_R	+	1	.
+if	~missing(	FU_CCQE15	)	ccq_count_fu	=	FU_CCQE15	+	1	.
+if	~missing(	FU_CCQE16	)	ccq_count_fu	=	FU_CCQE16	+	1	.
+if	~missing(	FU_CCQE17	)	ccq_count_fu	=	FU_CCQE17	+	1	.
+if	~missing(	FU_CCQE18	)	ccq_count_fu	=	FU_CCQE18	+	1	.
+
+
+
+if (missing(	preCCQE1	) & 	ccq_count_pre	>0	)	preCCQE1	=	pre_CCQ_mean	.
+if (missing(	preCCQE2	) & 	ccq_count_pre	>0	)	preCCQE2	=	pre_CCQ_mean	.
+if (missing(	preCCQE3	) & 	ccq_count_pre	>0	)	preCCQE3	=	pre_CCQ_mean	.
+if (missing(	preCCQE4_R	) & 	ccq_count_pre	>0	)	preCCQE4_R	=	pre_CCQ_mean	.
+if (missing(	preCCQE5	) & 	ccq_count_pre	>0	)	preCCQE5	=	pre_CCQ_mean	.
+if (missing(	preCCQE6	) & 	ccq_count_pre	>0	)	preCCQE6	=	pre_CCQ_mean	.
+if (missing(	preCCQE7	) & 	ccq_count_pre	>0	)	preCCQE7	=	pre_CCQ_mean	.
+if (missing(	preCCQE8	) & 	ccq_count_pre	>0	)	preCCQE8	=	pre_CCQ_mean	.
+if (missing(	preCCQE9_R	) & 	ccq_count_pre	>0	)	preCCQE9_R	=	pre_CCQ_mean	.
+if (missing(	preCCQE10	) & 	ccq_count_pre	>0	)	preCCQE10	=	pre_CCQ_mean	.
+if (missing(	preCCQE11	) & 	ccq_count_pre	>0	)	preCCQE11	=	pre_CCQ_mean	.
+if (missing(	preCCQE12	) & 	ccq_count_pre	>0	)	preCCQE12	=	pre_CCQ_mean	.
+if (missing(	preCCQE13	) & 	ccq_count_pre	>0	)	preCCQE13	=	pre_CCQ_mean	.
+if (missing(	preCCQE14_R	) & 	ccq_count_pre	>0	)	preCCQE14_R	=	pre_CCQ_mean	.
+if (missing(	preCCQE15	) & 	ccq_count_pre	>0	)	preCCQE15	=	pre_CCQ_mean	.
+if (missing(	preCCQE16	) & 	ccq_count_pre	>0	)	preCCQE16	=	pre_CCQ_mean	.
+if (missing(	preCCQE17	) & 	ccq_count_pre	>0	)	preCCQE17	=	pre_CCQ_mean	.
+if (missing(	preCCQE18	) & 	ccq_count_pre	>0	)	preCCQE18	=	pre_CCQ_mean	.
+
+if (missing(	post_CCQE1	) & 	ccq_count_post	>0	)	post_CCQE1	=	post_CCQ_mean	.
+if (missing(	post_CCQE2	) & 	ccq_count_post	>0	)	post_CCQE2	=	post_CCQ_mean	.
+if (missing(	post_CCQE3	) & 	ccq_count_post	>0	)	post_CCQE3	=	post_CCQ_mean	.
+if (missing(	post_CCQE4_R	) & 	ccq_count_post	>0	)	post_CCQE4_R	=	post_CCQ_mean	.
+if (missing(	post_CCQE5	) & 	ccq_count_post	>0	)	post_CCQE5	=	post_CCQ_mean	.
+if (missing(	post_CCQE6	) & 	ccq_count_post	>0	)	post_CCQE6	=	post_CCQ_mean	.
+if (missing(	post_CCQE7	) & 	ccq_count_post	>0	)	post_CCQE7	=	post_CCQ_mean	.
+if (missing(	post_CCQE8	) & 	ccq_count_post	>0	)	post_CCQE8	=	post_CCQ_mean	.
+if (missing(	post_CCQE9_R	) & 	ccq_count_post	>0	)	post_CCQE9_R	=	post_CCQ_mean	.
+if (missing(	post_CCQE10	) & 	ccq_count_post	>0	)	post_CCQE10	=	post_CCQ_mean	.
+if (missing(	post_CCQE11	) & 	ccq_count_post	>0	)	post_CCQE11	=	post_CCQ_mean	.
+if (missing(	post_CCQE12	) & 	ccq_count_post	>0	)	post_CCQE12	=	post_CCQ_mean	.
+if (missing(	post_CCQE13	) & 	ccq_count_post	>0	)	post_CCQE13	=	post_CCQ_mean	.
+if (missing(	post_CCQE14_R	) & 	ccq_count_post	>0	)	post_CCQE14_R	=	post_CCQ_mean	.
+if (missing(	post_CCQE15	) & 	ccq_count_post	>0	)	post_CCQE15	=	post_CCQ_mean	.
+if (missing(	post_CCQE16	) & 	ccq_count_post	>0	)	post_CCQE16	=	post_CCQ_mean	.
+if (missing(	post_CCQE17	) & 	ccq_count_post	>0	)	post_CCQE17	=	post_CCQ_mean	.
+if (missing(	post_CCQE18	) & 	ccq_count_post	>0	)	post_CCQE18	=	post_CCQ_mean	.
+
+if (missing(	FU_CCQE1	) & 	ccq_count_fu	>0	)	FU_CCQE1	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE2	) & 	ccq_count_fu	>0	)	FU_CCQE2	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE3	) & 	ccq_count_fu	>0	)	FU_CCQE3	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE4_R	) & 	ccq_count_fu	>0	)	FU_CCQE4_R	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE5	) & 	ccq_count_fu	>0	)	FU_CCQE5	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE6	) & 	ccq_count_fu	>0	)	FU_CCQE6	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE7	) & 	ccq_count_fu	>0	)	FU_CCQE7	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE8	) & 	ccq_count_fu	>0	)	FU_CCQE8	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE9_R	) & 	ccq_count_fu	>0	)	FU_CCQE9_R	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE10	) & 	ccq_count_fu	>0	)	FU_CCQE10	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE11	) & 	ccq_count_fu	>0	)	FU_CCQE11	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE12	) & 	ccq_count_fu	>0	)	FU_CCQE12	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE13	) & 	ccq_count_fu	>0	)	FU_CCQE13	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE14_R	) & 	ccq_count_fu	>0	)	FU_CCQE14_R	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE15	) & 	ccq_count_fu	>0	)	FU_CCQE15	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE16	) & 	ccq_count_fu	>0	)	FU_CCQE16	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE17	) & 	ccq_count_fu	>0	)	FU_CCQE17	=	fu_CCQ_mean	.
+if (missing(	FU_CCQE18	) & 	ccq_count_fu	>0	)	FU_CCQE18	=	fu_CCQ_mean	.
+
+Compute pre_CCQE_mean=mean( preCCQE1,	preCCQE2,	preCCQE3,	preCCQE4_R,	preCCQE5,	
+    preCCQE6,	preCCQE7,	preCCQE8,	preCCQE9_R,	preCCQE10,	preCCQE11,	preCCQE12,	preCCQE13,	
+    preCCQE14_R,	preCCQE15,	preCCQE16,	preCCQE17,	preCCQE18).
+Compute post_CCQE_mean=mean( post_CCQE1,	post_CCQE2,	post_CCQE3,	post_CCQE4_R,	post_CCQE5,	
+    post_CCQE6,	post_CCQE7,	post_CCQE8,	post_CCQE9_R,	post_CCQE10,	post_CCQE11,	post_CCQE12,	post_CCQE13,	
+    post_CCQE14_R,	post_CCQE15,	post_CCQE16,	post_CCQE17,	post_CCQE18).
+Compute fu_CCQE_mean=mean( fu_CCQE1,	fu_CCQE2,	fu_CCQE3,	fu_CCQE4_R,	fu_CCQE5,	
+    fu_CCQE6,	fu_CCQE7,	fu_CCQE8,	fu_CCQE9_R,	fu_CCQE10,	fu_CCQE11,	fu_CCQE12,	fu_CCQE13,	
+    fu_CCQE14_R,	fu_CCQE15,	fu_CCQE16,	fu_CCQE17,	fu_CCQE18).
+execute.
+
+
+SAVE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep.sav'
   /COMPRESSED.
 
 
 
 
-SAVE TRANSLATE OUTFILE='C:\Users\Nancy\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep.csv'
+SAVE TRANSLATE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep.csv'
   /TYPE=CSV
   /ENCODING='UTF8'
   /MAP
@@ -475,13 +872,13 @@ SAVE TRANSLATE OUTFILE='C:\Users\Nancy\OneDrive - UNSW\Documents\Faculty\Jane Ko
 *** getting totaltimefor DPICS .
 
 GET
-  FILE='C:\Users\Nancy\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\PCITT RCT main dataset 24.1.22.sav'.
+  FILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\PCITT RCT main dataset 24.1.22.sav'.
 DATASET NAME DataSet1 WINDOW=FRONT.
 
 
 
 
-SAVE OUTFILE='C:\Users\Nancy\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep_DPICStime.sav'
+SAVE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep_DPICStime.sav'
   /KEEP id 
   PARENT_total_verbalisations_TIME_1
 PARENT_total_LP_TIME_1
@@ -516,11 +913,11 @@ TOTAL_NC_perc_TIME_3
       /COMPRESSED.
 
 GET
-  FILE='C:\Users\Nancy\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep_DPICStime.sav'.
+  FILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep_DPICStime.sav'.
 DATASET NAME DataSet1 WINDOW=FRONT.
 
 
-SAVE TRANSLATE OUTFILE='C:\Users\Nancy\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep_DPICStime.csv'
+SAVE TRANSLATE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep_DPICStime.csv'
   /TYPE=CSV
   /ENCODING='UTF8'
   /MAP
