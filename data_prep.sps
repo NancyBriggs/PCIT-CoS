@@ -853,6 +853,58 @@ Compute fu_CCQE_mean=mean( fu_CCQE1,	fu_CCQE2,	fu_CCQE3,	fu_CCQE4_R,	fu_CCQE5,
 execute.
 
 
+**********************************************************************************************************************************************************.
+*BITSEA.
+**********************************************************************************************************************************************************.
+
+alter type post_bitsea_pf41(f8.0) .
+missing values preBITSEA_PF1 to preBITSEA_PF42(888,999,9999).
+missing values fu_BITSEA_PF1 to fu_BITSEA_PF42(888,999,9999).
+missing values post_BITSEA_PF1 to post_BITSEA_PF8(888,999,9999).
+missing values post_BITSEA_PF9 to post_BITSEA_PF36(888,999,9999).
+missing values post_BITSEA_PF37 (888,999,9999).
+missing values post_BITSEA_PF38 to post_BITSEA_PF41(888,999,9999).
+missing values post_BITSEA_PF42 (888,999,9999).
+
+
+*Bitsea problem.
+COMPUTE pre_bitseaprob_mean= mean(prebitsea_pf2,	prebitsea_pf3,	prebitsea_pf4,	prebitsea_pf6,	
+    prebitsea_pf7,	prebitsea_pf8,	prebitsea_pf9,	prebitsea_pf11,	prebitsea_pf12,	
+    prebitsea_pf14,	prebitsea_pf16,	prebitsea_pf17,	prebitsea_pf18,	prebitsea_pf21,	
+    prebitsea_pf23,	prebitsea_pf24,	prebitsea_pf26,	prebitsea_pf27,	prebitsea_pf28,	
+    prebitsea_pf30,	prebitsea_pf32,	prebitsea_pf33,	prebitsea_pf34,	prebitsea_pf35,	
+    prebitsea_pf36,	prebitsea_pf37,	prebitsea_pf38,	prebitsea_pf39,	prebitsea_pf40,	
+    prebitsea_pf41,	prebitsea_pf42) .
+COMPUTE post_bitseaprob_mean= mean(post_bitsea_pf2,	post_bitsea_pf3,	post_bitsea_pf4,	post_bitsea_pf6,	
+    post_bitsea_pf7,	post_bitsea_pf8,	post_bitsea_pf9,	post_bitsea_pf11,	post_bitsea_pf12,	
+    post_bitsea_pf14,	post_bitsea_pf16,	post_bitsea_pf17,	post_bitsea_pf18,	post_bitsea_pf21,	
+    post_bitsea_pf23,	post_bitsea_pf24,	post_bitsea_pf26,	post_bitsea_pf27,	post_bitsea_pf28,	
+    post_bitsea_pf30,	post_bitsea_pf32,	post_bitsea_pf33,	post_bitsea_pf34,	post_bitsea_pf35,	
+    post_bitsea_pf36,	post_bitsea_pf37,	post_bitsea_pf38,	post_bitsea_pf39,	post_bitsea_pf40, 
+    post_bitsea_pf41 ,	post_bitsea_pf42 ) .
+COMPUTE fu_bitseaprob_mean= mean(fu_bitsea_pf2,	fu_bitsea_pf3,	fu_bitsea_pf4,	fu_bitsea_pf6,	
+    fu_bitsea_pf7,	fu_bitsea_pf8,	fu_bitsea_pf9,	fu_bitsea_pf11,	fu_bitsea_pf12,	
+    fu_bitsea_pf14,	fu_bitsea_pf16,	fu_bitsea_pf17,	fu_bitsea_pf18,	fu_bitsea_pf21,	
+    fu_bitsea_pf23,	fu_bitsea_pf24,	fu_bitsea_pf26,	fu_bitsea_pf27,	fu_bitsea_pf28,	
+    fu_bitsea_pf30,	fu_bitsea_pf32,	fu_bitsea_pf33,	fu_bitsea_pf34,	fu_bitsea_pf35,	
+    fu_bitsea_pf36,	fu_bitsea_pf37,	fu_bitsea_pf38,	fu_bitsea_pf39,	fu_bitsea_pf40,	
+    fu_bitsea_pf41,	fu_bitsea_pf42) .
+Execute.
+
+* BITSEA Competence .
+COMPUTE pre_bitseacomp_mean=mean(prebitsea_pf1,	prebitsea_pf5,	prebitsea_pf10,	prebitsea_pf13,	
+    prebitsea_pf15,	prebitsea_pf19,	prebitsea_pf20,	prebitsea_pf22,	prebitsea_pf25,	
+    prebitsea_pf29,	prebitsea_pf31).
+COMPUTE post_bitseacomp_mean=mean(post_bitsea_pf1,	post_bitsea_pf5,	post_bitsea_pf10,	post_bitsea_pf13,	
+    post_bitsea_pf15,	post_bitsea_pf19,	post_bitsea_pf20,	post_bitsea_pf22,	post_bitsea_pf25,	
+    post_bitsea_pf29,	post_bitsea_pf31).
+COMPUTE fu_bitseacomp_mean=mean(fu_bitsea_pf1,	fu_bitsea_pf5,	fu_bitsea_pf10,	fu_bitsea_pf13,	
+    fu_bitsea_pf15,	fu_bitsea_pf19,	fu_bitsea_pf20,	fu_bitsea_pf22,	fu_bitsea_pf25,	
+    fu_bitsea_pf29,	fu_bitsea_pf31).
+execute.
+
+
+
 SAVE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep.sav'
   /COMPRESSED.
 
