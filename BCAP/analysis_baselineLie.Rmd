@@ -14,9 +14,12 @@ output:
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(warn=1)
+options(warnPartialMatchAttr = FALSE, 
+  warnPartialMatchDollar = FALSE,
+  warnPartialMatchArgs = FALSE)
 
 library(lme4)
-
 library(tidyverse)
 library(tidyselect)
 library(SASmarkdown)
@@ -26,11 +29,7 @@ library(multcomp)
 library(kableExtra)
 library(ggplot2)
 library(lmerTest) 
-
-
-options(warnPartialMatchAttr = FALSE, 
-  warnPartialMatchDollar = FALSE,
-  warnPartialMatchArgs = FALSE)
+library(effectsize)
 
 ```
 
@@ -260,9 +259,9 @@ result3<-lmer(outcome ~ prebcap_lie + group*time + (1 | id), dat)
 
 
 
-This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is no evidence that the pattern of change over time is different between the groups (p=0.335).
 
 ```{r, echo=FALSE}
+
 anovatab<-anova(result0,result0_5,result1,result2,result3)
 
 anovatab <-anovatab %>%
@@ -278,11 +277,11 @@ anovatab %>%
 ```
 
 
+This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is no evidence that the pattern of change over time is different between the groups (p=`r anovatab[5,9]`) .
 
 ```{r}
 summary(result3)
 ```
-
 
 
 #### Estimated Means & Change
@@ -291,53 +290,7 @@ Estimated means for each Treatment and Time are presented. In addition, within-g
 change between time points is presented with 95% CIs.
 
 
-```{r, echo=FALSE, warning=FALSE}
-
-result.change  <- emmeans(result3, "time", by = "group")
-result.change.d <-pairs(result.change)
-summary(result.change)
-confint(result.change.d)
-
-```
-
-
-
-```{r, echo=FALSE, warning=FALSE}
-
-result.emm <- emmeans(result3, ~group * time)
-result.means <- as.data.frame(result.emm)
-result.means <-  
-  result.means %>%
-  mutate(time1= ifelse(group==1 & time==1,  .9,   ## jitter on x axis
-                ifelse(group==1 & time==2, 1.9,       
-                ifelse(group==1 & time==3, 2.9,       
-                ifelse(group==2 & time==1, 1.0,
-                ifelse(group==2 & time==2, 2.0,       
-                ifelse(group==2 & time==3, 3.0,
-                ifelse(group==3 & time==1, 1.1,
-                ifelse(group==3 & time==2, 2.1,       
-                3.1)))))))))
-
-
-lp1 <- ggplot(data=result.means, aes(x=time1, y=emmean, group=group, shape=group, colour=group)) + geom_line(aes(linetype=group)) + geom_point(size=2) +
-    geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL, color=group)) +
-  #must define these the same so that only 1 legend is shown
-  scale_colour_discrete(name  ="Group",
-                            breaks=c(1,2,3),
-                            labels=c("PCIT-T", "CoS-P","Waitlist")) +
-  scale_shape_discrete(name  ="Group",
-                            breaks=c(1,2,3),
-                            labels=c("PCIT-T", "CoS-P","Waitlist")) +   
-  scale_linetype_manual(name="Group",
-                      values =c("solid","dashed","dotted"),
-                      breaks=c(1,2,3),
-                      labels=c("PCIT-T", "CoS-P","Waitlist")) +
-scale_x_continuous("Measurement",breaks = c(1, 2, 3)) +
-  scale_y_continuous("Estimated Means (95% CI)") +
-theme_classic() 
-
-lp1
-  
+```{r child='bootstrapped_es_CI_baselineLie.Rmd'}
 ```
 
 

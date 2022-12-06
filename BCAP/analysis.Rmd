@@ -15,6 +15,12 @@ output:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+
+options(warn=1)
+options(warnPartialMatchAttr = FALSE, 
+  warnPartialMatchDollar = FALSE,
+  warnPartialMatchArgs = FALSE)
+
 library(lme4)
 
 library(tidyverse)
@@ -29,11 +35,6 @@ library(lmerTest)
 library(effectsize)
 library(boot)
 
-
-
-options(warnPartialMatchAttr = FALSE, 
-  warnPartialMatchDollar = FALSE,
-  warnPartialMatchArgs = FALSE)
 
 ```
 
