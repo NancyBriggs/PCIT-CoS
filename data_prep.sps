@@ -481,45 +481,45 @@ Execute.
 * Those are jus missing values. 
 
 compute	ccq_count_pre	=0	.							
-if	~missing(	preCCQA1	)	ccq_count_pre	=	preCCQA1	+	1	.
-if	~missing(	preCCQA2	)	ccq_count_pre	=	preCCQA2	+	1	.
-if	~missing(	preCCQA3	)	ccq_count_pre	=	preCCQA3	+	1	.
-if	~missing(	preCCQA4	)	ccq_count_pre	=	preCCQA4	+	1	.
-if	~missing(	preCCQA5	)	ccq_count_pre	=	preCCQA5	+	1	.
-if	~missing(	preCCQA6	)	ccq_count_pre	=	preCCQA6	+	1	.
-if	~missing(	preCCQA7	)	ccq_count_pre	=	preCCQA7	+	1	.
-if	~missing(	preCCQA8	)	ccq_count_pre	=	preCCQA8	+	1	.
-if	~missing(	preCCQA9	)	ccq_count_pre	=	preCCQA9	+	1	.
-if	~missing(	preCCQA10	)	ccq_count_pre	=	preCCQA10	+	1	.
-if	~missing(	preCCQA11	)	ccq_count_pre	=	preCCQA11	+	1	.
-if	~missing(	preCCQA12_R)	ccq_count_pre	=	preCCQA12_R+	1	.
+if	~missing(	preCCQA1	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA2	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA3	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA4	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA5	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA6	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA7	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA8	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA9	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA10	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA11	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA12_R)	ccq_count_pre	=	ccq_count_pre             +	1	.
 
 compute	ccq_count_post	=0	.						
-if	~missing(	post_CCQA1	)	ccq_count_post	=	post_CCQA1	+	1	.
-if	~missing(	post_CCQA2	)	ccq_count_post	=	post_CCQA2	+	1	.
-if	~missing(	post_CCQA3	)	ccq_count_post	=	post_CCQA3	+	1	.
-if	~missing(	post_CCQA4	)	ccq_count_post	=	post_CCQA4	+	1	.
-if	~missing(	post_CCQA5	)	ccq_count_post	=	post_CCQA5	+	1	.
-if	~missing(	post_CCQA6	)	ccq_count_post	=	post_CCQA6	+	1	.
-if	~missing(	post_CCQA7	)	ccq_count_post	=	post_CCQA7	+	1	.
-if	~missing(	post_CCQA8	)	ccq_count_post	=	post_CCQA8	+	1	.
-if	~missing(	post_CCQA9	)	ccq_count_post	=	post_CCQA9	+	1	.
-if	~missing(	post_CCQA10	)	ccq_count_post	=	post_CCQA10	+	1	.
-if	~missing(	post_CCQA11	)	ccq_count_post	=	post_CCQA11	+	1	.
-if	~missing(	post_CCQA12_R	)	ccq_count_post	=	post_CCQA12_R	+	1	.
+if	~missing(	post_CCQA1	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA2	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA3	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA4	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA5	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA6	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA7	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA8	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA9	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA10	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA11	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA12_R	)	ccq_count_post	=	ccq_count_post	+	1	.
 compute	ccq_count_fu	=0	.						
-if	~missing(	FU_CCQA1	)	ccq_count_fu	=	FU_CCQA1	+	1	.
-if	~missing(	FU_CCQA2	)	ccq_count_fu	=	FU_CCQA2	+	1	.
-if	~missing(	FU_CCQA3	)	ccq_count_fu	=	FU_CCQA3	+	1	.
-if	~missing(	FU_CCQA4	)	ccq_count_fu	=	FU_CCQA4	+	1	.
-if	~missing(	FU_CCQA5	)	ccq_count_fu	=	FU_CCQA5	+	1	.
-if	~missing(	FU_CCQA6	)	ccq_count_fu	=	FU_CCQA6	+	1	.
-if	~missing(	FU_CCQA7	)	ccq_count_fu	=	FU_CCQA7	+	1	.
-if	~missing(	FU_CCQA8	)	ccq_count_fu	=	FU_CCQA8	+	1	.
-if	~missing(	FU_CCQA9	)	ccq_count_fu	=	FU_CCQA9	+	1	.
-if	~missing(	FU_CCQA10	)	ccq_count_fu	=	FU_CCQA10	+	1	.
-if	~missing(	FU_CCQA11	)	ccq_count_fu	=	FU_CCQA11	+	1	.
-if	~missing(	FU_CCQA12_R	)	ccq_count_fu	=	FU_CCQA12_R	+	1	.
+if	~missing(	FU_CCQA1	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA2	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA3	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA4	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA5	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA6	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA7	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA8	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA9	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA10	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA11	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA12_R	)	ccq_count_fu	=	ccq_count_fu	+	1	.
 
 
 
@@ -586,7 +586,10 @@ Execute.
 
 
 DATASET ACTIVATE DataSet1.
-COMPUTE pre_CHQ_mean =mean(preCCQD1,preCCQD2 ,preCCQD3,
+COMPUTE pre_CHQ_sum=preCCQD1+preCCQD2 +preCCQD3+ preCCQD4 + preCCQD5 + preCCQD6 +preCCQD7.
+COMPUTE pre_CHQ_mean=mean(preCCQD1,preCCQD2 ,preCCQD3,
+preCCQD4 ,preCCQD5 ,preCCQD6 ,preCCQD7).
+COMPUTE pre_CHQ_sum=sum(preCCQD1,preCCQD2 ,preCCQD3,
 preCCQD4 ,preCCQD5 ,preCCQD6 ,preCCQD7).
 COMPUTE post_CHQ_mean =mean(post_CCQD1,post_CCQD2 ,post_CCQD3,
 post_CCQD4 ,post_CCQD5 ,post_CCQD6 ,post_CCQD7).
@@ -595,29 +598,29 @@ fu_CCQD4 ,fu_CCQD5 ,fu_CCQD6 ,fu_CCQD7).
 Execute.
 
 compute	ccq_count_pre	=0	.						
-if	~missing(	preCCQD1	)	ccq_count_pre	=	preCCQD1	+	1	.
-if	~missing(	preCCQD2	)	ccq_count_pre	=	preCCQD2	+	1	.
-if	~missing(	preCCQD3	)	ccq_count_pre	=	preCCQD3	+	1	.
-if	~missing(	preCCQD4	)	ccq_count_pre	=	preCCQD4	+	1	.
-if	~missing(	preCCQD5	)	ccq_count_pre	=	preCCQD5	+	1	.
-if	~missing(	preCCQD6	)	ccq_count_pre	=	preCCQD6	+	1	.
-if	~missing(	preCCQD7	)	ccq_count_pre	=	preCCQD7	+	1	.
+if	~missing(	preCCQD1	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQD2	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQD3	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQD4	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQD5	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQD6	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQD7	)	ccq_count_pre	=	ccq_count_pre	+	1	.
 compute	ccq_count_post	=0	.						
-if	~missing(	post_CCQD1	)	ccq_count_post	=	post_CCQD1	+	1	.
-if	~missing(	post_CCQD2	)	ccq_count_post	=	post_CCQD2	+	1	.
-if	~missing(	post_CCQD3	)	ccq_count_post	=	post_CCQD3	+	1	.
-if	~missing(	post_CCQD4	)	ccq_count_post	=	post_CCQD4	+	1	.
-if	~missing(	post_CCQD5	)	ccq_count_post	=	post_CCQD5	+	1	.
-if	~missing(	post_CCQD6	)	ccq_count_post	=	post_CCQD6	+	1	.
-if	~missing(	post_CCQD7	)	ccq_count_post	=	post_CCQD7	+	1	.
+if	~missing(	post_CCQD1	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQD2	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQD3	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQD4	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQD5	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQD6	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQD7	)	ccq_count_post	=	ccq_count_post	+	1	.
 compute	ccq_count_fu	=0	.						
-if	~missing(	FU_CCQD1	)	ccq_count_fu	=	FU_CCQD1	+	1	.
-if	~missing(	FU_CCQD2	)	ccq_count_fu	=	FU_CCQD2	+	1	.
-if	~missing(	FU_CCQD3	)	ccq_count_fu	=	FU_CCQD3	+	1	.
-if	~missing(	FU_CCQD4	)	ccq_count_fu	=	FU_CCQD4	+	1	.
-if	~missing(	FU_CCQD5	)	ccq_count_fu	=	FU_CCQD5	+	1	.
-if	~missing(	FU_CCQD6	)	ccq_count_fu	=	FU_CCQD6	+	1	.
-if	~missing(	FU_CCQD7	)	ccq_count_fu	=	FU_CCQD7	+	1	.
+if	~missing(	FU_CCQD1	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQD2	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQD3	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQD4	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQD5	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQD6	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQD7	)	ccq_count_fu	=	ccq_count_fu	+	1	.
 
 
 execute.
@@ -725,62 +728,62 @@ Compute fu_CCQ_mean=mean( fu_CCQE1,	fu_CCQE2,	fu_CCQE3,	fu_CCQE4_R,	fu_CCQE5,
 
 
 compute	ccq_count_pre	 =0	.						
-if	~missing(	preCCQE1	)	ccq_count_pre	=	preCCQE1	+	1	.
-if	~missing(	preCCQE2	)	ccq_count_pre	=	preCCQE2	+	1	.
-if	~missing(	preCCQE3	)	ccq_count_pre	=	preCCQE3	+	1	.
-if	~missing(	preCCQE4_R	)	ccq_count_pre	=	preCCQE4_R	+	1	.
-if	~missing(	preCCQE5	)	ccq_count_pre	=	preCCQE5	+	1	.
-if	~missing(	preCCQE6	)	ccq_count_pre	=	preCCQE6	+	1	.
-if	~missing(	preCCQE7	)	ccq_count_pre	=	preCCQE7	+	1	.
-if	~missing(	preCCQE8	)	ccq_count_pre	=	preCCQE8	+	1	.
-if	~missing(	preCCQE9_R	)	ccq_count_pre	=	preCCQE9_R	+	1	.
-if	~missing(	preCCQE10	)	ccq_count_pre	=	preCCQE10	+	1	.
-if	~missing(	preCCQE11	)	ccq_count_pre	=	preCCQE11	+	1	.
-if	~missing(	preCCQE12	)	ccq_count_pre	=	preCCQE12	+	1	.
-if	~missing(	preCCQE13	)	ccq_count_pre	=	preCCQE13	+	1	.
-if	~missing(	preCCQE14_R	)	ccq_count_pre	=	preCCQE14_R	+	1	.
-if	~missing(	preCCQE15	)	ccq_count_pre	=	preCCQE15	+	1	.
-if	~missing(	preCCQE16	)	ccq_count_pre	=	preCCQE16	+	1	.
-if	~missing(	preCCQE17	)	ccq_count_pre	=	preCCQE17	+	1	.
-if	~missing(	preCCQE18	)	ccq_count_pre	=	preCCQE18	+	1	.
+if	~missing(	preCCQE1	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE2	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE3	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE4_R	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE5	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE6	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE7	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE8	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE9_R	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE10	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE11	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE12	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE13	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE14_R	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE15	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE16	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE17	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQE18	)	ccq_count_pre	=	ccq_count_pre	+	1	.
 compute	ccq_count_post	 =0	.						
-if	~missing(	post_CCQE1	)	ccq_count_post	=	post_CCQE1	+	1	.
-if	~missing(	post_CCQE2	)	ccq_count_post	=	post_CCQE2	+	1	.
-if	~missing(	post_CCQE3	)	ccq_count_post	=	post_CCQE3	+	1	.
-if	~missing(	post_CCQE4_R	)	ccq_count_post	=	post_CCQE4_R	+	1	.
-if	~missing(	post_CCQE5	)	ccq_count_post	=	post_CCQE5	+	1	.
-if	~missing(	post_CCQE6	)	ccq_count_post	=	post_CCQE6	+	1	.
-if	~missing(	post_CCQE7	)	ccq_count_post	=	post_CCQE7	+	1	.
-if	~missing(	post_CCQE8	)	ccq_count_post	=	post_CCQE8	+	1	.
-if	~missing(	post_CCQE9_R	)	ccq_count_post	=	post_CCQE9_R	+	1	.
-if	~missing(	post_CCQE10	)	ccq_count_post	=	post_CCQE10	+	1	.
-if	~missing(	post_CCQE11	)	ccq_count_post	=	post_CCQE11	+	1	.
-if	~missing(	post_CCQE12	)	ccq_count_post	=	post_CCQE12	+	1	.
-if	~missing(	post_CCQE13	)	ccq_count_post	=	post_CCQE13	+	1	.
-if	~missing(	post_CCQE14_R	)	ccq_count_post	=	post_CCQE14_R	+	1	.
-if	~missing(	post_CCQE15	)	ccq_count_post	=	post_CCQE15	+	1	.
-if	~missing(	post_CCQE16	)	ccq_count_post	=	post_CCQE16	+	1	.
-if	~missing(	post_CCQE17	)	ccq_count_post	=	post_CCQE17	+	1	.
-if	~missing(	post_CCQE18	)	ccq_count_post	=	post_CCQE18	+	1	.
+if	~missing(	post_CCQE1	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE2	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE3	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE4_R	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE5	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE6	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE7	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE8	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE9_R	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE10	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE11	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE12	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE13	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE14_R	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE15	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE16	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE17	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQE18	)	ccq_count_post	=	ccq_count_post	+	1	.
 compute	ccq_count_fu	 =0	.						
-if	~missing(	FU_CCQE1	)	ccq_count_fu	=	FU_CCQE1	+	1	.
-if	~missing(	FU_CCQE2	)	ccq_count_fu	=	FU_CCQE2	+	1	.
-if	~missing(	FU_CCQE3	)	ccq_count_fu	=	FU_CCQE3	+	1	.
-if	~missing(	FU_CCQE4_R	)	ccq_count_fu	=	FU_CCQE4_R	+	1	.
-if	~missing(	FU_CCQE5	)	ccq_count_fu	=	FU_CCQE5	+	1	.
-if	~missing(	FU_CCQE6	)	ccq_count_fu	=	FU_CCQE6	+	1	.
-if	~missing(	FU_CCQE7	)	ccq_count_fu	=	FU_CCQE7	+	1	.
-if	~missing(	FU_CCQE8	)	ccq_count_fu	=	FU_CCQE8	+	1	.
-if	~missing(	FU_CCQE9_R	)	ccq_count_fu	=	FU_CCQE9_R	+	1	.
-if	~missing(	FU_CCQE10	)	ccq_count_fu	=	FU_CCQE10	+	1	.
-if	~missing(	FU_CCQE11	)	ccq_count_fu	=	FU_CCQE11	+	1	.
-if	~missing(	FU_CCQE12	)	ccq_count_fu	=	FU_CCQE12	+	1	.
-if	~missing(	FU_CCQE13	)	ccq_count_fu	=	FU_CCQE13	+	1	.
-if	~missing(	FU_CCQE14_R	)	ccq_count_fu	=	FU_CCQE14_R	+	1	.
-if	~missing(	FU_CCQE15	)	ccq_count_fu	=	FU_CCQE15	+	1	.
-if	~missing(	FU_CCQE16	)	ccq_count_fu	=	FU_CCQE16	+	1	.
-if	~missing(	FU_CCQE17	)	ccq_count_fu	=	FU_CCQE17	+	1	.
-if	~missing(	FU_CCQE18	)	ccq_count_fu	=	FU_CCQE18	+	1	.
+if	~missing(	FU_CCQE1	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE2	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE3	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE4_R	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE5	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE6	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE7	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE8	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE9_R	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE10	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE11	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE12	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE13	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE14_R	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE15	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE16	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE17	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQE18	)	ccq_count_fu	=	ccq_count_fu	+	1	.
 
 
 
@@ -858,13 +861,38 @@ execute.
 **********************************************************************************************************************************************************.
 
 alter type post_bitsea_pf41(f8.0) .
-missing values preBITSEA_PF1 to preBITSEA_PF42(3,888,999,9999).
-missing values fu_BITSEA_PF1 to fu_BITSEA_PF42(3,888,999,9999).
-missing values post_BITSEA_PF1 to post_BITSEA_PF8(3,888,999,9999).
-missing values post_BITSEA_PF9 to post_BITSEA_PF36(3,888,999,9999).
-missing values post_BITSEA_PF37 (3,888,999,9999).
-missing values post_BITSEA_PF38 to post_BITSEA_PF41(3,888,999,9999).
-missing values post_BITSEA_PF42 (3,888,999,9999).
+missing values preBITSEA_PF1 to preBITSEA_PF42(888,999,9999).
+missing values fu_BITSEA_PF1 to fu_BITSEA_PF42(888,999,9999).
+missing values post_BITSEA_PF1 to post_BITSEA_PF8(888,999,9999).
+missing values post_BITSEA_PF9 to post_BITSEA_PF36(888,999,9999).
+missing values post_BITSEA_PF37 (888,999,9999).
+missing values post_BITSEA_PF38 to post_BITSEA_PF41(888,999,9999).
+missing values post_BITSEA_PF42 (888,999,9999).
+RECODE preBITSEA_PF1 preBITSEA_PF2 preBITSEA_PF3 preBITSEA_PF4 preBITSEA_PF5 preBITSEA_PF6 
+    preBITSEA_PF7 preBITSEA_PF8 preBITSEA_PF9 preBITSEA_PF10 preBITSEA_PF11 preBITSEA_PF12 
+    preBITSEA_PF13 preBITSEA_PF14 preBITSEA_PF15 preBITSEA_PF16 preBITSEA_PF17 preBITSEA_PF18 
+    preBITSEA_PF19 preBITSEA_PF20 preBITSEA_PF21 preBITSEA_PF22 preBITSEA_PF23 preBITSEA_PF24 
+    preBITSEA_PF25 preBITSEA_PF26 preBITSEA_PF27 preBITSEA_PF28 preBITSEA_PF29 preBITSEA_PF30 
+    preBITSEA_PF31 preBITSEA_PF32 preBITSEA_PF33 preBITSEA_PF34 preBITSEA_PF35 preBITSEA_PF36 
+    preBITSEA_PF37 preBITSEA_PF38 preBITSEA_PF39 preBITSEA_PF40 preBITSEA_PF41 preBITSEA_PF42 
+    preBITSEA_PFA preBITSEA_PFB post_BITSEA_PF1 post_BITSEA_PF2 post_BITSEA_PF3 post_BITSEA_PF4 
+    post_BITSEA_PF5 post_BITSEA_PF6 post_BITSEA_PF7 post_BITSEA_PF8 post_BITSEA_PF9 post_BITSEA_PF10 
+    post_BITSEA_PF11 post_BITSEA_PF12 post_BITSEA_PF13 post_BITSEA_PF14 post_BITSEA_PF15 
+    post_BITSEA_PF16 post_BITSEA_PF17 post_BITSEA_PF18 post_BITSEA_PF19 post_BITSEA_PF20 
+    post_BITSEA_PF21 post_BITSEA_PF22 post_BITSEA_PF23 post_BITSEA_PF24 post_BITSEA_PF25 
+    post_BITSEA_PF26 post_BITSEA_PF27 post_BITSEA_PF28 post_BITSEA_PF29 post_BITSEA_PF30 
+    post_BITSEA_PF31 post_BITSEA_PF32 post_BITSEA_PF33 post_BITSEA_PF34 post_BITSEA_PF35 
+    post_BITSEA_PF36 post_BITSEA_PF37 post_BITSEA_PF38 post_BITSEA_PF39 post_BITSEA_PF40 
+    post_BITSEA_PF41 post_BITSEA_PF42 post_BITSEA_PFA post_BITSEA_PFB FU_BITSEA_PF1 FU_BITSEA_PF2 
+    FU_BITSEA_PF3 FU_BITSEA_PF4 FU_BITSEA_PF5 FU_BITSEA_PF6 FU_BITSEA_PF7 FU_BITSEA_PF8 FU_BITSEA_PF9 
+    FU_BITSEA_PF10 FU_BITSEA_PF11 FU_BITSEA_PF12 FU_BITSEA_PF13 FU_BITSEA_PF14 FU_BITSEA_PF15 
+    FU_BITSEA_PF16 FU_BITSEA_PF17 FU_BITSEA_PF18 FU_BITSEA_PF19 FU_BITSEA_PF20 FU_BITSEA_PF21 
+    FU_BITSEA_PF22 FU_BITSEA_PF23 FU_BITSEA_PF24 FU_BITSEA_PF25 FU_BITSEA_PF26 FU_BITSEA_PF27 
+    FU_BITSEA_PF28 FU_BITSEA_PF29 FU_BITSEA_PF30 FU_BITSEA_PF31 FU_BITSEA_PF32 FU_BITSEA_PF33 
+    FU_BITSEA_PF34 FU_BITSEA_PF35 FU_BITSEA_PF36 FU_BITSEA_PF37 FU_BITSEA_PF38 FU_BITSEA_PF39 
+    FU_BITSEA_PF40 FU_BITSEA_PF41 FU_BITSEA_PF42 FU_BITSEA_PFA FU_BITSEA_PFB (3=SYSMIS).
+EXECUTE.
+
 
 
 *Bitsea problem.
@@ -976,4 +1004,5 @@ SAVE TRANSLATE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\
   /REPLACE
   /FIELDNAMES
   /CELLS=VALUES.
+
 
