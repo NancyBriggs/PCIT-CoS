@@ -858,13 +858,13 @@ execute.
 **********************************************************************************************************************************************************.
 
 alter type post_bitsea_pf41(f8.0) .
-missing values preBITSEA_PF1 to preBITSEA_PF42(888,999,9999).
-missing values fu_BITSEA_PF1 to fu_BITSEA_PF42(888,999,9999).
-missing values post_BITSEA_PF1 to post_BITSEA_PF8(888,999,9999).
-missing values post_BITSEA_PF9 to post_BITSEA_PF36(888,999,9999).
-missing values post_BITSEA_PF37 (888,999,9999).
-missing values post_BITSEA_PF38 to post_BITSEA_PF41(888,999,9999).
-missing values post_BITSEA_PF42 (888,999,9999).
+missing values preBITSEA_PF1 to preBITSEA_PF42(3,888,999,9999).
+missing values fu_BITSEA_PF1 to fu_BITSEA_PF42(3,888,999,9999).
+missing values post_BITSEA_PF1 to post_BITSEA_PF8(3,888,999,9999).
+missing values post_BITSEA_PF9 to post_BITSEA_PF36(3,888,999,9999).
+missing values post_BITSEA_PF37 (3,888,999,9999).
+missing values post_BITSEA_PF38 to post_BITSEA_PF41(3,888,999,9999).
+missing values post_BITSEA_PF42 (3,888,999,9999).
 
 
 *Bitsea problem.

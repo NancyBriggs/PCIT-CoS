@@ -237,7 +237,7 @@ hist + theme_minimal() +
 
 #### Model & Results
 
-A linear mixed model with random effect for individual and fixed effects of group, time and the interaction was run. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2.
+A linear mixed model with random effect for individual and fixed effects of group, time and the interaction was run. BCAP lie was included as a time-varying covariate. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2.
 
 ```{r, echo=FALSE, warning=FALSE}
 #  analysis
@@ -311,16 +311,16 @@ result3<-glmer(outcome ~ lie + group*time + (1 | id), data=dat)
 
 
 
-This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is no evidence that the pattern of change over time is different between the groups (p=0.335).
 
 ```{r, echo=FALSE}
 anovatab<-anova(result0,result0_5,result1,result2,result3)
 
 anovatab <-anovatab %>%
            mutate(Effect = ifelse(npar == 3, "Intercept",
-                           ifelse(npar == 5, "Group",
-                           ifelse(npar == 7, "Time",
-                           ifelse(npar == 10, "Group*Time",""))))) %>%
+                           ifelse(npar == 4, "Lie",
+                           ifelse(npar == 6, "Lie + Group",
+                           ifelse(npar == 8, "Lie + Group + Time",
+                           ifelse(npar == 11, "Lie + Group*Time","")))))) %>%
            relocate(Effect) 
 anovatab %>%
            kbl() %>%
@@ -330,6 +330,9 @@ anovatab %>%
 
 
 ```
+
+This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is no evidence that the pattern of change over time is different between the groups (p=`r round(anovatab[5,9],3)`).
+
 
 
 
@@ -397,7 +400,7 @@ summary(GlobalF, test = Ftest())
 
 ```
 
-p>0.05, so we cannot reject the nul hypothesis.
+p>0.05, so we cannot reject the null hypothesis.
 
 
 #### Hypothesis 2
@@ -455,5 +458,7 @@ ggplot(data.frame(x2=dat$time,pearson=residuals(result3,type="pearson")),
 ```
 
 ```{r}
+
+
 rm(list = ls())
 ```

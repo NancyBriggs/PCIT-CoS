@@ -13,13 +13,12 @@ output:
 
 ##### Group mean difference at each timepoint
 
-Effect sizes all calculated by the pooled T1 SD of the outcome. Adjusted p-value from Bonferroni correction.
 
 ```{r, echo=FALSE}
 result.mean  <- emmeans(result3, "group", by = "time")
 result.mean.d <-pairs(result.mean)
 result.mean.d.adj <-pairs(result.mean, adjust="bonferroni")
-
+summary(result.mean)
 # get baseline pooled SD
 
 # save each T1 measure for each group as a vector (pull)

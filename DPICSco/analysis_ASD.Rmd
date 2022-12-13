@@ -1,7 +1,7 @@
 ---
 title: "PCIT-CoS-Waitlist RCT Paper 1: DPICS Child Compliance, Controlling for ASD"
 author: "Nancy Briggs"
-date: "31 JAN 2021"
+date: "`r Sys.Date()`"
 output:
   html_document:
     toc: true
@@ -14,7 +14,7 @@ output:
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
+options(warn=1)
 
 library(lme4)
 library(tidyverse)
@@ -161,7 +161,7 @@ desctable %>%
            kable_styling()
 ```
 
-Note that with the number of ASD cases, it is unlikely that a model with the group*time *ASD interaction will run at all. 
+Note that with the number of ASD cases, it is unlikely that a model with the group$*$time$*$ASD interaction will run at all. 
 
 ```{r, echo=FALSE}
 #Child Compliance
@@ -240,13 +240,7 @@ result0_5<-glmer(cbind(co, effcommands-co) ~ asdcase + (1 | id), data=p, family=
 result1<-glmer(cbind(co, effcommands-co) ~ asdcase + group + (1 | id), data=p, family=binomial)
 result2<-glmer(cbind(co, effcommands-co) ~ asdcase + group + time + (1 | id), data=p, family=binomial)
 result3<-glmer(cbind(co, effcommands-co) ~ asdcase + group + time +group*time + (1 | id), data=p, family=binomial)
-```
-
-The model with asdcase*group*time does not converge. We will leave it out.
-
-```{r}
 result4<-glmer(cbind(co, effcommands-co) ~ asdcase*group*time + (1 | id), data=p, family=binomial)
-summary(result4)
 ```
 
 
@@ -290,7 +284,6 @@ result.change  <- emmeans(result4, "time", by = c("group","asdcase"), type = "re
 # Differences give ODDS RATIOS
 result.change.d <-pairs(result.change)
 summary(result.change)
-confint(result.change)
 confint(result.change.d)
 
 
@@ -357,7 +350,7 @@ This is a joint hypothesis test.
 First, confirming that the ordering of the means is as hypothesized:
 
 ```{r, echo=FALSE}
-#confint(result.change.d)
+confint(result.change.d)
 # df= Inf is ok
 ```
 

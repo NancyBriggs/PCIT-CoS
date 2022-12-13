@@ -14,7 +14,7 @@ output:
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
+options(warn=1)
 library(lme4)
 
 library(tidyverse)
@@ -238,7 +238,8 @@ anovatab %>%
            kable_styling()
 ```
 
-There is no evidence that ASD moderates the 2-way group*time interaction (the 3-way interaction p=0.701). 
+
+There is no evidence that ASD moderates the 2-way group*time interaction (the 3-way interaction p=`r round(anovatab[6,9],3)`). 
 
 Model3, the model with Group*Time, adjusted by ASD will be the model I use for Estimated Means.
 

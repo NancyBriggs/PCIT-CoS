@@ -1,7 +1,7 @@
 ---
 title: "PCIT-CoS-Waitlist RCT Paper 1: DPICS Child Compliance"
 author: "Nancy Briggs"
-date: "`r Sys.date()`"
+date: "`r Sys.Date()`"
 output:
   html_document:
     toc: true
@@ -353,7 +353,7 @@ confint(result.change.d)
 # df= Inf is ok
 ```
 
-so, change from t1 to t2 is represented as an OR.  They way these results are presented, a value <1 means that there is an *increase* from T1 to T2.  So, for PCIT-T, the OR=0.737, indicating that the odds of a child compliance after effective command  islower at Time 1 by a factor of 0.737.  Alternatively, we can take the reciprocal
+so, change from t1 to t2 is represented as an OR.  The way these results are presented, a value <1 means that there is an *increase* from T1 to T2.  So, for PCIT-T, the OR=0.737, indicating that the odds of a child compliance after effective command  is lower at Time 1 by a factor of 0.737.  Alternatively, we can take the reciprocal
 
 $\frac{1}{0.737} = 1.356852$
 
@@ -388,8 +388,7 @@ summary(GlobalF, test = Ftest())
 
 ```
 
-p<0.05 so this hypothesis is supported. We have evidence to reject the null in favour of the alternative.
-
+p>0.05 so this hypothesis is not supported. 
 
 #### Hypothesis 2
 

@@ -16,7 +16,7 @@ Output run on `r Sys.Date()`
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
+options(warn=1)
 library(lme4)
 
 library(tidyverse)
@@ -198,7 +198,7 @@ hist + theme_minimal() +
 
 #### Model & Results
 
-A linear mixed model with random effect for individual and fixed effects of group, time and the interaction was run *on the log-transformed data*. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2.
+A linear mixed model with random effect for individual and fixed effects of group, time and the interaction was run **on the log-transformed data**. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2.
 
 ```{r, echo=FALSE, warning=FALSE}
 #  analysis
@@ -224,7 +224,7 @@ result3<-lmer(outcome ~ group*time + (1 | id), dat)
 
 
 
-This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is no evidence that the pattern of change over time is different between the groups (p=0.610).
+
 
 ```{r, echo=FALSE}
 anovatab<-anova(result0,result1,result2,result3)
@@ -239,6 +239,8 @@ anovatab %>%
            kbl(digits=3) %>%
            kable_styling()
 ```
+
+This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is no evidence that the pattern of change over time is different between the groups (p=`r round(anovatab[4,9],3)`).
 
 
 
