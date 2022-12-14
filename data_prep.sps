@@ -3,6 +3,14 @@ GET
   FILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\PCITT RCT main dataset 4.1.22.sav'.
 DATASET NAME DataSet1 WINDOW=FRONT.
 
+
+FILTER OFF.
+USE ALL.
+SELECT IF (GROUP<999).
+EXECUTE.
+
+
+
 DATASET ACTIVATE DataSet1.
 COMPUTE cbclext_pre_mean=mean(precbcl5,precbcl6,precbcl56,precbcl59,precbcl95, precbcl8, precbcl15,precbcl16,precbcl18,
                 precbcl20,precbcl27,precbcl29,precbcl35,precbcl40,precbcl42,precbcl44,precbcl53,
@@ -33,12 +41,6 @@ EXECUTE.
 
 
 
-FILTER OFF.
-USE ALL.
-SELECT IF (GROUP<999).
-EXECUTE.
-SAVE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep.sav'
-  /COMPRESSED.
 
 
 * Count the number of valid items.
@@ -459,7 +461,7 @@ EXECUTE.
 *** Adding in CCQ recoding.
 * 1. reverse code items that need it. (Already done) .
 * 2. caculate the mean for each subscale.
-* 3. replace missing values with mean, unless all are missing then it's jst messing.
+* 3. replace missing values with mean, unless all are missing then it's jst missing.
 * This is the same process as the CBCL above.
 
 * 2. calculated means.
@@ -568,15 +570,25 @@ if (missing(	FU_CCQA12_R	) & 	ccq_count_fu	>0	)	FU_CCQA12_R	=	fu_CCQ_A_TOPSE_mea
 
 execute.
 
+** Need to compute Sum not MEAN .
 * Compute subscale mean.
-COMPUTE pre_CCQ_A_TOPSE_mean =mean(preCCQA1, preCCQA2,  preCCQA3,  preCCQA4, preCCQA5,  preCCQA6, preCCQA7,  preCCQA8,  
+ * COMPUTE pre_CCQ_A_TOPSE_mean =mean(preCCQA1, preCCQA2,  preCCQA3,  preCCQA4, preCCQA5,  preCCQA6, preCCQA7,  preCCQA8,  
     preCCQA9,  preCCQA10, preCCQA11, preCCQA12_R).
-COMPUTE post_CCQ_A_TOPSE_mean =mean(post_CCQA1, post_CCQA2,  post_CCQA3,  post_CCQA4, post_CCQA5,  post_CCQA6, post_CCQA7,  
+ * COMPUTE post_CCQ_A_TOPSE_mean =mean(post_CCQA1, post_CCQA2,  post_CCQA3,  post_CCQA4, post_CCQA5,  post_CCQA6, post_CCQA7,  
     post_CCQA8,  post_CCQA9,  post_CCQA10, post_CCQA11, post_CCQA12_R).
-COMPUTE fu_CCQ_A_TOPSE_mean =mean(fu_CCQA1, fu_CCQA2,  fu_CCQA3,  fu_CCQA4, fu_CCQA5,  fu_CCQA6, fu_CCQA7,  
+ * COMPUTE fu_CCQ_A_TOPSE_mean =mean(fu_CCQA1, fu_CCQA2,  fu_CCQA3,  fu_CCQA4, fu_CCQA5,  fu_CCQA6, fu_CCQA7,  
+fu_CCQA8,  fu_CCQA9,  fu_CCQA10, fu_CCQA11, fu_CCQA12_R).
+ * Execute.
+
+
+* Compute subscale Sum.
+COMPUTE pre_CCQ_A_TOPSE_sum =sum(preCCQA1, preCCQA2,  preCCQA3,  preCCQA4, preCCQA5,  preCCQA6, preCCQA7,  preCCQA8,  
+    preCCQA9,  preCCQA10, preCCQA11, preCCQA12_R).
+COMPUTE post_CCQ_A_TOPSE_sum =sum(post_CCQA1, post_CCQA2,  post_CCQA3,  post_CCQA4, post_CCQA5,  post_CCQA6, post_CCQA7,  
+    post_CCQA8,  post_CCQA9,  post_CCQA10, post_CCQA11, post_CCQA12_R).
+COMPUTE fu_CCQ_A_TOPSE_sum =sum(fu_CCQA1, fu_CCQA2,  fu_CCQA3,  fu_CCQA4, fu_CCQA5,  fu_CCQA6, fu_CCQA7,  
 fu_CCQA8,  fu_CCQA9,  fu_CCQA10, fu_CCQA11, fu_CCQA12_R).
 Execute.
-
 
 
 
@@ -651,11 +663,24 @@ if (missing(	FU_CCQD5	) & 	ccq_count_fu	>0	)	FU_CCQD5	=	fu_CHQ_mean	.
 if (missing(	FU_CCQD6	) & 	ccq_count_fu	>0	)	FU_CCQD6	=	fu_CHQ_mean	.
 if (missing(	FU_CCQD7	) & 	ccq_count_fu	>0	)	FU_CCQD7	=	fu_CHQ_mean	.
  execute.
-COMPUTE pre_CHQD_mean =mean(preCCQD1,preCCQD2 ,preCCQD3,
+
+* Need to compute SUM not MEAN.
+* Compute mean.
+ * COMPUTE pre_CHQD_mean =mean(preCCQD1,preCCQD2 ,preCCQD3,
 preCCQD4 ,preCCQD5 ,preCCQD6 ,preCCQD7).
-COMPUTE post_CHQD_mean =mean(post_CCQD1,post_CCQD2 ,post_CCQD3,
+ * COMPUTE post_CHQD_mean =mean(post_CCQD1,post_CCQD2 ,post_CCQD3,
 post_CCQD4 ,post_CCQD5 ,post_CCQD6 ,post_CCQD7).
-COMPUTE fu_CHQD_mean =mean(fu_CCQD1,fu_CCQD2 ,fu_CCQD3,
+ * COMPUTE fu_CHQD_mean =mean(fu_CCQD1,fu_CCQD2 ,fu_CCQD3,
+fu_CCQD4 ,fu_CCQD5 ,fu_CCQD6 ,fu_CCQD7).
+ * Execute.
+
+
+* Compute sum.
+COMPUTE pre_CHQD_sum =sum(preCCQD1,preCCQD2 ,preCCQD3,
+preCCQD4 ,preCCQD5 ,preCCQD6 ,preCCQD7).
+COMPUTE post_CHQD_sum =sum(post_CCQD1,post_CCQD2 ,post_CCQD3,
+post_CCQD4 ,post_CCQD5 ,post_CCQD6 ,post_CCQD7).
+COMPUTE fu_CHQD_sum =sum(fu_CCQD1,fu_CCQD2 ,fu_CCQD3,
 fu_CCQD4 ,fu_CCQD5 ,fu_CCQD6 ,fu_CCQD7).
 Execute.
 
@@ -706,12 +731,23 @@ if (missing(	FU_CCQC4	) & 	ccq_count_fu	>0	)	FU_CCQC4	=	fu_CCQ_mean	.
 if (missing(	FU_CCQC5	) & 	ccq_count_fu	>0	)	FU_CCQC5	=	fu_CCQ_mean	.
 Execute.
 
-COMPUTE pre_CCQC_mean =mean(preCCQC1,preCCQC2 ,preCCQC3,
+* Need to compute SUM not MEAN.
+ * COMPUTE pre_CCQC_mean =mean(preCCQC1,preCCQC2 ,preCCQC3,
 preCCQC4 ,preCCQC5).
-COMPUTE post_CCQC_mean =mean(post_CCQC1,post_CCQC2 ,post_CCQC3,
+ * COMPUTE post_CCQC_mean =mean(post_CCQC1,post_CCQC2 ,post_CCQC3,
 post_CCQC4 ,post_CCQC5).
-COMPUTE fu_CCQC_mean =mean(fu_CCQC1,fu_CCQC2 ,fu_CCQC3,
+ * COMPUTE fu_CCQC_mean =mean(fu_CCQC1,fu_CCQC2 ,fu_CCQC3,
 fu_CCQC4 ,fu_CCQC5).
+
+
+* compute SUM .
+COMPUTE pre_CCQC_sum =sum(preCCQC1,preCCQC2 ,preCCQC3,
+preCCQC4 ,preCCQC5).
+COMPUTE post_CCQC_sum =sum(post_CCQC1,post_CCQC2 ,post_CCQC3,
+post_CCQC4 ,post_CCQC5).
+COMPUTE fu_CCQC_sum =sum(fu_CCQC1,fu_CCQC2 ,fu_CCQC3,
+fu_CCQC4 ,fu_CCQC5).
+
 
 
 * Parental Reflectiveness.
@@ -844,16 +880,34 @@ if (missing(	FU_CCQE16	) & 	ccq_count_fu	>0	)	FU_CCQE16	=	fu_CCQ_mean	.
 if (missing(	FU_CCQE17	) & 	ccq_count_fu	>0	)	FU_CCQE17	=	fu_CCQ_mean	.
 if (missing(	FU_CCQE18	) & 	ccq_count_fu	>0	)	FU_CCQE18	=	fu_CCQ_mean	.
 
-Compute pre_CCQE_mean=mean( preCCQE1,	preCCQE2,	preCCQE3,	preCCQE4_R,	preCCQE5,	
+
+
+* Need to compute SUM not MEAN.
+ * Compute pre_CCQE_mean=mean( preCCQE1,	preCCQE2,	preCCQE3,	preCCQE4_R,	preCCQE5,	
     preCCQE6,	preCCQE7,	preCCQE8,	preCCQE9_R,	preCCQE10,	preCCQE11,	preCCQE12,	preCCQE13,	
     preCCQE14_R,	preCCQE15,	preCCQE16,	preCCQE17,	preCCQE18).
-Compute post_CCQE_mean=mean( post_CCQE1,	post_CCQE2,	post_CCQE3,	post_CCQE4_R,	post_CCQE5,	
+ * Compute post_CCQE_mean=mean( post_CCQE1,	post_CCQE2,	post_CCQE3,	post_CCQE4_R,	post_CCQE5,	
     post_CCQE6,	post_CCQE7,	post_CCQE8,	post_CCQE9_R,	post_CCQE10,	post_CCQE11,	post_CCQE12,	post_CCQE13,	
     post_CCQE14_R,	post_CCQE15,	post_CCQE16,	post_CCQE17,	post_CCQE18).
-Compute fu_CCQE_mean=mean( fu_CCQE1,	fu_CCQE2,	fu_CCQE3,	fu_CCQE4_R,	fu_CCQE5,	
+ * Compute fu_CCQE_mean=mean( fu_CCQE1,	fu_CCQE2,	fu_CCQE3,	fu_CCQE4_R,	fu_CCQE5,	
+    fu_CCQE6,	fu_CCQE7,	fu_CCQE8,	fu_CCQE9_R,	fu_CCQE10,	fu_CCQE11,	fu_CCQE12,	fu_CCQE13,	
+    fu_CCQE14_R,	fu_CCQE15,	fu_CCQE16,	fu_CCQE17,	fu_CCQE18).
+ * execute.
+
+* Compute sum.
+Compute pre_CCQE_sum=sum( preCCQE1,	preCCQE2,	preCCQE3,	preCCQE4_R,	preCCQE5,	
+    preCCQE6,	preCCQE7,	preCCQE8,	preCCQE9_R,	preCCQE10,	preCCQE11,	preCCQE12,	preCCQE13,	
+    preCCQE14_R,	preCCQE15,	preCCQE16,	preCCQE17,	preCCQE18).
+Compute post_CCQE_sum=sum( post_CCQE1,	post_CCQE2,	post_CCQE3,	post_CCQE4_R,	post_CCQE5,	
+    post_CCQE6,	post_CCQE7,	post_CCQE8,	post_CCQE9_R,	post_CCQE10,	post_CCQE11,	post_CCQE12,	post_CCQE13,	
+    post_CCQE14_R,	post_CCQE15,	post_CCQE16,	post_CCQE17,	post_CCQE18).
+Compute fu_CCQE_sum=sum( fu_CCQE1,	fu_CCQE2,	fu_CCQE3,	fu_CCQE4_R,	fu_CCQE5,	
     fu_CCQE6,	fu_CCQE7,	fu_CCQE8,	fu_CCQE9_R,	fu_CCQE10,	fu_CCQE11,	fu_CCQE12,	fu_CCQE13,	
     fu_CCQE14_R,	fu_CCQE15,	fu_CCQE16,	fu_CCQE17,	fu_CCQE18).
 execute.
+
+
+
 
 
 **********************************************************************************************************************************************************.
@@ -894,23 +948,23 @@ RECODE preBITSEA_PF1 preBITSEA_PF2 preBITSEA_PF3 preBITSEA_PF4 preBITSEA_PF5 pre
 EXECUTE.
 
 
-
+* Compute sums not means.
 *Bitsea problem.
-COMPUTE pre_bitseaprob_mean= mean(prebitsea_pf2,	prebitsea_pf3,	prebitsea_pf4,	prebitsea_pf6,	
+COMPUTE pre_bitseaprob_sum= sum(prebitsea_pf2,	prebitsea_pf3,	prebitsea_pf4,	prebitsea_pf6,	
     prebitsea_pf7,	prebitsea_pf8,	prebitsea_pf9,	prebitsea_pf11,	prebitsea_pf12,	
     prebitsea_pf14,	prebitsea_pf16,	prebitsea_pf17,	prebitsea_pf18,	prebitsea_pf21,	
     prebitsea_pf23,	prebitsea_pf24,	prebitsea_pf26,	prebitsea_pf27,	prebitsea_pf28,	
     prebitsea_pf30,	prebitsea_pf32,	prebitsea_pf33,	prebitsea_pf34,	prebitsea_pf35,	
     prebitsea_pf36,	prebitsea_pf37,	prebitsea_pf38,	prebitsea_pf39,	prebitsea_pf40,	
     prebitsea_pf41,	prebitsea_pf42) .
-COMPUTE post_bitseaprob_mean= mean(post_bitsea_pf2,	post_bitsea_pf3,	post_bitsea_pf4,	post_bitsea_pf6,	
+COMPUTE post_bitseaprob_sum= sum(post_bitsea_pf2,	post_bitsea_pf3,	post_bitsea_pf4,	post_bitsea_pf6,	
     post_bitsea_pf7,	post_bitsea_pf8,	post_bitsea_pf9,	post_bitsea_pf11,	post_bitsea_pf12,	
     post_bitsea_pf14,	post_bitsea_pf16,	post_bitsea_pf17,	post_bitsea_pf18,	post_bitsea_pf21,	
     post_bitsea_pf23,	post_bitsea_pf24,	post_bitsea_pf26,	post_bitsea_pf27,	post_bitsea_pf28,	
     post_bitsea_pf30,	post_bitsea_pf32,	post_bitsea_pf33,	post_bitsea_pf34,	post_bitsea_pf35,	
     post_bitsea_pf36,	post_bitsea_pf37,	post_bitsea_pf38,	post_bitsea_pf39,	post_bitsea_pf40, 
     post_bitsea_pf41 ,	post_bitsea_pf42 ) .
-COMPUTE fu_bitseaprob_mean= mean(fu_bitsea_pf2,	fu_bitsea_pf3,	fu_bitsea_pf4,	fu_bitsea_pf6,	
+COMPUTE fu_bitseaprob_sum= sum(fu_bitsea_pf2,	fu_bitsea_pf3,	fu_bitsea_pf4,	fu_bitsea_pf6,	
     fu_bitsea_pf7,	fu_bitsea_pf8,	fu_bitsea_pf9,	fu_bitsea_pf11,	fu_bitsea_pf12,	
     fu_bitsea_pf14,	fu_bitsea_pf16,	fu_bitsea_pf17,	fu_bitsea_pf18,	fu_bitsea_pf21,	
     fu_bitsea_pf23,	fu_bitsea_pf24,	fu_bitsea_pf26,	fu_bitsea_pf27,	fu_bitsea_pf28,	
@@ -920,13 +974,13 @@ COMPUTE fu_bitseaprob_mean= mean(fu_bitsea_pf2,	fu_bitsea_pf3,	fu_bitsea_pf4,	fu
 Execute.
 
 * BITSEA Competence .
-COMPUTE pre_bitseacomp_mean=mean(prebitsea_pf1,	prebitsea_pf5,	prebitsea_pf10,	prebitsea_pf13,	
+COMPUTE pre_bitseacomp_sum=sum(prebitsea_pf1,	prebitsea_pf5,	prebitsea_pf10,	prebitsea_pf13,	
     prebitsea_pf15,	prebitsea_pf19,	prebitsea_pf20,	prebitsea_pf22,	prebitsea_pf25,	
     prebitsea_pf29,	prebitsea_pf31).
-COMPUTE post_bitseacomp_mean=mean(post_bitsea_pf1,	post_bitsea_pf5,	post_bitsea_pf10,	post_bitsea_pf13,	
+COMPUTE post_bitseacomp_sum=sum(post_bitsea_pf1,	post_bitsea_pf5,	post_bitsea_pf10,	post_bitsea_pf13,	
     post_bitsea_pf15,	post_bitsea_pf19,	post_bitsea_pf20,	post_bitsea_pf22,	post_bitsea_pf25,	
     post_bitsea_pf29,	post_bitsea_pf31).
-COMPUTE fu_bitseacomp_mean=mean(fu_bitsea_pf1,	fu_bitsea_pf5,	fu_bitsea_pf10,	fu_bitsea_pf13,	
+COMPUTE fu_bitseacomp_sum=sum(fu_bitsea_pf1,	fu_bitsea_pf5,	fu_bitsea_pf10,	fu_bitsea_pf13,	
     fu_bitsea_pf15,	fu_bitsea_pf19,	fu_bitsea_pf20,	fu_bitsea_pf22,	fu_bitsea_pf25,	
     fu_bitsea_pf29,	fu_bitsea_pf31).
 execute.

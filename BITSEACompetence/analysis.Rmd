@@ -16,7 +16,7 @@ Output run on `r Sys.Date()`
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
+options(warn=1)
 library(lme4)
 
 library(tidyverse)
@@ -77,16 +77,16 @@ data <- data %>%
                 pre_ccq_a_topse_mean, post_ccq_a_topse_mean ,fu_ccq_a_topse_mean, 
 
                 # CCQ Caregiving Helplessness
-                pre_chqd_mean, post_chqd_mean, fu_chqd_mean,
+                pre_chqd_sum, post_chqd_sum, fu_chqd_sum,
                 
                 # CCQ Hostil Parenting
-                pre_ccqc_mean, post_ccqc_mean, fu_ccqc_mean,
+                pre_ccqc_sum, post_ccqc_sum, fu_ccqc_sum,
                 
                 #1: Brief Infant Toddler Social Emotional Assessment (BITSEA)
                 # Problem
-                pre_bitseaprob_mean, post_bitseaprob_mean, fu_bitseaprob_mean,
+                pre_bitseaprob_sum, post_bitseaprob_sum, fu_bitseaprob_sum,
                 # Competence
-                pre_bitseacomp_mean, post_bitseacomp_mean,fu_bitseacomp_mean
+                pre_bitseacomp_sum, post_bitseacomp_sum,fu_bitseacomp_sum
 
                 )
 
@@ -99,38 +99,30 @@ data <- data %>%
 #### Descriptives
 
 ```{r, echo=FALSE}
-# pre_bitseacomp_mean, post_bitseacomp_mean,fu_bitseacomp_mean
+# pre_bitseacomp_sum, post_bitseacomp_sum,fu_bitseacomp_sum
+
 desctable <- data %>%
   group_by(group) %>%
-  mutate(score1 = case_when( 
-    pre_bitseacomp_mean == -9 ~ NA_real_,          #assign missing values to zeros
-    TRUE ~ pre_bitseacomp_mean)) %>%
-  mutate(score2 = case_when( 
-    post_bitseacomp_mean == -9 ~ NA_real_,         #assign missing values to zeros
-    TRUE ~ post_bitseacomp_mean)) %>%
-  mutate(score3 = case_when( 
-    fu_bitseacomp_mean == -9 ~ NA_real_,           #assign missing values to zeros
-    TRUE ~ fu_bitseacomp_mean)) %>%
-  summarise(n1 = sum(!is.na(score1)) , 
-            mean1=mean(pre_bitseacomp_mean, na.rm = T ),
-            sd1=sd(pre_bitseacomp_mean, na.rm = T ),
-            median1=median(pre_bitseacomp_mean, na.rm = T ),
-            min1=min(pre_bitseacomp_mean, na.rm = T ),
-            max1=max(pre_bitseacomp_mean, na.rm = T ),
+  summarise(n1 = sum(!is.na(pre_bitseacomp_sum)),
+            mean1=mean(pre_bitseacomp_sum, na.rm = T ),
+            sd1=sd(pre_bitseacomp_sum, na.rm = T ),
+            median1=median(pre_bitseacomp_sum, na.rm = T ),
+            min1=min(pre_bitseacomp_sum, na.rm = T ),
+            max1=max(pre_bitseacomp_sum, na.rm = T ),
             
-            n2 = sum(!is.na(score2)) , 
-            mean2=mean(post_bitseacomp_mean, na.rm = T ),
-            sd2=sd(post_bitseacomp_mean, na.rm = T ),
-            median2=median(post_bitseacomp_mean, na.rm = T ),
-            min2=min(post_bitseacomp_mean, na.rm = T ),
-            max2=max(post_bitseacomp_mean, na.rm = T ),
+            n2 = sum(!is.na(post_bitseacomp_sum)), 
+            mean2=mean(post_bitseacomp_sum, na.rm = T ),
+            sd2=sd(post_bitseacomp_sum, na.rm = T ),
+            median2=median(post_bitseacomp_sum, na.rm = T ),
+            min2=min(post_bitseacomp_sum, na.rm = T ),
+            max2=max(post_bitseacomp_sum, na.rm = T ),
             
-            n3 = sum(!is.na(score3)) , 
-            mean3=mean(fu_bitseacomp_mean, na.rm = T ),
-            sd3=sd(fu_bitseacomp_mean, na.rm = T ),
-            median3=median(fu_bitseacomp_mean, na.rm = T ),
-            min3=min(fu_bitseacomp_mean, na.rm = T ),
-            max3=max(fu_bitseacomp_mean, na.rm = T )  ) %>%
+            n3 = sum(!is.na(fu_bitseacomp_sum)), 
+            mean3=mean(fu_bitseacomp_sum, na.rm = T ),
+            sd3=sd(fu_bitseacomp_sum, na.rm = T ),
+            median3=median(fu_bitseacomp_sum, na.rm = T ),
+            min3=min(fu_bitseacomp_sum, na.rm = T ),
+            max3=max(fu_bitseacomp_sum, na.rm = T )  ) %>%
   pivot_longer(cols = -group,  
                 names_to = c('.value', 'time'), 
                     names_pattern = '(.*)(\\d+)')
@@ -152,16 +144,16 @@ desctable %>%
 # Histograms
 # plot
 p <- data %>%
-  dplyr::select(id,group, pre_bitseacomp_mean, post_bitseacomp_mean, fu_bitseacomp_mean) %>%
-  pivot_longer( cols = c("pre_bitseacomp_mean", "post_bitseacomp_mean", "fu_bitseacomp_mean"),  names_prefix = "bitseacomp_", 
+  dplyr::select(id,group, pre_bitseacomp_sum, post_bitseacomp_sum, fu_bitseacomp_sum) %>%
+  pivot_longer( cols = c("pre_bitseacomp_sum", "post_bitseacomp_sum", "fu_bitseacomp_sum"),  names_prefix = "bitseacomp_", 
                 names_to="t", values_to="outcome") %>%
-  mutate(time = ifelse(t == "pre_bitseacomp_mean",  1,
-                ifelse(t == "post_bitseacomp_mean", 2, 3))) 
+  mutate(time = ifelse(t == "pre_bitseacomp_sum",  1,
+                ifelse(t == "post_bitseacomp_sum", 2, 3))) 
   
 
   
-hist<-ggplot(p, aes(x=outcome) )+
-  geom_histogram(alpha=0.6, binwidth = .25) +
+hist<-ggplot(p, aes(x=as.numeric(outcome)) )+
+  geom_histogram(alpha=0.6, binwidth = 2) +
   xlab("BITSEA Problem") +
   ylab("Frequency") +
   facet_wrap(group~time)
@@ -187,11 +179,11 @@ A linear mixed model with random effect for individual and fixed effects of grou
 ```{r, echo=FALSE, warning=FALSE}
 #  analysis
 dat <- data %>%
-  dplyr::select(id,group, pre_bitseacomp_mean, post_bitseacomp_mean, fu_bitseacomp_mean) %>%
-  pivot_longer( cols = c("pre_bitseacomp_mean", "post_bitseacomp_mean", "fu_bitseacomp_mean"),  names_prefix = "bitseacomp_", 
+  dplyr::select(id,group, pre_bitseacomp_sum, post_bitseacomp_sum, fu_bitseacomp_sum) %>%
+  pivot_longer( cols = c("pre_bitseacomp_sum", "post_bitseacomp_sum", "fu_bitseacomp_sum"),  names_prefix = "bitseacomp_", 
                 names_to="t", values_to="outcome") %>%
-  mutate(time = ifelse(t == "pre_bitseacomp_mean",  1,
-                ifelse(t == "post_bitseacomp_mean", 2, 3))) 
+  mutate(time = ifelse(t == "pre_bitseacomp_sum",  1,
+                ifelse(t == "post_bitseacomp_sum", 2, 3))) 
   
 
 dat$time<- as.factor(dat$time)
@@ -206,9 +198,6 @@ result3<-lmer(outcome ~ group*time + (1 | id), dat)
 
 
 
-
-This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is no evidence that the pattern of change over time is different between the groups (p=0.591).
-
 ```{r, echo=FALSE}
 anovatab<-anova(result0,result1,result2,result3)
 
@@ -221,7 +210,15 @@ anovatab <-anovatab %>%
 anovatab %>%
            kbl(digits=3) %>%
            kable_styling()
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(anovatab[4,9]<0.05, "evidence", "no evidence")
 ```
+
+
+
+This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is `r evidence` that the pattern of change over time is different among the groups (p=`r anovatab[4,9]`).
 
 
 
@@ -259,9 +256,41 @@ First, confirming that the ordering of the means is as hypothesized:
 result.change  <- emmeans(result3, "time", by = "group")
 result.change.d <-pairs(result.change)
 result.change.d
+result.change.d1<-as.data.frame(result.change.d)
+result.change.d1<- result.change.d1 %>%
+  mutate(t1t2change=-1*estimate) %>%
+  mutate(quality=ifelse(t1t2change<0, "decreased t1 to t2", 
+                 ifelse(t1t2change>0, "increase t1 to t2", "did not change" )))
+
+result.change.d1 %>%
+  filter(contrast=="1 - 2") %>%
+  dplyr::select(contrast, group, t1t2change, quality, p.value ) %>%
+  kbl(digits=3) %>%
+  kable_styling()
+
+
+# ordering change.
+## Extract pvalue for evidence / no evidence
+orderincrease <- ifelse( result.change.d1$increase[1]>result.change.d1$increase[4],
+         ifelse( result.change.d1$increase[4]>result.change.d1$increase[7] , 
+                 "PCITT > COS-P > Waitlist", "Order not satisfied" ))
+# orderdecrease <- ifelse( result.change.d1$estimate[1]<result.change.d1$estimate[4],
+#          ifelse( result.change.d1$estimate[4]<result.change.d1$estimate[7] , 
+#                  "PCITT > COS-P > Waitlist", "Order not satisfied" ))
+
+
+
 ```
 
-Ordering of effects are in the hypothesized, order: PCITT>COSP>Waitlist
+Is the ordering of change satisfied? 
+
+The magnitude of change is 
+
+Greatest to least change from t1 to t2:  `r orderincrease`
+
+Note that I interpreted an increase in scores as being "better".  If a decrease in scores is "better" then these change values should be interpreted in that light.
+
+
 
 ```{r, echo=FALSE, warning=FALSE}
 
@@ -272,18 +301,25 @@ hyp1   <- matrix(c(0, 0,0, 0,0, -1,0,0 ),1)
 # Hyp2 is 1 df test, 
 hyp2   <- matrix(c(0, 0,0, 0,1, 0,1,0 ),1)
 
+
+
 # hypF is combined 2df test. Yes!
 h<-rbind(hyp1,hyp2)
 hypF <- as.matrix(h)
 GlobalF <- glht(result3, linfct = hypF, test = Ftest())
 GlobalF$linfct
 summary(GlobalF, test = Ftest())
+F<-summary(GlobalF, test = Ftest())
 
 #also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
 
+
+## Extract pvalue for evidence / no evidence
+evidence = ifelse(F$test$pvalue<0.05, "evidence", "no evidence")
+
 ```
 
-pvalue>0.05. We do not have evidence that there is a difference in the change over from Baseline to Post amongst the groups, such that PCITT showed the largest change, then COSP then Waitlist.
+p= `r round(F$test$pvalue,3)`. We have `r evidence` that there is a difference in the change over from Baseline to Post amongst the groups.
 
 
 
@@ -296,9 +332,21 @@ First, the change in PCITT and COSP from time 2 to time 3:
 
 ```{r, echo=FALSE}
 result.change.d
+
+# ordering change.
+## Extract pvalue for evidence / no evidence
+orderincrease <- ifelse( result.change.d1$increase[1]>result.change.d1$increase[4],
+                 "PCITT > COS-P, increase was greater in PCITT", 
+                 "PCITT < COS-P, increase was not greater in PCITT" )
+orderdecrease <- ifelse( result.change.d1$estimate[1]<result.change.d1$estimate[4],
+                 "PCITT > COS-P, decrease was greater in PCITT", 
+                 "PCITT < COS-P, decrease was not greater in PCITT" )
+
 ```
 
-There is greater change in PCITT(-.138) than in COSP (-.115).
+Assuming an increase in scores is better, `r orderincrease`
+
+Assuming a decrease in scores is better,`r orderdecrease`
 
 
 ```{r, echo=FALSE, warning=FALSE}
@@ -309,11 +357,14 @@ There is greater change in PCITT(-.138) than in COSP (-.115).
 hyp2   <- matrix(c(0, 0,0, 0,0, -1,0,1 ),1)
 hyp2F <- glht(result3, linfct = hyp2)
 summary(hyp2F)
+F<-summary(hyp2F)
 #also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
 
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(F$test$pvalue<0.05, "evidence", "no evidence")
 ```
 
-p>0.05, so we do not have enough evidence to suggest that the change from t2 to t3 in PCITT is greater than the change in COSP.
+p>`r round(F$test$pvalue,3)`, so we have `r evidence` to suggest that the change from t2 to t3 in PCITT is greater than the change in COSP.
 
 
 
