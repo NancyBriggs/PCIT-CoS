@@ -1,7 +1,7 @@
 ---
 title: "PCIT-CoS-Waitlist RCT Paper 1: BITSEA Competence"
 author: "Nancy Briggs"
-date: "06 June 2022"
+date: "`r Sys.Date()`"
 output:
   html_document:
     toc: true
@@ -13,6 +13,13 @@ output:
 ### BITSEA Competence {.tabset .tabset-fade .tabset-pills}
 
 Output run on `r Sys.Date()`
+
+
+Values have been calculated by:
+
+- missing values are: 3, 888, 999, 9999
+- sum computed from:  pf1, pf5, pf10, pf13, pf15, pf19, pf20, pf22, pf25, pf29, pf31
+
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -154,7 +161,7 @@ p <- data %>%
   
 hist<-ggplot(p, aes(x=as.numeric(outcome)) )+
   geom_histogram(alpha=0.6, binwidth = 2) +
-  xlab("BITSEA Problem") +
+  xlab("BITSEA Competence") +
   ylab("Frequency") +
   facet_wrap(group~time)
 
@@ -271,9 +278,9 @@ result.change.d1 %>%
 
 # ordering change.
 ## Extract pvalue for evidence / no evidence
-orderincrease <- ifelse( result.change.d1$increase[1]>result.change.d1$increase[4],
-         ifelse( result.change.d1$increase[4]>result.change.d1$increase[7] , 
-                 "PCITT > COS-P > Waitlist", "Order not satisfied" ))
+orderincrease <- ifelse( result.change.d1$t1t2change[1]>result.change.d1$t1t2change[4] &
+                         result.change.d1$t1t2change[4]>result.change.d1$t1t2change[7] , 
+                 "PCITT > COS-P > Waitlist", "Order not satisfied" )
 # orderdecrease <- ifelse( result.change.d1$estimate[1]<result.change.d1$estimate[4],
 #          ifelse( result.change.d1$estimate[4]<result.change.d1$estimate[7] , 
 #                  "PCITT > COS-P > Waitlist", "Order not satisfied" ))
@@ -283,8 +290,6 @@ orderincrease <- ifelse( result.change.d1$increase[1]>result.change.d1$increase[
 ```
 
 Is the ordering of change satisfied? 
-
-The magnitude of change is 
 
 Greatest to least change from t1 to t2:  `r orderincrease`
 
@@ -297,9 +302,10 @@ Note that I interpreted an increase in scores as being "better".  If a decrease 
 ## Specify contrast matrices
 # Hyp1 is 1 df test
 # could use alternative="less" ir alternative="greater" in glht
-hyp1   <- matrix(c(0, 0,0, 0,0, -1,0,0 ),1)
+hyp1   <- matrix(c(0, 0,0, 0,0, 1,0,0 ),1)
 # Hyp2 is 1 df test, 
-hyp2   <- matrix(c(0, 0,0, 0,1, 0,1,0 ),1)
+hyp2   <- matrix(c(0, 0,0, 0,0, -1,1, 0 ),1)
+
 
 
 
@@ -331,14 +337,29 @@ There will be a gradient of size of change from T2 to T3 such that the change in
 First, the change in PCITT and COSP from time 2 to time 3:
 
 ```{r, echo=FALSE}
-result.change.d
+
+result.change.d1<-as.data.frame(result.change.d)
+result.change.d1<- result.change.d1 %>%
+  mutate(t2t3change=-1*estimate) %>%
+  mutate(quality=ifelse(t2t3change<0, "decreased t2 to t3", 
+                 ifelse(t2t3change>0, "increase t2 to t3", "did not change" )))
+
+result.change.d1 %>%
+  filter(contrast=="2 - 3") %>%
+  dplyr::select(contrast, group, t2t3change, quality, p.value ) %>%
+  kbl(digits=3) %>%
+  kable_styling()
+
+
 
 # ordering change.
 ## Extract pvalue for evidence / no evidence
-orderincrease <- ifelse( result.change.d1$increase[1]>result.change.d1$increase[4],
+orderincrease <- ifelse(result.change.d1$t2t3change[3]>0 &
+                        result.change.d1$t2t3change[3]>result.change.d1$t2t3change[6],
                  "PCITT > COS-P, increase was greater in PCITT", 
                  "PCITT < COS-P, increase was not greater in PCITT" )
-orderdecrease <- ifelse( result.change.d1$estimate[1]<result.change.d1$estimate[4],
+orderdecrease <- ifelse(result.change.d1$t2t3change[3]<0 &
+                        result.change.d1$t2t3change[3]<result.change.d1$t2t3change[6],
                  "PCITT > COS-P, decrease was greater in PCITT", 
                  "PCITT < COS-P, decrease was not greater in PCITT" )
 

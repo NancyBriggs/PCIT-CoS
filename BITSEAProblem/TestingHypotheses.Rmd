@@ -1,0 +1,201 @@
+---
+title: "Hypothesis Tests"
+author: "Nancy Briggs"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+#### Hypothesis 1
+
+We hypothesize that from baseline (‘T1’) to post-treatment/waitlist (‘T2’) there will be a gradient effect, whereby parent-child dyads who receive PCIT-T
+will show the greatest gains and parent-child dyads who
+receive no treatment will show the least gains. For the outcome, then, the 
+null hypothesis is:
+
+$H_0:  \text {mean change}(\text{PCIT-T}) = \text {mean change}(\text{CoS-P}) = \text {mean change}(\text{Waitlist})$
+$H_A: \text {mean change}(\text{PCIT-T}) > \text {mean change}(\text{CoS-P}) \& \text {mean change}(\text{CoS-P}) > \text {mean change}(\text{Waitlist})$
+
+For this, we test two tests, and then look at the magnitude of change within each group.
+
+First, testing the two comparisons:
+
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+result.change  <- emmeans(result3, "time", by = "group")
+result.change.d <-pairs(result.change)
+result.change.d
+result.change.d1<-as.data.frame(result.change.d)
+result.change.d1<- result.change.d1 %>%
+  mutate(t1t2change=-1*estimate) %>%
+  mutate(quality=ifelse(t1t2change<0, "decreased t1 to t2", 
+                 ifelse(t1t2change>0, "increase t1 to t2", "did not change" )))
+r1<- result.change.d1 %>%
+  filter(group==1 & contrast=="1 - 2") %>%
+  dplyr::select(c(contrast, t1t2change))       
+r2<- result.change.d1 %>%
+  filter(group==2 & contrast=="1 - 2") %>%
+  dplyr::select(c(contrast, t1t2change)) 
+
+
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp1   <- matrix(c(0, 0,0, 0,0, 1,0,0 ),1)
+# Hyp2 is 1 df test, 
+hyp2   <- matrix(c(0, 0,0, 0,0, -1,1, 0 ),1)
+
+F1 <- glht(result3, linfct = hyp1)
+F2 <- glht(result3, linfct = hyp2)
+sF1 <- summary(F1)
+ci<- confint(F1)
+r1$did <- sF1$test$coefficients
+r1$cil <- ci$confint[2]
+r1$ciu <- ci$confint[3]
+r1$p <- sF1$test$pvalue
+r1$comp <- "G1 change vs G2 change"
+
+sF2 <- summary(F2)
+ci<- confint(F1)
+r2$did <- sF2$test$coefficients
+r2$cil <- ci$confint[2]
+r2$ciu <- ci$confint[3]
+r2$p <- sF2$test$pvalue
+r2$comp <- "G2 change vs G3 change"
+
+r1<- rbind(r1,r2)
+r1$adjp<-p.adjust(r1$p, method = "holm", n = 2)
+
+r1 %>%
+  dplyr::select(!contrast) %>%
+  relocate(comp) %>%
+  kbl(digits=3) %>%
+  kable_styling() 
+
+## Extract pvalue for evidence / no evidence
+evidence1_r = ifelse(sF1$test$pvalue<0.05, "evidence", "no evidence")
+evidence1_a = ifelse(sF1$test$pvalue<0.05, "evidence", "no evidence")
+evidence2_r = ifelse(sF2$test$pvalue<0.05, "evidence", "no evidence")
+evidence2_a = ifelse(sF2$test$pvalue<0.05, "evidence", "no evidence")
+
+
+
+
+# hypF is combined 2df test. Yes!
+# h<-rbind(hyp1,hyp2)
+# hypF <- as.matrix(h)
+# GlobalF <- glht(result3, linfct = hypF, test = Ftest())
+# GlobalF$linfct
+# summary(GlobalF, test = Ftest())
+# F<-summary(GlobalF, test = Ftest())
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+
+## Extract pvalue for evidence / no evidence
+#evidence = ifelse(F$test$pvalue<0.05, "evidence", "no evidence")
+
+```
+
+For test of difference between G1 and G2 in change from T1-2:  
+p= `r round(sF1$test$pvalue,3)`. We have `r evidence1_r` that there is a difference in the change over from Baseline to Post between the groups. The adjusted pvalue is `r round(r1$adjp[1],3)`.
+
+For test of difference between G1 and G2 in change from T1-2:  
+p= `r round(sF2$test$pvalue,3)`. We have `r evidence2_r` that there is a difference in the change over from Baseline to Post between the groups.  The adjusted pvalue is `r round(r1$adjp[2],3)`.
+
+p-values adjusted by Holm's stepdown procedure.
+
+```{r, echo=FALSE}
+
+result.change.d1 %>%
+  filter(contrast=="1 - 2") %>%
+  dplyr::select(contrast, group, t1t2change, quality, p.value ) %>%
+  kbl(digits=3) %>%
+  kable_styling()
+
+
+# ordering change.
+## Extract pvalue for evidence / no evidence
+orderincrease <- ifelse( result.change.d1$t1t2change[1]>result.change.d1$t1t2change[4] &                result.change.d1$t1t2change[4]>result.change.d1$t1t2change[7] , 
+     "change in PCITT > COS-P > Waitlist", "Order not satisfied" )
+
+orderdecrease <- ifelse( result.change.d1$t1t2change[1]<result.change.d1$t1t2change[4] &                result.change.d1$t1t2change[4]<result.change.d1$t1t2change[7] , 
+     "change in PCITT > COS-P > Waitlist", "Order not satisfied" )
+
+```
+
+Is the ordering of change satisfied? 
+
+Assuming an increase is better (positive change is improvement)
+
+Greatest to least change from t1 to t2:  `r orderincrease`
+
+
+Assuming an decrease is better (negative change is improvement)
+
+Greatest to least change from t1 to t2:  `r orderdecrease`
+
+
+
+
+
+
+#### Hypothesis 2
+
+There will be a gradient of size of change from T2 to T3 such that the change in the PCIT-T group > the change in the CoS-P group.  This isn't really a gradient; it's just 1 hypothesis.
+
+First, the change in PCITT and COSP from time 2 to time 3:
+
+```{r, echo=FALSE}
+
+result.change.d1<-as.data.frame(result.change.d)
+result.change.d1<- result.change.d1 %>%
+  mutate(t2t3change=-1*estimate) %>%
+  mutate(quality=ifelse(t2t3change<0, "decreased t2 to t3", 
+                 ifelse(t2t3change>0, "increase t2 to t3", "did not change" )))
+
+result.change.d1 %>%
+  filter(contrast=="2 - 3") %>%
+  dplyr::select(contrast, group, t2t3change, quality, p.value ) %>%
+  kbl(digits=3) %>%
+  kable_styling()
+
+
+
+# ordering change.
+## Extract pvalue for evidence / no evidence
+orderincrease <- ifelse(result.change.d1$t2t3change[3]>0 &
+                        result.change.d1$t2t3change[3]>result.change.d1$t2t3change[6],
+                 "PCITT > COS-P, increase was greater in PCITT", 
+                 "PCITT < COS-P, increase was not greater in PCITT" )
+orderdecrease <- ifelse(result.change.d1$t2t3change[3]<0 &
+                        result.change.d1$t2t3change[3]<result.change.d1$t2t3change[6],
+                 "PCITT > COS-P, decrease was greater in PCITT", 
+                 "PCITT < COS-P, decrease was not greater in PCITT" )
+
+```
+
+Assuming an increase in scores is better, `r orderincrease`
+
+Assuming a decrease in scores is better,`r orderdecrease`
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp2   <- matrix(c(0, 0,0, 0,0, -1,0,1 ),1)
+hyp2F <- glht(result3, linfct = hyp2)
+summary(hyp2F)
+F<-summary(hyp2F)
+ci<- confint(F)
+ci
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(F$test$pvalue<0.05, "evidence", "no evidence")
+```
+
+p=`r round(F$test$pvalue,3)`, so we have `r evidence` to suggest that the change from t2 to t3 in PCITT is greater than the change in COSP.
+
