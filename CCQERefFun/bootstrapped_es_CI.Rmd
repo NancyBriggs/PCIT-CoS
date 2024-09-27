@@ -13,9 +13,16 @@ output:
 
 ##### Group mean difference at each timepoint
 
+NOTE THIS SET OF RESULTS DOES NOT BOOTSTRAP.
+
+
 Effect sizes all calculated by the pooled T1 SD of the outcome. Adjusted p-value from Bonferroni correction.
 
+
+
+
 ```{r, echo=FALSE}
+
 result.mean  <- emmeans(result3, "group", by = "time")
 result.mean.d <-pairs(result.mean)
 result.mean.d.adj <-pairs(result.mean, adjust="bonferroni")
@@ -126,7 +133,7 @@ boot_es_group <- function(mod){
   pooledsd<- sd_pooled(t1_1, t1_2, t1_3)
 }
 
-numsim <- 600
+numsim <-10
 seed=100
 groupd <-
   bootMer(fit_mixed, boot_contrasts, nsim = numsim, verbose=FALSE, seed=seed) # R = 599 at least
@@ -181,7 +188,7 @@ s_groupdiffs %>%
   col.names = c("Group Difference", "Time","Mean", "SE", "t","p","adj p",
                   "Lower CL","Upper CL", "Effect Size", "Lower CL","Upper CL") )  %>%
   kable_styling() %>%
-  add_footnote( c("Effect size scaled by pooled T1 SD", "ES 95% Bootstrapped Percentile CI limits","If you want a positive ES (and it is calculated as negative), be sure to switch the signs and positions of the lower and upper CIs."), notation = "symbol")
+  add_footnote( c("Effect size scaled by pooled T1 SD of logged data", "ES 95% Bootstrapped Percentile CI limits","If you want a positive ES (and it is calculated as negative), be sure to switch the signs and positions of the lower and upper CIs."), notation = "symbol")
 ```
 
 
@@ -231,7 +238,7 @@ s %>%
   col.names = c("Change", "Group","Mean", "SE", "t","p","adj p",
                   "Lower CL","Upper CL", "Effect Size", "Lower CL","Upper CL") )  %>%
   kable_styling() %>%
-  add_footnote( c("Effect size scaled by pooled T1 SD", "ES 95% Bootstrapped Percentile CI limits","If you want a positive ES (and it is calculated as negative), be sure to switch the signs and positions of the lower and upper CIs."), notation = "symbol")
+  add_footnote( c("Effect size scaled by pooled T1 SD of logged data", "ES 95% Bootstrapped Percentile CI limits","If you want a positive ES (and it is calculated as negative), be sure to switch the signs and positions of the lower and upper CIs."), notation = "symbol")
 
 ```
 

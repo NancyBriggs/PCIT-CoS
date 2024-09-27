@@ -1,7 +1,7 @@
 ---
 title: "PCIT-CoS-Waitlist RCT Paper 1: Parental Reflectiveness CCQE"
 author: "Nancy Briggs"
-date: "06 June 2022"
+date: "`r Sys.Date()`"
 output:
   html_document:
     toc: true
@@ -14,8 +14,15 @@ output:
 
 Output run on `r Sys.Date()`
 
+
+Values are totals, not means, of the following CCQ variables: CCQE1, CCQE2, CCQE3, CCQE4_R, CCQE5, CCQE6, CCQE7, CCQE8, CCQE9_R, CCQE10, CCQE11, CCQE12, CCQE13, CCQE14_R, CCQE15, CCQE16, CCQE17, CCQE18
+
+
+
+
 ```{r, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
 
 library(lme4)
 
@@ -77,21 +84,24 @@ data <- data %>%
                 pre_ccq_a_topse_mean, post_ccq_a_topse_mean ,fu_ccq_a_topse_mean, 
 
                 # CCQ Caregiving Helplessness
-                pre_chqd_mean, post_chqd_mean, fu_chqd_mean,
+                pre_chqd_sum, post_chqd_sum, fu_chqd_sum,
                 
                 # CCQ Hostil Parenting
-                pre_ccqc_mean, post_ccqc_mean, fu_ccqc_mean,
+                pre_ccqc_sum, post_ccqc_sum, fu_ccqc_sum,
 
                 # Maternal reflective functioning 
-                pre_ccqe_mean, post_ccqe_mean, fu_ccqe_mean,
+                pre_ccqe_sum, post_ccqe_sum, fu_ccqe_sum,
 
                 #1: Brief Infant Toddler Social Emotional Assessment (BITSEA)
+                #1: Brief Infant Toddler Social Emotional Assessment (BITSEA)
                 # Problem
-                pre_bitseaprob_mean, post_bitseaprob_mean, fu_bitseaprob_mean,
+                pre_bitseaprob_sum, post_bitseaprob_sum, fu_bitseaprob_sum,
+                # Competence
+                pre_bitseacomp_sum, post_bitseacomp_sum,fu_bitseacomp_sum
 
                 #NICHD
                 #Observed maternal negativity
-                nichd_negative_total, post_nichd_negative_total, fu_nichd_negative_total,
+                #nichd_negative_total, post_nichd_negative_total, fu_nichd_negative_total,
   
                 )
 
@@ -103,35 +113,35 @@ data <- data %>%
 
 #### Descriptives
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=F}
 
-# pre_ccqe_mean, post_ccqe_mean, fu_ccqe_mean
+# pre_ccqe_sum, post_ccqe_sum, fu_ccqe_sum
 
 # One person on Waitlist has a value for FU.  set to NA
-#data$fu_ccqe_mean[data$group==3] <- NA
+#data$fu_ccqe_sum[data$group==3] <- NA
 
 desctable <- data %>%
   group_by(group) %>%
-  summarise(n1 = sum(!is.na(pre_ccqe_mean)) , 
-            mean1=mean(pre_ccqe_mean, na.rm = T ),
-            sd1=sd(pre_ccqe_mean, na.rm = T ),
-            median1=median(pre_ccqe_mean, na.rm = T ),
-            min1=min(pre_ccqe_mean, na.rm = T ),
-            max1=max(pre_ccqe_mean, na.rm = T ),
+  summarise(n1 = sum(!is.na(pre_ccqe_sum)) , 
+            mean1=mean(pre_ccqe_sum, na.rm = T ),
+            sd1=sd(pre_ccqe_sum, na.rm = T ),
+            median1=median(pre_ccqe_sum, na.rm = T ),
+            min1=min(pre_ccqe_sum, na.rm = T ),
+            max1=max(pre_ccqe_sum, na.rm = T ),
             
-            n2 = sum(!is.na(post_ccqe_mean)) , 
-            mean2=mean(post_ccqe_mean, na.rm = T ),
-            sd2=sd(post_ccqe_mean, na.rm = T ),
-            median2=median(post_ccqe_mean, na.rm = T ),
-            min2=min(post_ccqe_mean, na.rm = T ),
-            max2=max(post_ccqe_mean, na.rm = T ),
+            n2 = sum(!is.na(post_ccqe_sum)) , 
+            mean2=mean(post_ccqe_sum, na.rm = T ),
+            sd2=sd(post_ccqe_sum, na.rm = T ),
+            median2=median(post_ccqe_sum, na.rm = T ),
+            min2=min(post_ccqe_sum, na.rm = T ),
+            max2=max(post_ccqe_sum, na.rm = T ),
             
-            n3 = sum(!is.na(fu_ccqe_mean)) , 
-            mean3=mean(fu_ccqe_mean, na.rm = T ),
-            sd3=sd(fu_ccqe_mean, na.rm = T ),
-            median3=median(fu_ccqe_mean, na.rm = T ),
-            min3=min(fu_ccqe_mean, na.rm = T ),
-            max3=max(fu_ccqe_mean, na.rm = T )  ) %>%
+            n3 = sum(!is.na(fu_ccqe_sum)) , 
+            mean3=mean(fu_ccqe_sum, na.rm = T ),
+            sd3=sd(fu_ccqe_sum, na.rm = T ),
+            median3=median(fu_ccqe_sum, na.rm = T ),
+            min3=min(fu_ccqe_sum, na.rm = T ),
+            max3=max(fu_ccqe_sum, na.rm = T )  ) %>%
   pivot_longer(cols = -group,  
                 names_to = c('.value', 'time'), 
                     names_pattern = '(.*)(\\d+)')
@@ -153,21 +163,21 @@ desctable %>%
 
 
 ```{r, echo=FALSE}
-##   pre_ccqe_mean, post_ccqe_mean, fu_ccqe_mean
+##   pre_ccqe_sum, post_ccqe_sum, fu_ccqe_sum
 # Histograms
 # plot
 p <- data %>%
-  dplyr::select(id,group,  pre_ccqe_mean, post_ccqe_mean, fu_ccqe_mean) %>%
-  pivot_longer( cols = c( "pre_ccqe_mean", "post_ccqe_mean", "fu_ccqe_mean"),  names_prefix = "bitseacomp_", 
+  dplyr::select(id,group,  pre_ccqe_sum, post_ccqe_sum, fu_ccqe_sum) %>%
+  pivot_longer( cols = c( "pre_ccqe_sum", "post_ccqe_sum", "fu_ccqe_sum"),  names_prefix = "bitseacomp_", 
                 names_to="t", values_to="outcome") %>%
-  mutate(time = ifelse(t == "pre_ccqe_mean",  1,
-                ifelse(t == "post_ccqe_mean", 2, 3))) 
+  mutate(time = ifelse(t == "pre_ccqe_sum",  1,
+                ifelse(t == "post_ccqe_sum", 2, 3))) 
   
 
   
 hist<-ggplot(p, aes(x=outcome) )+
   geom_histogram(alpha=0.6, binwidth = .5) +
-  xlab("Observed maternal sensitivity (NICHD)") +
+  xlab("Observed Parental Reflectiveness") +
   ylab("Frequency") +
   facet_wrap(group~time)
 
@@ -187,16 +197,16 @@ hist + theme_minimal() +
 
 #### Model & Results
 
-A linear mixed model with random effect for individual and fixed effects of group, time and the interaction was run *on the log-transformed data*. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2.
+A linear mixed model with random effect for individual and fixed effects of group, time and the interaction was run on the raw data. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2.
 
 ```{r, echo=FALSE, warning=FALSE}
 #  analysis
 dat <- data %>%
-dplyr::select(id,group,  pre_ccqe_mean, post_ccqe_mean, fu_ccqe_mean) %>%
-  pivot_longer( cols = c( "pre_ccqe_mean", "post_ccqe_mean", "fu_ccqe_mean"),  names_prefix = "bitseacomp_", 
+dplyr::select(id,group,  pre_ccqe_sum, post_ccqe_sum, fu_ccqe_sum) %>%
+  pivot_longer( cols = c( "pre_ccqe_sum", "post_ccqe_sum", "fu_ccqe_sum"),  names_prefix = "bitseacomp_", 
                 names_to="t", values_to="outcome") %>%
-  mutate(time = ifelse(t == "pre_ccqe_mean",  1,
-                ifelse(t == "post_ccqe_mean", 2, 3))) 
+  mutate(time = ifelse(t == "pre_ccqe_sum",  1,
+                ifelse(t == "post_ccqe_sum", 2, 3))) 
   
 
 dat$time<- as.factor(dat$time)
@@ -212,7 +222,7 @@ result3<-lmer(outcome ~ group*time + (1 | id), dat)
 
 
 
-This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is no evidence that the pattern of change over time is different between the groups (p=0.591).
+This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value.
 
 ```{r, echo=FALSE}
 anovatab<-anova(result0,result1,result2,result3)
@@ -226,9 +236,15 @@ anovatab <-anovatab %>%
 anovatab %>%
            kbl(digits=3) %>%
            kable_styling()
+
+
+
+
+## Extract pvalue for evidence / no evidence
+evidence = ifelse(anovatab[4,9]<0.05, "evidence", "no evidence")
 ```
 
-
+Here, there is `r evidence` that the pattern of change over time is different between the groups (`r round(anovatab[4,9],4)`).
 
 ```{r}
 summary(result3)
@@ -264,18 +280,50 @@ First, confirming that the ordering of the means is as hypothesized:
 result.change  <- emmeans(result3, "time", by = "group")
 result.change.d <-pairs(result.change)
 result.change.d
+result.change.d1<-as.data.frame(result.change.d)
+result.change.d1<- result.change.d1 %>%
+  mutate(t1t2change=-1*estimate) %>%
+  mutate(quality=ifelse(t1t2change<0, "decreased t1 to t2", 
+                 ifelse(t1t2change>0, "increase t1 to t2", "did not change" )))
+
+result.change.d1 %>%
+  filter(contrast=="1 - 2") %>%
+  dplyr::select(contrast, group, t1t2change, quality, p.value ) %>%
+  kbl(digits=3) %>%
+  kable_styling()
+
+
+# ordering change.
+## Extract pvalue for evidence / no evidence
+orderincrease <- ifelse( result.change.d1$t1t2change[1]>result.change.d1$t1t2change[4] &
+                         result.change.d1$t1t2change[4]>result.change.d1$t1t2change[7] , 
+                 "PCITT > COS-P > Waitlist", "Order not satisfied" )
+# orderdecrease <- ifelse( result.change.d1$estimate[1]<result.change.d1$estimate[4],
+#          ifelse( result.change.d1$estimate[4]<result.change.d1$estimate[7] , 
+#                  "PCITT > COS-P > Waitlist", "Order not satisfied" ))
+
+
+
 ```
 
-scores increased for the PCITT group from Baseline to post (-.218), and decreased for COSP (0.027).
+Is the ordering of change satisfied? 
+
+Greatest to least change from t1 to t2:  `r orderincrease`
+
+Note that I interpreted an increase in scores as being "better".  If a decrease in scores is "better" then these change values should be interpreted in that light.
+
 
 ```{r, echo=FALSE, warning=FALSE}
 
 ## Specify contrast matrices
 # Hyp1 is 1 df test
 # could use alternative="less" ir alternative="greater" in glht
-hyp1   <- matrix(c(0, 0,0, 0,0, -1,0,0 ),1)
+hyp1   <- matrix(c(0, 0,0, 0,0, 1,0,0 ),1)
 # Hyp2 is 1 df test, 
-hyp2   <- matrix(c(0, 0,0, 0,1, 0,1,0 ),1)
+hyp2   <- matrix(c(0, 0,0, 0,0, -1,1, 0 ),1)
+
+
+
 
 # hypF is combined 2df test. Yes!
 h<-rbind(hyp1,hyp2)
@@ -283,15 +331,18 @@ hypF <- as.matrix(h)
 GlobalF <- glht(result3, linfct = hypF, test = Ftest())
 GlobalF$linfct
 summary(GlobalF, test = Ftest())
+F<-summary(GlobalF, test = Ftest())
 
 #also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
 
+
+## Extract pvalue for evidence / no evidence
+evidence = ifelse(F$test$pvalue<0.05, "evidence", "no evidence")
+
 ```
 
-pvalue<0.05. We do have evidence that there is a difference in the change over from Baseline to Post amongst the groups.  
 
-
-
+p= `r round(F$test$pvalue,3)`. We have `r evidence` that there is a difference in the change over from Baseline to Post amongst the groups.
 
 #### Hypothesis 2
 
@@ -300,11 +351,39 @@ There will be a gradient of size of change from T2 to T3 such that the change in
 First, the change in PCITT and COSP from time 2 to time 3:
 
 ```{r, echo=FALSE}
-result.change.d
+
+result.change.d1<-as.data.frame(result.change.d)
+result.change.d1<- result.change.d1 %>%
+  mutate(t2t3change=-1*estimate) %>%
+  mutate(quality=ifelse(t2t3change<0, "decreased t2 to t3", 
+                 ifelse(t2t3change>0, "increase t2 to t3", "did not change" )))
+
+result.change.d1 %>%
+  filter(contrast=="2 - 3") %>%
+  dplyr::select(contrast, group, t2t3change, quality, p.value ) %>%
+  kbl(digits=3) %>%
+  kable_styling()
+
+
+
+# ordering change.
+## Extract pvalue for evidence / no evidence
+orderincrease <- ifelse(result.change.d1$t2t3change[3]>0 &
+                        result.change.d1$t2t3change[3]>result.change.d1$t2t3change[6],
+                 "PCITT > COS-P, increase was greater in PCITT", 
+                 "PCITT < COS-P, increase was not greater in PCITT" )
+orderdecrease <- ifelse(result.change.d1$t2t3change[3]<0 &
+                        result.change.d1$t2t3change[3]<result.change.d1$t2t3change[6],
+                 "PCITT > COS-P, decrease was greater in PCITT", 
+                 "PCITT < COS-P, decrease was not greater in PCITT" )
+
 ```
 
-There is not as much change in PCITT(-0.074) as in COSP (-0.100).
 
+
+Assuming an increase in scores is better, `r orderincrease`
+
+Assuming a decrease in scores is better,`r orderdecrease`
 
 ```{r, echo=FALSE, warning=FALSE}
 
@@ -314,22 +393,51 @@ There is not as much change in PCITT(-0.074) as in COSP (-0.100).
 hyp2   <- matrix(c(0, 0,0, 0,0, -1,0,1 ),1)
 hyp2F <- glht(result3, linfct = hyp2)
 summary(hyp2F)
+F<-summary(hyp2F)
 #also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(F$test$pvalue<0.05, "evidence", "no evidence")
+```
+
+p=`r round(F$test$pvalue,3)`, so we have `r evidence` to suggest that the change from t2 to t3 in PCITT is greater than the change in COSP.
+
+
+
+##### Change from T1-T3
+
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp2   <- matrix(c(0, 0,0, 0,0, 0,0,1 ),1)
+hyp2F <- glht(result3, linfct = hyp2, test = Ftest())
+summary(hyp2F, test = Ftest())
+s<-summary(hyp2F, test = Ftest())
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(s$test$pvalue<0.05, "evidence", "no evidence")
 
 ```
 
-p>0.05, so we do not have enough evidence to suggest that the change from t2 to t3 in PCITT is greater than the change in COSP.
+
+
+p=`r round(s$test$pvalue,4)`. We have `r evidence` that the change from T1 to T3 is different for G1 and G2 
 
 
 
 
 #### Residuals
 
-Assumptions of the model are met when analysing the log-trasformed data.
+Assumptions of the model are met.
 
 ```{r, echo=FALSE, warning=FALSE}
-plot(result3,form = resid(., type = "pearson") ~ predict(., re.form = NA) )
-
+plot(result3)
 
 qqnorm(residuals(result3))
 qqline(residuals(result3), col="red")

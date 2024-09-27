@@ -1,7 +1,7 @@
 ---
 title: "PCIT-CoS-Waitlist RCT Paper 1:CCQ Caregiving Helplessness, Controlling for ASD"
 author: "Nancy Briggs"
-date: "05 JAN 2021"
+date: "r Sys.Date()"
 output:
   html_document:
     toc: true
@@ -10,7 +10,12 @@ output:
 ---
 
 
-### CCQ Caregiving Helplessness Adjusting for ASD {.tabset .tabset-fade .tabset-pills}
+###  Parental Reflectiveness CCQE {.tabset .tabset-fade .tabset-pills}
+
+Output run on `r Sys.Date()`
+
+
+Values are totals, not means, of the following CCQ variables: CCQE1, CCQE2, CCQE3, CCQE4_R, CCQE5, CCQE6, CCQE7, CCQE8, CCQE9_R, CCQE10, CCQE11, CCQE12, CCQE13, CCQE14_R, CCQE15, CCQE16, CCQE17, CCQE18
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -74,7 +79,7 @@ data <- data %>%
                 pre_ccq_a_topse_mean, post_ccq_a_topse_mean ,fu_ccq_a_topse_mean , 
 
                 # CCQ Caregiving Helplessness
-                pre_chqd_mean, post_chqd_mean, fu_chqd_mean
+                pre_chqd_sum, post_chqd_sum, fu_chqd_sum
 
 
                 
@@ -89,43 +94,37 @@ data <- data %>%
 #### Descriptives
 
 ```{r, echo=FALSE, warning=FALSE}
-#  pre_chqd_mean, post_chqd_mean, fu_chqd_mean
 
+# pre_ccqe_sum, post_ccqe_sum, fu_ccqe_sum
+
+# One person on Waitlist has a value for FU.  set to NA
+#data$fu_ccqe_sum[data$group==3] <- NA
 
 desctable <- data %>%
-  group_by(asdcase, group) %>%
-  mutate(score1 = case_when( 
-    pre_chqd_mean == -9 ~ NA_real_,          #assign missing values to zeros
-    TRUE ~ pre_chqd_mean)) %>%
-  mutate(score2 = case_when( 
-    post_chqd_mean == -9 ~ NA_real_,         #assign missing values to zeros
-    TRUE ~ post_chqd_mean)) %>%
-  mutate(score3 = case_when( 
-    fu_chqd_mean == -9 ~ NA_real_,           #assign missing values to zeros
-    TRUE ~ fu_chqd_mean)) %>%
-  summarise(n1 = sum(!is.na(score1)) , 
-            mean1=mean(pre_chqd_mean, na.rm = T ),
-            sd1=sd(pre_chqd_mean, na.rm = T ),
-            median1=median(pre_chqd_mean, na.rm = T ),
-            min1=min(pre_chqd_mean, na.rm = T ),
-            max1=max(pre_chqd_mean, na.rm = T ),
+  group_by(asdcase,group) %>%
+  summarise(n1 = sum(!is.na(pre_ccqe_sum)) , 
+            mean1=mean(pre_ccqe_sum, na.rm = T ),
+            sd1=sd(pre_ccqe_sum, na.rm = T ),
+            median1=median(pre_ccqe_sum, na.rm = T ),
+            min1=min(pre_ccqe_sum, na.rm = T ),
+            max1=max(pre_ccqe_sum, na.rm = T ),
             
-            n2 = sum(!is.na(score2)) , 
-            mean2=mean(post_chqd_mean, na.rm = T ),
-            sd2=sd(post_chqd_mean, na.rm = T ),
-            median2=median(post_chqd_mean, na.rm = T ),
-            min2=min(post_chqd_mean, na.rm = T ),
-            max2=max(post_chqd_mean, na.rm = T ),
+            n2 = sum(!is.na(post_ccqe_sum)) , 
+            mean2=mean(post_ccqe_sum, na.rm = T ),
+            sd2=sd(post_ccqe_sum, na.rm = T ),
+            median2=median(post_ccqe_sum, na.rm = T ),
+            min2=min(post_ccqe_sum, na.rm = T ),
+            max2=max(post_ccqe_sum, na.rm = T ),
             
-            n3 = sum(!is.na(score3)) , 
-            mean3=mean(fu_chqd_mean, na.rm = T ),
-            sd3=sd(fu_chqd_mean, na.rm = T ),
-            median3=median(fu_chqd_mean, na.rm = T ),
-            min3=min(fu_chqd_mean, na.rm = T ),
-            max3=max(fu_chqd_mean, na.rm = T )  ) %>%
-  pivot_longer(cols = -c(group,asdcase),  
+            n3 = sum(!is.na(fu_ccqe_sum)) , 
+            mean3=mean(fu_ccqe_sum, na.rm = T ),
+            sd3=sd(fu_ccqe_sum, na.rm = T ),
+            median3=median(fu_ccqe_sum, na.rm = T ),
+            min3=min(fu_ccqe_sum, na.rm = T ),
+            max3=max(fu_ccqe_sum, na.rm = T )  ) %>%
+  pivot_longer(cols = -c(asdcase,group),  
                 names_to = c('.value', 'time'), 
-                    names_pattern = '(.*)(\\d+)')
+                    names_pattern = '(.*)(\\d+)') 
 
 write.csv(desctable,"desctable_asd.csv", row.names = TRUE)
 
@@ -140,15 +139,15 @@ desctable %>%
 
 
 ```{r, echo=FALSE}
-#  pre_chqd_mean, post_chqd_mean, fu_chqd_mean
+#  pre_chqd_sum, post_chqd_sum, fu_chqd_sum
 # Histograms
 # plot
 p <- data %>%
-  dplyr::select(id,group, pre_chqd_mean, post_chqd_mean, fu_chqd_mean) %>%
-  pivot_longer( cols = c("pre_chqd_mean", "post_chqd_mean", "fu_chqd_mean"),  names_prefix = "ccqa_", 
+  dplyr::select(id,group, pre_chqd_sum, post_chqd_sum, fu_chqd_sum) %>%
+  pivot_longer( cols = c("pre_chqd_sum", "post_chqd_sum", "fu_chqd_sum"),  names_prefix = "ccqa_", 
                 names_to="t", values_to="outcome") %>%
-  mutate(time = ifelse(t == "pre_chqd_mean",  1,
-                ifelse(t == "post_chqd_mean", 2, 3))) 
+  mutate(time = ifelse(t == "pre_chqd_sum",  1,
+                ifelse(t == "post_chqd_sum", 2, 3))) 
   
 
 
@@ -180,11 +179,11 @@ A linear mixed model with random effect for individual and fixed effects of grou
 ```{r, echo=FALSE, warning=FALSE}
 #  analysis
 dat <- data %>%
-  dplyr::select(id,group, asdcase, pre_chqd_mean, post_chqd_mean, fu_chqd_mean) %>%
-  pivot_longer( cols = c("pre_chqd_mean", "post_chqd_mean", "fu_chqd_mean"),  names_prefix = "ccqa_", 
+  dplyr::select(id,group, asdcase, pre_chqd_sum, post_chqd_sum, fu_chqd_sum) %>%
+  pivot_longer( cols = c("pre_chqd_sum", "post_chqd_sum", "fu_chqd_sum"),  names_prefix = "ccqa_", 
                 names_to="t", values_to="outcome") %>%
-  mutate(time = ifelse(t == "pre_chqd_mean",  1,
-                ifelse(t == "post_chqd_mean", 2, 3))) 
+  mutate(time = ifelse(t == "pre_chqd_sum",  1,
+                ifelse(t == "post_chqd_sum", 2, 3))) 
   
 
 
@@ -205,7 +204,7 @@ result4<-lmer(outcome ~ asdcase*group*time + (1 | id), dat)
 
 
 
-This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is no evidence that the pattern of change over time is different between the groups (p=0.591).
+This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. 
 
 ```{r, echo=FALSE}
 anovatab<-anova(result0,result0_5,result1,result2,result3,result4)
@@ -220,9 +219,15 @@ anovatab <-anovatab %>%
 anovatab %>%
            kbl(digits=3) %>%
            kable_styling()
+
+
+
+
+## Extract pvalue for evidence / no evidence
+evidence = ifelse(anovatab[6,9]<0.05, "evidence", "no evidence")
 ```
 
-There is no evidence that ASD moderates the 2-way group*time interaction (the 3-way interaction p=0.254). 
+There is no `r evidence` that ASD moderates the 2-way group*time interaction (the 3-way interaction p=`r round(anovatab[6,9],4)` ). 
 
 Model3, the model with Group*Time, adjusted by ASD will be the model I use for Estimated Means.
 
