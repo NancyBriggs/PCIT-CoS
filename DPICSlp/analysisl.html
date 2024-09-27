@@ -11,7 +11,7 @@
 
 <meta name="author" content="Nancy Briggs" />
 
-<meta name="date" content="2024-04-10" />
+<meta name="date" content="2024-03-19" />
 
 <title>PCIT-CoS-Waitlist RCT Paper 1: DPICS LP</title>
 
@@ -1714,7 +1714,7 @@ border-radius: 0px;
 <h1 class="title toc-ignore">PCIT-CoS-Waitlist RCT Paper 1: DPICS
 LP</h1>
 <h4 class="author">Nancy Briggs</h4>
-<h4 class="date">2024-04-10</h4>
+<h4 class="date">2024-03-19</h4>
 
 </div>
 
@@ -3138,8 +3138,6 @@ GlobalF$linfct</code></pre>
 </div>
 <div id="hypothesis-2" class="section level4">
 <h4>Hypothesis 2</h4>
-<div id="change-from-t2-t3" class="section level5">
-<h5>Change from T2-T3</h5>
 <p>There will be a gradient of size of change from T2 to T3 such that
 the change in the PCIT-T group &gt; the change in the CoS-P group. This
 isn’t really a gradient; it’s just 1 hypothesis.</p>
@@ -3201,35 +3199,8 @@ summary(hyp2F)</code></pre>
 ##        Estimate Std. Error z value Pr(&gt;|z|)
 ## 1 == 0   0.6018     0.5025   1.198    0.231
 ## (Adjusted p values reported -- single-step method)</code></pre>
-<pre class="r"><code>s&lt;-summary(hyp2F, test = Ftest())
-#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
-
-
-
-## Extract pvaue for evidence / no evidence
-evidence = ifelse(s$test$pvalue&lt;0.05, &quot;evidence&quot;, &quot;no evidence&quot;)</code></pre>
-<p>Change in G1 from T2 to T3: 0.586</p>
-<p>Change in G2 from T2 to T3: 1.07</p>
-<p>p=0.2328. We have no evidence that the change from T1 to T3 is
-different for G1 and G2</p>
-</div>
-<div id="change-from-t1-t3" class="section level5">
-<h5>Change from T1-T3</h5>
-<pre><code>## 
-##   General Linear Hypotheses
-## 
-## Linear Hypotheses:
-##        Estimate
-## 1 == 0   -2.253
-## 
-## Global Test:
-##      F DF1 DF2    Pr(&gt;F)
-## 1 17.4   1 163 4.922e-05</code></pre>
-<p>Change in G1 from T1 to T3: 15.561</p>
-<p>Change in G2 from T1 to T3: 1.635</p>
-<p>p=0. We have evidence that the change from T1 to T3 is different for
-G1 and G2</p>
-</div>
+<pre class="r"><code>#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html</code></pre>
+<p>p&gt;0.05, so this null hypothesis cannot be rejected.</p>
 </div>
 <div id="residuals" class="section level4">
 <h4>Residuals</h4>

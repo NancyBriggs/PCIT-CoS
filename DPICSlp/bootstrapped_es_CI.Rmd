@@ -16,26 +16,10 @@ output:
 Effect sizes all calculated by the pooled T1 SD of the outcome. Adjusted p-value from Bonferroni correction.
 
 ```{r, echo=FALSE}
-result.mean  <- emmeans(result3, "group", by = "time")
-result.mean.d <-pairs(result.mean)
+result.mean  <- emmeans(result3, "group", by = "time", type = "response")
+result.mean.d <-pairs(result.mean, type = "response" )
 result.mean.d.adj <-pairs(result.mean, adjust="bonferroni")
 
-# get baseline pooled SD
-
-# save each T1 measure for each group as a vector (pull)
-t1_1 <- dat %>%
-        filter(group==1 & time==1) %>%
-        dplyr::select(outcome) %>%
-        pull(outcome)
-t1_2 <- dat %>%
-        filter(group==2 & time==1) %>%
-        dplyr::select(outcome) %>%
-        pull(outcome)
-t1_3 <- dat %>%
-        filter(group==3 & time==1) %>%
-        dplyr::select(outcome) %>%
-        pull(outcome)
-pooledsd<- sd_pooled(t1_1, t1_2, t1_3)
 # save summary of differences as dataset
 s_groupdiffs<-summary(result.mean.d)
 ci<-confint(result.mean.d)
@@ -45,21 +29,20 @@ s_groupdiffsadj <- s_groupdiffsadj %>%
 
 s_groupdiffs<- left_join(s_groupdiffs,s_groupdiffsadj)
 s_groupdiffs<- left_join(s_groupdiffs,ci)
-# calculate effect sizes
-s_groupdiffs$es=s_groupdiffs$estimate/pooledsd
+
 
 ```
 
-```{r, echo=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE, include=F, eval=F}
 # bootstrapped percentile CIs for Effect sizes.
-fit_mixed <- lmer(outcome ~ group*time + (1 | id), dat)
+fit_mixed <- glmer(cbind(lp, verbal-lp) ~ group + time +group*time + (1 | id), data=p, family=binomial)
 
 boot_contrasts <- function(mod){
   # code for ucntion to get group differences at each time point
   rg <- ref_grid(mod, mult.levs = rm_levels)
   
   # get the expected means:
-  em_ <- emmeans(rg, ~ group*time)
+  em_ <- emmeans(rg, ~ group*time,type = "response")
   
   # run pairwise tests between the treatment groups within each phase
   c_ <- contrast(em_, "pairwise", by = 'time')
@@ -190,27 +173,12 @@ s_groupdiffs %>%
 
 ```{r, echo=FALSE, warning=FALSE}
 
-result.change  <- emmeans(result3, "time", by = "group")
-result.change.d <-pairs(result.change)
-result.change.d.adj <-pairs(result.change, adjust="bonferroni")
+result.change  <- emmeans(result3, "time", by = "group", type="response")
+result.change.d <-pairs(result.change, reverse=TRUE)
+result.change.d.adj <-pairs(result.change, reverse=TRUE,adjust="bonferroni")
 
-# get baseline pooled SD
-
-# save each T1 measure for each group as a vector (pull)
-t1_1 <- dat %>%
-        filter(group==1 & time==1) %>%
-        dplyr::select(outcome) %>%
-        pull(outcome)
-t1_2 <- dat %>%
-        filter(group==2 & time==1) %>%
-        dplyr::select(outcome) %>%
-        pull(outcome)
-t1_3 <- dat %>%
-        filter(group==3 & time==1) %>%
-        dplyr::select(outcome) %>%
-        pull(outcome)
-pooledsd<- sd_pooled(t1_1, t1_2, t1_3)
 # save summary of differences as dataset
+estmeans<-summary(result.change)
 s<-summary(result.change.d)
 ci<-confint(result.change.d)
 sadj<-summary(result.change.d.adj)
@@ -219,27 +187,48 @@ sadj <- sadj %>%
 
 s<- left_join(s,sadj)
 s<- left_join(s,ci)
-# calculate effect sizes
-s$es=(s$estimate/pooledsd)
+```
 
 
-s<- cbind(s,es_change)
+```{r, echo=F}
+estmeans %>%
+  dplyr::select(c(-df)) %>%
+  kbl(digits=3,caption = "Estimated Mean Number of LP", 
+  col.names = c("Time", "Group","Mean", "SE", "LowerCL","UpperCL") )  %>%
+  kable_styling() 
+```
+
+
+```{r, echo=F}
+s_groupdiffs
+dplyr::select(c(-null,-df)) %>%
+  kbl(digits=3,caption = "Between-Group Differences", 
+  col.names = c("Change", "Group","Ratio", "SE", "z","p","adj p",
+                  "Lower CL","Upper CL") )  %>%
+  kable_styling() %>%
+  add_footnote( c("Effect size here is the ratio of differences. A value greater than 1 indicates a proportion change from the reference group." ), notation = "symbol")
+```
+
+Here you can see that Group1 has a lower number of LP at time 1 than Group1 (Ratio=.69), but at Time 2, it is much higher (ratio=10.96). 
+
+```{r, echo=F}
 
 s %>%
-  dplyr::select(c(-comparison,-df)) %>%
-  kbl(digits=3,caption = "Within-Group Change and Effect Sizes", 
-  col.names = c("Change", "Group","Mean", "SE", "t","p","adj p",
-                  "Lower CL","Upper CL", "Effect Size", "Lower CL","Upper CL") )  %>%
+ dplyr::select(c(-null,-df)) %>%
+  kbl(digits=3,caption = "Within-Group Change", 
+  col.names = c("Change", "Group","Ratio", "SE", "z","p","adj p",
+                  "Lower CL","Upper CL") )  %>%
   kable_styling() %>%
-  add_footnote( c("Effect size scaled by pooled T1 SD", "ES 95% Bootstrapped Percentile CI limits","If you want a positive ES (and it is calculated as negative), be sure to switch the signs and positions of the lower and upper CIs."), notation = "symbol")
+  add_footnote( c("Effect size here is the ratio of change. A value greater than 1 indicates a proportion change from the reference timepoint." ), notation = "symbol")
 
 ```
 
+Here, you can see that the effect size for change in group1 from T1 to T2 is 25.4. This can be interpreted as: the number of LP at time 2 was 25.4 times that of LP at time1. That's huge!  The value for group2 is 1.6, showing an increase in 1.6 times LP at time 1, but it is so much smaller than the relative increase for Group1.  
 
 
 ```{r, echo=FALSE, warning=FALSE}
 
-result.emm <- emmeans(result3, ~group * time)
+result.emm <- emmeans(result3, ~group * time, type = "response")
 result.means <- as.data.frame(result.emm)
 result.means <-  
   result.means %>%
@@ -254,8 +243,8 @@ result.means <-
                 3.1)))))))))
 
 
-lp1 <- ggplot(data=result.means, aes(x=time1, y=emmean, group=group, shape=group, colour=group)) + geom_line(aes(linetype=group)) + geom_point(size=2) +
-    geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL, color=group)) +
+lp1 <- ggplot(data=result.means, aes(x=time1, y=rate, group=group, shape=group, colour=group)) + geom_line(aes(linetype=group)) + geom_point(size=2) +
+    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL, color=group)) +
   #must define these the same so that only 1 legend is shown
   scale_colour_discrete(name  ="Group",
                             breaks=c(1,2,3),

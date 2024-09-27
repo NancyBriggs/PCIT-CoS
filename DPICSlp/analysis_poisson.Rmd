@@ -1,5 +1,5 @@
 ---
-title: "PCIT-CoS-Waitlist RCT Paper 1: DPICS NTA"
+title: "PCIT-CoS-Waitlist RCT Paper 1: DPICS LP"
 author: "Nancy Briggs"
 date: "`r Sys.Date()`"
 output:
@@ -9,9 +9,14 @@ output:
     toc_float: true
 ---
 
+I was not happy with modelling this DPICS variable as a proportion of total verbalisation since all the proportions ended up being so small (total verbalisations were in the hundreds, with LP actions being small, usually <10%).
 
-<!-- ### DPICS NTA  {.tabset .tabset-fade .tabset-pills} -->
-### DPICS NTA 
+So I switched to a poisson model, with no offset, simply looking at total number of LP verbalisations, and I am much happier with the output and results.
+
+In the results, the "effect size" the the ratio of the means.
+
+
+### DPICS LP  {.tabset .tabset-fade .tabset-pills}
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -27,7 +32,7 @@ library(multcomp)
 library(kableExtra)
 library(ggplot2)
 library(lmerTest)
-library(DHARMa)
+
 
 options(warnPartialMatchAttr = FALSE, 
   warnPartialMatchDollar = FALSE,
@@ -52,16 +57,7 @@ data <- data %>%
                 parent_lp_perc_total_time_1, parent_lp_perc_total_time_2, parent_lp_perc_total_time_3,
                 #DPICS Negative Talk
                 parent_nta_perc_total_time_1, parent_nta_perc_total_time_2, parent_nta_perc_total_time_3,
-                #BCAP
-                prebcap_risk, post_bcap_risk, fu_bcap_risk,
-                #BCAP Lie scale
-                prebcap_lie, post_bcap_lie, fu_bcap_lie,
-                
-                # Child Ext Behav
-                cbclext_pre_total,cbclext_post_total,cbclext_fu_total,
-
-                # CBCL Internalising Behav
-                cbclint_pre_total,cbclint_post_total,cbclint_fu_total,
+               
                 
                 #Child Compliance
                 total_co_perc_time_1,total_co_perc_time_2,total_co_perc_time_3
@@ -102,52 +98,93 @@ data <- left_join(data, time, by="id")
 
 #### Descriptives
 
-```{r, echo=FALSE, warning=F}
-# parent_nta_perc_total_time_1, parent_nta_perc_total_time_2, parent_nta_perc_total_time_3,
+```{r, echo=FALSE}
+# parent_lp_perc_total_time_1, parent_lp_perc_total_time_2, parent_lp_perc_total_time_3,
 
 
 desctable <- data %>%
   group_by(group) %>%
   mutate(score1 = case_when( 
-    parent_nta_perc_total_time_1 == -9 ~ NA_real_,                                #assign missing values to zeros
-    TRUE ~ parent_nta_perc_total_time_1)) %>%
+    parent_lp_perc_total_time_1 == -9 ~ NA_real_,                                #assign missing values to zeros
+    TRUE ~ parent_lp_perc_total_time_1)) %>%
   mutate(score2 = case_when( 
-    parent_nta_perc_total_time_2 == -9 ~ NA_real_,                                #assign missing values to zeros
-    TRUE ~ parent_nta_perc_total_time_2)) %>%
+    parent_lp_perc_total_time_2 == -9 ~ NA_real_,                                #assign missing values to zeros
+    TRUE ~ parent_lp_perc_total_time_2)) %>%
   mutate(score3 = case_when( 
-    parent_nta_perc_total_time_3 == -9 ~ NA_real_,                                #assign missing values to zeros
-    TRUE ~ parent_nta_perc_total_time_3)) %>%
+    parent_lp_perc_total_time_3 == -9 ~ NA_real_,                                #assign missing values to zeros
+    TRUE ~ parent_lp_perc_total_time_3)) %>%
   summarise(n1 = sum(!is.na(score1)) , 
-            mean1=mean(parent_nta_perc_total_time_1, na.rm = T ),
-            sd1=sd(parent_nta_perc_total_time_1, na.rm = T ),
-            median1=median(parent_nta_perc_total_time_1, na.rm = T ),
-            min1=min(parent_nta_perc_total_time_1, na.rm = T ),
-            max1=max(parent_nta_perc_total_time_1, na.rm = T ),
+            mean1=mean(parent_lp_perc_total_time_1, na.rm = T ),
+            sd1=sd(parent_lp_perc_total_time_1, na.rm = T ),
+            median1=median(parent_lp_perc_total_time_1, na.rm = T ),
+            min1=min(parent_lp_perc_total_time_1, na.rm = T ),
+            max1=max(parent_lp_perc_total_time_1, na.rm = T ),
             
             n2 = sum(!is.na(score2)) , 
-            mean2=mean(parent_nta_perc_total_time_2, na.rm = T ),
-            sd2=sd(parent_nta_perc_total_time_2, na.rm = T ),
-            median2=median(parent_nta_perc_total_time_2, na.rm = T ),
-            min2=min(parent_nta_perc_total_time_2, na.rm = T ),
-            max2=max(parent_nta_perc_total_time_2, na.rm = T ),
+            mean2=mean(parent_lp_perc_total_time_2, na.rm = T ),
+            sd2=sd(parent_lp_perc_total_time_2, na.rm = T ),
+            median2=median(parent_lp_perc_total_time_2, na.rm = T ),
+            min2=min(parent_lp_perc_total_time_2, na.rm = T ),
+            max2=max(parent_lp_perc_total_time_2, na.rm = T ),
             
             n3 = sum(!is.na(score3)) , 
-            mean3=mean(parent_nta_perc_total_time_3, na.rm = T ),
-            sd3=sd(parent_nta_perc_total_time_3, na.rm = T ),
-            median3=median(parent_nta_perc_total_time_3, na.rm = T ),
-            min3=min(parent_nta_perc_total_time_3, na.rm = T ),
-            max3=max(parent_nta_perc_total_time_3, na.rm = T )  ) %>%
+            mean3=mean(parent_lp_perc_total_time_3, na.rm = T ),
+            sd3=sd(parent_lp_perc_total_time_3, na.rm = T ),
+            median3=median(parent_lp_perc_total_time_3, na.rm = T ),
+            min3=min(parent_lp_perc_total_time_3, na.rm = T ),
+            max3=max(parent_lp_perc_total_time_3, na.rm = T )  ) %>%
   pivot_longer(cols = -group,  
                 names_to = c('.value', 'time'), 
                     names_pattern = '(.*)(\\d+)')
 
 write.csv(desctable,"desctable.csv", row.names = TRUE)
 
+
+
+
+desctableTotal <- data %>%
+  group_by(group) %>%
+  mutate(score1 = case_when( 
+    parent_total_lp_time_1 == -9 ~ NA_real_,                                #assign missing values to zeros
+    TRUE ~ parent_total_lp_time_1)) %>%
+  mutate(score2 = case_when( 
+    parent_total_lp_time_2 == -9 ~ NA_real_,                                #assign missing values to zeros
+    TRUE ~ parent_total_lp_time_2)) %>%
+  mutate(score3 = case_when( 
+    parent_total_lp_time_3 == -9 ~ NA_real_,                                #assign missing values to zeros
+    TRUE ~ parent_total_lp_time_3)) %>%
+  summarise(n1 = sum(!is.na(score1)) , 
+            mean1=mean(parent_total_lp_time_1, na.rm = T ),
+            sd1=sd(parent_total_lp_time_1, na.rm = T ),
+            median1=median(parent_total_lp_time_1, na.rm = T ),
+            min1=min(parent_total_lp_time_1, na.rm = T ),
+            max1=max(parent_total_lp_time_1, na.rm = T ),
+            
+            n2 = sum(!is.na(score2)) , 
+            mean2=mean(parent_total_lp_time_2, na.rm = T ),
+            sd2=sd(parent_total_lp_time_2, na.rm = T ),
+            median2=median(parent_total_lp_time_2, na.rm = T ),
+            min2=min(parent_total_lp_time_2, na.rm = T ),
+            max2=max(parent_total_lp_time_2, na.rm = T ),
+            
+            n3 = sum(!is.na(score3)) , 
+            mean3=mean(parent_total_lp_time_3, na.rm = T ),
+            sd3=sd(parent_total_lp_time_3, na.rm = T ),
+            median3=median(parent_total_lp_time_3, na.rm = T ),
+            min3=min(parent_total_lp_time_3, na.rm = T ),
+            max3=max(parent_total_lp_time_3, na.rm = T )  ) %>%
+  pivot_longer(cols = -group,  
+                names_to = c('.value', 'time'), 
+                    names_pattern = '(.*)(\\d+)')
+
+write.csv(desctableTotal,"desctable_numberLP.csv", row.names = TRUE)
+
 ```
 
 
 
-_Descriptives for Percent Total Time_
+
+_Descriptives of Percent of Total Verbalisations_
 
 ```{r, echo=FALSE}
 desctable %>%
@@ -155,6 +192,13 @@ desctable %>%
            kable_styling()
 ```
 
+_Descriptives of Total Number of LP_
+
+```{r, echo=FALSE}
+desctableTotal %>%
+           kbl() %>%
+           kable_styling()
+```
 
 
 ```{r, echo=FALSE}
@@ -162,17 +206,17 @@ desctable %>%
 # Histograms
 # plot
 p <- data %>%
-  dplyr::select(id,group, parent_nta_perc_total_time_1, parent_nta_perc_total_time_2, parent_nta_perc_total_time_3) %>%
-  pivot_longer( cols = starts_with("parent_nta_perc_total_time_"), names_prefix = "time", 
+  dplyr::select(id,group, parent_total_lp_time_1, parent_total_lp_time_2, parent_total_lp_time_3) %>%
+  pivot_longer( cols = starts_with("parent_total_lp_time_"), names_prefix = "time", 
                 names_to="t", values_to="outcome") %>%
-  mutate(time = ifelse(t == "parent_nta_perc_total_time_1",  1,
-                ifelse(t == "parent_nta_perc_total_time_2", 2, 3))) 
+  mutate(time = ifelse(t == "parent_total_lp_time_1",  1,
+                ifelse(t == "parent_total_lp_time_2", 2, 3))) 
   
 
   
 hist<-ggplot(p, aes(x=outcome) )+
   geom_histogram(alpha=0.6, binwidth = 5) +
-  xlab("CBCL Externalising") +
+  xlab("DPICS Total LP") +
   ylab("Frequency") +
   facet_wrap(group~time)
 
@@ -193,7 +237,7 @@ hist + theme_minimal() +
 
 #### Model & Results
 
-A generalized linear mixed model (GLMM) with random effect for individual and fixed effects of group, time and the interaction was run on the number of LP responses in the total number of verbalizations. A binomial distribution was specifed with a logit link. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2. Assumptions on the residuals were examined using simulated residuals (see below).
+A generalized linear mixed model (GLMM) with random effect for individual and fixed effects of group, time and the interaction was run on the number of LP responses. A poisson distribution was specified with a log link. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2. Assumptions on the residuals were examined using simulated residuals (see below).
 
 
 ```{r, echo=FALSE}
@@ -211,14 +255,14 @@ dat <- data %>%
                 ifelse(t == "parent_total_verbalisations_time_2", 2, 3))) 
 dat1 <- data %>%
   dplyr::select(id,group, 
-                parent_total_nta_time_1,
-                parent_total_nta_time_2,
-                parent_total_nta_time_3) %>%
-  pivot_longer( cols = starts_with("parent_total_nta_time_"), 
+                parent_total_lp_time_1,
+                parent_total_lp_time_2,
+                parent_total_lp_time_3) %>%
+  pivot_longer( cols = starts_with("parent_total_lp_time_"), 
                 names_prefix = "time", 
-                names_to="t", values_to="nta") %>%
-  mutate(time = ifelse(t == "parent_total_nta_time_1",  1,
-                ifelse(t == "parent_total_nta_time_2", 2, 3))) 
+                names_to="t", values_to="lp") %>%
+  mutate(time = ifelse(t == "parent_total_lp_time_1",  1,
+                ifelse(t == "parent_total_lp_time_2", 2, 3))) 
 
 
 p <- left_join(x=dat,y=dat1, by=c("id","time","group")) 
@@ -227,10 +271,10 @@ p$time<- as.factor(p$time)
 p$group<- as.factor(p$group)
 
 
-result0<-glmer(cbind(nta, verbal-nta) ~ (1 | id), data=p, family=binomial)
-result1<-glmer(cbind(nta, verbal-nta) ~ group + (1 | id), data=p, family=binomial)
-result2<-glmer(cbind(nta, verbal-nta) ~ group + time + (1 | id), data=p, family=binomial)
-result3<-glmer(cbind(nta, verbal-nta) ~ group + time +group*time + (1 | id), data=p, family=binomial)
+result0<-glmer(lp ~ (1 | id), data=p, family=poisson)
+result1<-glmer(lp ~ group + (1 | id), data=p, family=poisson)
+result2<-glmer(lp ~ group + time + (1 | id), data=p, family=poisson)
+result3<-glmer(lp ~ group + time +group*time + (1 | id), data=p, family=poisson)
 
 ```
 
@@ -259,7 +303,6 @@ summary(result3)
 
 
 
-
 #### Estimated Means & Change
 
 Estimated means for each Treatment and Time are presented. In addition, within-group
@@ -267,9 +310,9 @@ change between time points is presented with 95% CIs.
 
 
 
-```{r, echo=FALSE, warning=FALSE, message=F}
+```{r, echo=FALSE, warning=FALSE}
 
-result.change  <- emmeans(result3, "time", by = "group", type="response", reverse=TRUE)
+result.change  <- emmeans(result3, "time", by = "group", type="response")
 result.change.d <-pairs(result.change, reverse=TRUE)
 result.change.d.adj <-pairs(result.change, reverse=TRUE,adjust="bonferroni")
 
@@ -286,7 +329,9 @@ s<- left_join(s,ci)
 ```
 
 
-```{r, echo=FALSE, message=F}
+ Adjusted p-value from Bonferroni correction.
+
+```{r, echo=FALSE}
 result.mean  <- emmeans(result3, "group", by = "time", type = "response")
 result.mean.d <-pairs(result.mean, type = "response" )
 result.mean.d.adj <-pairs(result.mean, adjust="bonferroni")
@@ -310,7 +355,7 @@ s_groupdiffs<- left_join(s_groupdiffs,ci)
 ```{r, echo=F}
 estmeans %>%
   dplyr::select(c(-df)) %>%
-  kbl(digits=5,caption = "Estimated Proportion Number of NTA", 
+  kbl(digits=3,caption = "Estimated Mean Number of LP", 
   col.names = c("Time", "Group","Mean", "SE", "LowerCL","UpperCL") )  %>%
   kable_styling() 
 ```
@@ -318,20 +363,18 @@ estmeans %>%
 
 ##### Group mean difference at each timepoint
 
-
- Adjusted p-value from Bonferroni correction.
-
 ```{r, echo=F}
 s_groupdiffs %>%
 dplyr::select(c(-null,-df)) %>%
-  kbl(digits=5,caption = "Between-Group Differences", 
+  kbl(digits=3,caption = "Between-Group Differences", 
   col.names = c("Comparison", "Time","Ratio", "SE", "z","p","adj p",
                   "Lower CL","Upper CL") )  %>%
   kable_styling() %>%
-  add_footnote( c("Effect size here is the odds ratio. A value greater than 1 indicates a relative change in odds of NTA from the reference group." ), notation = "symbol")
+  add_footnote( c("Effect size here is the ratio of differences. A value greater than 1 indicates a proportion change from the reference group." ), notation = "symbol")
 ```
 
-Here you can see that group1 shows lower odds of MTA at time2 relative to group2 (OR=0.39) and relative to group3 (OR=0.484)
+Here you can see that Group1 has a lower number of LP at time 1 than Group1 (Ratio=.69), but at Time 2, it is much higher (ratio=10.96). 
+
 
 ##### Change within each group
 
@@ -340,14 +383,14 @@ Here you can see that group1 shows lower odds of MTA at time2 relative to group2
 s %>%
  dplyr::select(c(-null,-df)) %>%
   kbl(digits=3,caption = "Within-Group Change", 
-  col.names = c("Change", "Group","OR", "SE", "z","p","adj p",
+  col.names = c("Change", "Group","Ratio", "SE", "z","p","adj p",
                   "Lower CL","Upper CL") )  %>%
   kable_styling() %>%
-  add_footnote( c("Effect size here is the OR of NTA. A value less than 1 indicates lower odds of NTA from the reference timepoint." ), notation = "symbol")
+  add_footnote( c("Effect size here is the ratio of change. A value greater than 1 indicates a proportion change from the reference timepoint." ), notation = "symbol")
 
 ```
 
-Here, you can see that the OR for change in group1 from T1 to T2 is 0.253. This can be interpreted as: the odds of NTA at time 2 was nearly 75% lower than of NTA at time1. The OR for group2 is 0.697, showing an decrease in odds of 30%  relative to the odds of NTA at time 1, but it is  smaller than the relative decrease for Group1.  
+Here, you can see that the effect size for change in group1 from T1 to T2 is 25.4. This can be interpreted as: the number of LP at time 2 was 25.4 times that of LP at time1. That's huge!  The value for group2 is 1.6, showing an increase in 1.6 times LP at time 1, but it is so much smaller than the relative increase for Group1.  
 
 
 ```{r, echo=FALSE, warning=FALSE}
@@ -367,7 +410,7 @@ result.means <-
                 3.1)))))))))
 
 
-lp1 <- ggplot(data=result.means, aes(x=time1, y=prob, group=group, shape=group, colour=group)) + geom_line(aes(linetype=group)) + geom_point(size=2) +
+lp1 <- ggplot(data=result.means, aes(x=time1, y=rate, group=group, shape=group, colour=group)) + geom_line(aes(linetype=group)) + geom_point(size=2) +
     geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL, color=group)) +
   #must define these the same so that only 1 legend is shown
   scale_colour_discrete(name  ="Group",
@@ -424,6 +467,8 @@ confint(result.change.d)
 # df= Inf is ok
 ```
 
+so, change from t1 to t2 is represented as an rate ratio.  They way these results are presented, a value greater than 1 means that there is an *increase* from T1 to T2.  
+
 Now, to get the p-value associated with the joint hypothesis.
 
 ```{r}
@@ -449,12 +494,7 @@ summary(GlobalF, test = Ftest())
 p<0.05 so this hypothesis is supported.
 
 
-
 #### Hypothesis 2
-
-
-
-##### Change from T2-T3
 
 There will be a gradient of size of change from T2 to T3 such that the change in the PCIT-T group > the change in the CoS-P group.  This isn't really a gradient; it's just 1 hypothesis.
 
@@ -462,10 +502,7 @@ First, the change in PCITT and COSP from time 2 to time 3:
 
 ```{r, echo=FALSE}
 result.change
-
-      
 confint(result.change.d)
-or<-data.frame(result.change.d)
 ```
 
 
@@ -478,52 +515,11 @@ or<-data.frame(result.change.d)
 hyp2   <- matrix(c(0, 0,0, 0,0, -1,0,1 ),1)
 hyp2F <- glht(result3, linfct = hyp2)
 summary(hyp2F)
-s<-summary(hyp2F, test = Ftest())
 #also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
-
-
-
-## Extract pvaue for evidence / no evidence
-evidence = ifelse(s$test$pvalue<0.05, "evidence", "no evidence")
 
 ```
 
-Change in G1 from T2 to T3: `r round(or[3,3],3)`
-
-Change in G2 from T2 to T3: `r round(or[6,3],3)`
-
-p=`r round(s$test$pvalue,4)`. We have `r evidence` that the change from T1 to T3 is different for G1 and G2 
-
-
-##### Change from T1-T3
-
-
-
-```{r, echo=FALSE, warning=FALSE}
-
-## Specify contrast matrices
-# Hyp1 is 1 df test
-# could use alternative="less" ir alternative="greater" in glht
-hyp2   <- matrix(c(0, 0,0, 0,0, 0,0,1 ),1)
-hyp2F <- glht(result3, linfct = hyp2, test = Ftest())
-summary(hyp2F, test = Ftest())
-s<-summary(hyp2F, test = Ftest())
-#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
-
-
-## Extract pvaue for evidence / no evidence
-evidence = ifelse(s$test$pvalue<0.05, "evidence", "no evidence")
-
-```
-
-
-Change in G1 from T1 to T3: `r round(or[2,3],3)`
-
-Change in G2 from T1 to T3: `r round(or[5,3],3)`
-
-
-p=`r round(s$test$pvalue,4)`. We have `r evidence` that the change from T1 to T3 is different for G1 and G2 
-
+p>0.05, so this null hypothesis cannot be rejected.  
 
 
 #### Residuals

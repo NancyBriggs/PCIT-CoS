@@ -49,20 +49,6 @@ names(data) <- tolower(names(data))
 
 data <- data %>%
   dplyr::select(id:treatment_time_mins, dobchild, sexchild, numbhousehold, incfamily,
-                #DPICS Labelled Praise
-                parent_lp_perc_total_time_1, parent_lp_perc_total_time_2, parent_lp_perc_total_time_3,
-                #DPICS Negative Talk
-                parent_nta_perc_total_time_1, parent_nta_perc_total_time_2, parent_nta_perc_total_time_3,
-                #BCAP
-                prebcap_risk, post_bcap_risk, fu_bcap_risk,
-                #BCAP Lie scale
-                prebcap_lie, post_bcap_lie, fu_bcap_lie,
-                
-                # Child Ext Behav
-                cbclext_pre_total,cbclext_post_total,cbclext_fu_total,
-
-                # CBCL Internalising Behav
-                cbclint_pre_total,cbclint_post_total,cbclint_fu_total,
                 
                 #Child Compliance
                 total_co_perc_time_1,total_co_perc_time_2,total_co_perc_time_3
@@ -107,7 +93,9 @@ data$child_co_total_time_3[data$group==3] <- NA
 
 #### Descriptives
 
-```{r, echo=FALSE}
+_Descriptives for Percentage of Effective Commands_
+
+```{r, echo=FALSE, warning=FALSE}
 #Child Compliance
 #total_co_perc_time_1,total_co_perc_time_2,total_co_perc_time_3
 # One person on Waitlist has a value for FU.  set to NA
@@ -153,8 +141,6 @@ desctable <- data %>%
 write.csv(desctable,"desctable.csv", row.names = TRUE)
 
 ```
-
-
 
 
 ```{r, echo=FALSE}
@@ -204,7 +190,7 @@ hist + theme_minimal() +
 
 #### Model & Results
 
-A generalized linear mixed model (GLMM) with random effect for individual and fixed effects of group, time and the interaction was run on the number of LP responses in the total number of verbalizations. A binomial distribution was specified with a logit link. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2. Assumptions on the residuals were examined using simulated residuals (see below).
+A generalized linear mixed model (GLMM) with random effect for individual and fixed effects of group, time and the interaction was run on the number of Compliance responses in the total number of verbalizations. A binomial distribution was specified with a logit link. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2. Assumptions on the residuals were examined using simulated residuals (see below).
 
 TOTAL_eff_commands_TIME_1 is the denominator, and CHILD_CO_total_TIME_1 is the numerator
 
@@ -276,27 +262,92 @@ summary(result3)
 
 #### Estimated Means & Change
 
-Estimated means for each Treatment and Time are presented. In addition, within-group
-change between time points is presented with 95% CIs.
+
+```{r, echo=FALSE, warning=FALSE}
+
+result.change  <- emmeans(result3, "time", by = "group", type="response")
+result.change.d <-pairs(result.change, reverse=TRUE)
+result.change.d.adj <-pairs(result.change, reverse=TRUE,adjust="bonferroni")
+
+# save summary of differences as dataset
+estmeans<-summary(result.change)
+s<-summary(result.change.d)
+ci<-confint(result.change.d)
+sadj<-summary(result.change.d.adj)
+sadj <- sadj %>%
+        rename(p.value.adj=p.value)
+
+s<- left_join(s,sadj)
+s<- left_join(s,ci)
+```
 
 
-```{r, warning=FALSE}
-# type="response" means that the emms are transformed and presented on the orginal scale
-# This website has a nice demonstration of emmeans with GLMM https://cran.r-project.org/web/packages/emmeans/vignettes/transformations.html
+ Adjusted p-value from Bonferroni correction.
 
-result.change  <- emmeans(result3, "time", by = "group", type = "response")
-# Differences give ODDS RATIOS
-result.change.d <-pairs(result.change)
-summary(result.change)
-confint(result.change.d)
+```{r, echo=FALSE}
+result.mean  <- emmeans(result3, "group", by = "time", type = "response")
+result.mean.d <-pairs(result.mean, type = "response" )
+result.mean.d.adj <-pairs(result.mean, adjust="bonferroni")
+
+# save summary of differences as dataset
+s_groupdiffs<-summary(result.mean.d)
+ci<-confint(result.mean.d)
+s_groupdiffsadj<-summary(result.mean.d.adj)
+s_groupdiffsadj <- s_groupdiffsadj %>%
+        rename(p.value.adj=p.value)
+
+s_groupdiffs<- left_join(s_groupdiffs,s_groupdiffsadj)
+s_groupdiffs<- left_join(s_groupdiffs,ci)
 
 
 ```
 
+##### Group mean  at each timepoint
 
 
-```{r, echo=FALSE}
-result.emm <- emmeans(result3, ~group * time , type = "response")
+```{r, echo=F}
+estmeans %>%
+  dplyr::select(c(-df)) %>%
+  kbl(digits=3,caption = "Estimated Mean Number of LP", 
+  col.names = c("Time", "Group","Mean", "SE", "LowerCL","UpperCL") )  %>%
+  kable_styling() 
+```
+
+
+##### Group mean difference at each timepoint
+
+```{r, echo=F}
+s_groupdiffs %>%
+dplyr::select(c(-null,-df)) %>%
+  kbl(digits=3,caption = "Between-Group Differences", 
+  col.names = c("Comparison", "Time","Ratio", "SE", "z","p","adj p",
+                  "Lower CL","Upper CL") )  %>%
+  kable_styling() %>%
+  add_footnote( c("Effect size here is the ratio of means A value greater than 1 indicates a proportion change from the reference group." ), notation = "symbol")
+```
+
+Here you can see that group1 shows higher odds of compliance than group2 at time 2 (OR=1.157), but the CI is wide (0.695, 1.926) and the p>0.05.
+
+
+##### Change within each group
+
+```{r, echo=F}
+
+s %>%
+ dplyr::select(c(-null,-df)) %>%
+  kbl(digits=3,caption = "Within-Group Change", 
+  col.names = c("Change", "Group","Ratio", "SE", "z","p","adj p",
+                  "Lower CL","Upper CL") )  %>%
+  kable_styling() %>%
+  add_footnote( c("Effect size here is the ratio of change. A value greater than 1 indicates a proportion change from the reference timepoint." ), notation = "symbol")
+
+```
+
+Here, you can see that the OR for change in group1 from T1 to T2 is 1.357 (-/986, 1.968) and the OR for change in group2 is 1.210 (0.861, 1.701). Both of these do show an increase in odds of compliance over time, but the change is not significant.
+
+```{r, echo=FALSE, warning=FALSE}
+
+result.emm <- emmeans(result3, ~group * time, type = "response")
 result.means <- as.data.frame(result.emm)
 result.means <-  
   result.means %>%
@@ -333,6 +384,19 @@ lp1
 ```
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 ####  Hypothesis 1
 
 We hypothesize that from baseline (‘T1’) to post-treatment/waitlist (‘T2’) there will be a gradient effect, whereby parent-child dyads who receive PCIT-T
@@ -353,16 +417,6 @@ confint(result.change.d)
 # df= Inf is ok
 ```
 
-so, change from t1 to t2 is represented as an OR.  The way these results are presented, a value <1 means that there is an *increase* from T1 to T2.  So, for PCIT-T, the OR=0.737, indicating that the odds of a child compliance after effective command  is lower at Time 1 by a factor of 0.737.  Alternatively, we can take the reciprocal
-
-$\frac{1}{0.737} = 1.356852$
-
-and the CI limits:
-
-$\frac{1}{1.01} = 0.9901$
-
-
-$\frac{1}{0.535} = 1.869159$
 
 Here, the odds of compliance 1.36 times the odds at time 2 than time 1 for PCIT-T.  Or, there is a 36% increase in the odds of compliance at Time 2.
 
@@ -390,7 +444,11 @@ summary(GlobalF, test = Ftest())
 
 p>0.05 so this hypothesis is not supported. 
 
+
+
 #### Hypothesis 2
+
+##### Change from T2-T3
 
 There will be a gradient of size of change from T2 to T3 such that the change in the PCIT-T group > the change in the CoS-P group.  This isn't really a gradient; it's just 1 hypothesis.
 
@@ -398,7 +456,10 @@ First, the change in PCITT and COSP from time 2 to time 3:
 
 ```{r, echo=FALSE}
 result.change
+
+      
 confint(result.change.d)
+or<-data.frame(result.change.d)
 ```
 
 
@@ -411,11 +472,52 @@ confint(result.change.d)
 hyp2   <- matrix(c(0, 0,0, 0,0, -1,0,1 ),1)
 hyp2F <- glht(result3, linfct = hyp2)
 summary(hyp2F)
+s<-summary(hyp2F, test = Ftest())
 #also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(s$test$pvalue<0.05, "evidence", "no evidence")
 
 ```
 
-p>0.05, so we fail to reject the null.
+Change in G1 from T2 to T3: `r round(or[3,3],3)`
+
+Change in G2 from T2 to T3: `r round(or[6,3],3)`
+
+p=`r round(s$test$pvalue,4)`. We have `r evidence` that the change from T1 to T3 is different for G1 and G2 
+
+
+##### Change from T1-T3
+
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp2   <- matrix(c(0, 0,0, 0,0, 0,0,1 ),1)
+hyp2F <- glht(result3, linfct = hyp2, test = Ftest())
+summary(hyp2F, test = Ftest())
+s<-summary(hyp2F, test = Ftest())
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(s$test$pvalue<0.05, "evidence", "no evidence")
+
+```
+
+
+Change in G1 from T1 to T3: `r round(or[2,3],3)`
+
+Change in G2 from T1 to T3: `r round(or[5,3],3)`
+
+
+p=`r round(s$test$pvalue,4)`. We have `r evidence` that the change from T1 to T3 is different for G1 and G2 
+
 
 #### Residuals
 
@@ -432,13 +534,194 @@ There are no violations of assumptions.
 
 library(DHARMa)
 
-simulationOutput <- simulateResiduals(fittedModel = result3, plot = F)
-
-plot(simulationOutput)
-
+sim= simulateResiduals(result3)
+resid = residuals(sim, quantileFunction = qnorm, outlierValues = c(-7,7))
+plot(resid~predict(result3, re.form = NA,type="response"))
+qqnorm(resid)
 
 citation("DHARMa")
 ```
+
+
+There are a 3 observations that are not fit well  by the model.  These observations show very high or very low proportion of compliance to effective commands.  
+
+
+#### Sensitivity
+
+Here is a quick sensitivity check excluding those 3 cases with very different proportions
+
+```{r, echo=F}
+filter<-c(91,17,54)
+p %>%
+  filter(id %in% filter)
+
+p1 <- p %>%
+  mutate(co=ifelse(id==91 & time==1,NA,co)) %>%
+  mutate(co=ifelse(id==17 & time==3,NA,co)) %>%
+  mutate(co=ifelse(id==54 & time==2,NA,co))
+
+
+```
+
+You can see that for id 91, the time 1 value is relatively high (28/34). For id 17 the time 3 value is low (2/20) and for id 54, the time 2 value is low (4/41). These observations will be removed and the model rerun.
+
+```{r, echo=F}
+result0<-glmer(cbind(co, effcommands-co) ~ (1 | id), data=p1, family=binomial)
+result1<-glmer(cbind(co, effcommands-co) ~ group + (1 | id), data=p1, family=binomial)
+result2<-glmer(cbind(co, effcommands-co) ~ group + time + (1 | id), data=p1, family=binomial)
+result3<-glmer(cbind(co, effcommands-co) ~ group + time +group*time + (1 | id), data=p1, family=binomial)
+```
+
+```{r, echo=F}
+anovatab<-anova(result0,result1,result2,result3)
+
+anovatab <-anovatab %>%
+           mutate(Effect = ifelse(npar == 2, "Intercept",
+                           ifelse(npar == 4, "Group",
+                           ifelse(npar == 6, "Time",
+                           ifelse(npar == 9, "Group*Time",""))))) %>%
+           relocate(Effect) 
+anovatab %>%
+           kbl() %>%
+           kable_styling()
+```
+group*time effect is still not significant.
+
+
+```{r, echo=F}
+summary(result3)
+
+
+```
+
+
+
+#### Estimated Means & Change
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+result.change  <- emmeans(result3, "time", by = "group", type="response")
+result.change.d <-pairs(result.change, reverse=TRUE)
+result.change.d.adj <-pairs(result.change, reverse=TRUE,adjust="bonferroni")
+
+# save summary of differences as dataset
+estmeans<-summary(result.change)
+s<-summary(result.change.d)
+ci<-confint(result.change.d)
+sadj<-summary(result.change.d.adj)
+sadj <- sadj %>%
+        rename(p.value.adj=p.value)
+
+s<- left_join(s,sadj)
+s<- left_join(s,ci)
+```
+
+
+ Adjusted p-value from Bonferroni correction.
+
+```{r, echo=FALSE}
+result.mean  <- emmeans(result3, "group", by = "time", type = "response")
+result.mean.d <-pairs(result.mean, type = "response" )
+result.mean.d.adj <-pairs(result.mean, adjust="bonferroni")
+
+# save summary of differences as dataset
+s_groupdiffs<-summary(result.mean.d)
+ci<-confint(result.mean.d)
+s_groupdiffsadj<-summary(result.mean.d.adj)
+s_groupdiffsadj <- s_groupdiffsadj %>%
+        rename(p.value.adj=p.value)
+
+s_groupdiffs<- left_join(s_groupdiffs,s_groupdiffsadj)
+s_groupdiffs<- left_join(s_groupdiffs,ci)
+
+
+```
+
+##### Group mean  at each timepoint
+
+
+```{r, echo=F}
+estmeans %>%
+  dplyr::select(c(-df)) %>%
+  kbl(digits=3,caption = "Estimated Mean Number of LP", 
+  col.names = c("Time", "Group","Mean", "SE", "LowerCL","UpperCL") )  %>%
+  kable_styling() 
+```
+
+
+##### Group mean difference at each timepoint
+
+```{r, echo=F}
+s_groupdiffs %>%
+dplyr::select(c(-null,-df)) %>%
+  kbl(digits=3,caption = "Between-Group Differences", 
+  col.names = c("Comparison", "Time","Ratio", "SE", "z","p","adj p",
+                  "Lower CL","Upper CL") )  %>%
+  kable_styling() %>%
+  add_footnote( c("Effect size here is the ratio of means A value greater than 1 indicates a proportion change from the reference group." ), notation = "symbol")
+```
+Nothing changed from the previous model.
+
+
+##### Change within each group
+
+```{r, echo=F}
+
+s %>%
+ dplyr::select(c(-null,-df)) %>%
+  kbl(digits=3,caption = "Within-Group Change", 
+  col.names = c("Change", "Group","Ratio", "SE", "z","p","adj p",
+                  "Lower CL","Upper CL") )  %>%
+  kable_styling() %>%
+  add_footnote( c("Effect size here is the ratio of change. A value greater than 1 indicates a proportion change from the reference timepoint." ), notation = "symbol")
+
+```
+
+Nothing changed from the previous model.
+
+```{r, echo=FALSE, warning=FALSE}
+
+result.emm <- emmeans(result3, ~group * time, type = "response")
+result.means <- as.data.frame(result.emm)
+result.means <-  
+  result.means %>%
+  mutate(time1= ifelse(group==1 & time==1,  .9,   ## jitter on x axis
+                ifelse(group==1 & time==2, 1.9,       
+                ifelse(group==1 & time==3, 2.9,       
+                ifelse(group==2 & time==1, 1.0,
+                ifelse(group==2 & time==2, 2.0,       
+                ifelse(group==2 & time==3, 3.0,
+                ifelse(group==3 & time==1, 1.1,
+                ifelse(group==3 & time==2, 2.1,       
+                3.1)))))))))
+
+
+lp1 <- ggplot(data=result.means, aes(x=time1, y=prob, group=group, shape=group, colour=group)) + geom_line(aes(linetype=group)) + geom_point(size=2) +
+    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL, color=group)) +
+  #must define these the same so that only 1 legend is shown
+  scale_colour_discrete(name  ="Group",
+                            breaks=c(1,2,3),
+                            labels=c("PCIT-T", "CoS-P","Waitlist")) +
+  scale_shape_discrete(name  ="Group",
+                            breaks=c(1,2,3),
+                            labels=c("PCIT-T", "CoS-P","Waitlist")) +   
+  scale_linetype_manual(name="Group",
+                      values =c("solid","dashed","dotted"),
+                      breaks=c(1,2,3),
+                      labels=c("PCIT-T", "CoS-P","Waitlist")) +
+scale_x_continuous("Measurement",breaks = c(1, 2, 3)) +
+  scale_y_continuous("Estimated Means (95% CI)") +
+theme_classic() 
+
+lp1
+  
+```
+
+
+
+Takeaway: removing those relatively extreme values doesn't change conclusions.
+
 
 
 
