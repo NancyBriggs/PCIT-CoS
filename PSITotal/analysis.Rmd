@@ -1,0 +1,440 @@
+---
+title: "PCIT-CoS-Waitlist RCT Paper 1: PSI Total"
+author: "Nancy Briggs"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 6
+    toc_float: true
+---
+
+
+### PSI Total {.tabset .tabset-fade .tabset-pills}
+
+Output run on `r Sys.Date()`
+
+
+This output is run on the data in "PSI-SF data_recoded 12.6.24.sav"
+
+Variables: PSI_total_T1 PSI_total_T2 PSI_total_T3
+
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(warn=1)
+library(lme4)
+
+library(tidyverse)
+library(tidyselect)
+library(SASmarkdown)
+library(nlme)
+library(emmeans)
+library(multcomp)
+library(kableExtra)
+library(ggplot2)
+library(lmerTest)
+library(effectsize)
+library(boot)
+
+options(warnPartialMatchAttr = FALSE, 
+  warnPartialMatchDollar = FALSE,
+  warnPartialMatchArgs = FALSE)
+
+```
+
+
+```{r, echo=FALSE}
+# Data 
+# Import data
+# recoding for CBCL and totals done in SPSS before bringing data in to R
+
+data <- read.csv("../data_prep.csv", fileEncoding="UTF-8-BOM")
+names(data) <- tolower(names(data))
+
+
+psi <- read.csv("../PSI-SF data_recoded 12.6.24.csv", fileEncoding="UTF-8-BOM")
+names(psi) <- tolower(names(psi))
+psi <- psi %>%
+  filter(id!=9 ) %>%
+  dplyr::select(!group) %>%
+  rename(psi_totalnew_t1=psi_total_t1_recoded,
+         psi_totalnew_t2=psi_total_t2_recoded,
+         psi_totalnew_t3=psi_total_t3_recoded)
+
+# keep relevant demographic and outcome variables
+
+data <- data %>%
+  left_join(psi, by="id") %>%
+  dplyr::select(id:treatment_time_mins, dobchild, sexchild, numbhousehold, incfamily,
+              
+                #PSI Total
+                psi_totalnew_t1, psi_totalnew_t2, psi_totalnew_t3
+                )
+
+
+```
+
+
+
+
+#### Descriptives
+
+```{r, echo=FALSE}
+#   psi_total_t1, psi_total_t2, psi_total_t3
+desctable <- data %>%
+  group_by(group) %>%
+  summarise(n1 = sum(!is.na(psi_totalnew_t1)) , 
+            mean1=mean(psi_totalnew_t1, na.rm = T ),
+            sd1=sd(psi_totalnew_t1, na.rm = T ),
+            median1=median(psi_totalnew_t1, na.rm = T ),
+            min1=min(psi_totalnew_t1, na.rm = T ),
+            max1=max(psi_totalnew_t1, na.rm = T ),
+            
+            n2 = sum(!is.na(psi_totalnew_t2)) , 
+            mean2=mean(psi_totalnew_t2, na.rm = T ),
+            sd2=sd(psi_totalnew_t2, na.rm = T ),
+            median2=median(psi_totalnew_t2, na.rm = T ),
+            min2=min(psi_totalnew_t2, na.rm = T ),
+            max2=max(psi_totalnew_t2, na.rm = T ),
+            
+            n3 = sum(!is.na(psi_totalnew_t3)) , 
+            mean3=mean(psi_totalnew_t3, na.rm = T ),
+            sd3=sd(psi_totalnew_t3, na.rm = T ),
+            median3=median(psi_totalnew_t3, na.rm = T ),
+            min3=min(psi_totalnew_t3, na.rm = T ),
+            max3=max(psi_totalnew_t3, na.rm = T )  ) %>%
+  pivot_longer(cols = -group,  
+                names_to = c('.value', 'time'), 
+                    names_pattern = '(.*)(\\d+)')
+
+
+desctable1 <- data %>%
+  group_by(group) %>%
+  summarise(n1 = sum(!is.na(psi_total_t1)) , 
+            mean1=mean(psi_total_t1, na.rm = T ),
+            sd1=sd(psi_total_t1, na.rm = T ),
+            median1=median(psi_total_t1, na.rm = T ),
+            min1=min(psi_total_t1, na.rm = T ),
+            max1=max(psi_total_t1, na.rm = T ),
+            
+            n2 = sum(!is.na(psi_total_t2)) , 
+            mean2=mean(psi_total_t2, na.rm = T ),
+            sd2=sd(psi_total_t2, na.rm = T ),
+            median2=median(psi_total_t2, na.rm = T ),
+            min2=min(psi_total_t2, na.rm = T ),
+            max2=max(psi_total_t2, na.rm = T ),
+            
+            n3 = sum(!is.na(psi_total_t3)) , 
+            mean3=mean(psi_total_t3, na.rm = T ),
+            sd3=sd(psi_total_t3, na.rm = T ),
+            median3=median(psi_total_t3, na.rm = T ),
+            min3=min(psi_total_t3, na.rm = T ),
+            max3=max(psi_total_t3, na.rm = T )  ) %>%
+  pivot_longer(cols = -group,  
+                names_to = c('.value', 'time'), 
+                    names_pattern = '(.*)(\\d+)')
+
+
+write.csv(desctable,"desctable.csv", row.names = TRUE)
+
+```
+
+```{r, echo=FALSE}
+desctable %>%
+           kbl(digits=3) %>%
+           kable_minimal()
+```
+
+
+
+```{r, echo=FALSE}
+##   psi_total_t1, psi_total_t2, psi_total_t3
+# Histograms
+# plot
+p <- data %>%
+  dplyr::select(id,group, psi_totalnew_t1, psi_totalnew_t2, psi_totalnew_t3) %>%
+  pivot_longer( cols = c("psi_totalnew_t1", "psi_totalnew_t2", "psi_totalnew_t3"),  names_prefix = "ders_", 
+                names_to="t", values_to="outcome") %>%
+  mutate(time = ifelse(t == "psi_totalnew_t1",  1,
+                ifelse(t == "psi_totalnew_t2", 2, 3))) 
+  
+
+  
+hist<-ggplot(p, aes(x=outcome) )+
+  geom_histogram(alpha=0.6, binwidth = 10) +
+  xlab("PSI Total") +
+  ylab("Frequency") +
+  facet_wrap(group~time)
+
+group.labs <- c("PCIT-T", "COS-P", "Waitlist")
+names(group.labs) <- c("1", "2", "3")
+
+# New facet label names for group variable
+time.labs <- c("Pre", "Post","FollowUp")
+names(time.labs) <- c("1", "2","3")
+# Create the plot
+hist + theme_minimal() +
+  facet_grid(
+  group ~ time, 
+  labeller = labeller(group = group.labs, time = time.labs) )
+
+```
+
+#### Model & Results
+
+A linear mixed model with random effect for individual and fixed effects of group, time and the interaction was run. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2.
+
+```{r, echo=FALSE, warning=FALSE}
+#  analysis
+dat <- data %>%
+  dplyr::select(id,group,psi_totalnew_t1, psi_totalnew_t2, psi_totalnew_t3) %>%
+  pivot_longer( cols = c("psi_totalnew_t1", "psi_totalnew_t2", "psi_totalnew_t3"),  names_prefix = "bitseaprob_", 
+                names_to="t", values_to="outcome") %>%
+  mutate(time = ifelse(t == "psi_totalnew_t1",  1,
+                ifelse(t == "psi_totalnew_t2", 2, 3)))
+  
+
+dat$time<- as.factor(dat$time)
+dat$group<- as.factor(dat$group)
+
+result0<-lmer(outcome ~ (1 | id), dat)
+result1<-lmer(outcome ~ group + (1 | id), dat)
+result2<-lmer(outcome ~ group + time + (1 | id), dat)
+result3<-lmer(outcome ~ group*time + (1 | id), dat)
+```
+
+
+
+
+
+```{r, echo=FALSE}
+anovatab<-anova(result0,result1,result2,result3)
+
+anovatab <-anovatab %>%
+           mutate(Effect = ifelse(npar == 3, "Intercept",
+                           ifelse(npar == 5, "Group",
+                           ifelse(npar == 7, "Time",
+                           ifelse(npar == 10, "Group*Time",""))))) %>%
+           relocate(Effect) 
+anovatab %>%
+           kbl(digits=3) %>%
+           kable_styling()
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(anovatab[4,9]<0.05, "evidence", "no evidence")
+```
+
+
+
+This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is `r evidence` that the pattern of change over time is different among the groups (p=`r round(anovatab[4,9],3)`).
+
+
+
+
+```{r}
+summary(result3)
+```
+
+
+
+#### Estimated Means & Change
+
+Estimated means for each Treatment and Time are presented. In addition, within-group
+change between time points is presented with 95% CIs.
+
+
+```{r child='bootstrapped_es_CI.Rmd'}
+```
+
+
+#### Hypothesis 1
+
+We hypothesize that from baseline (‘T1’) to post-treatment/waitlist (‘T2’) there will be a gradient effect, whereby parent-child dyads who receive PCIT-T
+will show the greatest gains and parent-child dyads who
+receive no treatment will show the least gains. For the outcome, then, the 
+null hypothesis is:
+
+$H_0:  \text {mean change}(\text{PCIT-T}) = \text {mean change}(\text{CoS-P}) = \text {mean change}(\text{Waitlist})$
+$H_A: \text {mean change}(\text{PCIT-T}) > \text {mean change}(\text{CoS-P}) > \text {mean change}(\text{Waitlist})$
+
+This is a joint hypothesis test.
+
+First, confirming that the ordering of the means is as hypothesized:
+
+```{r, echo=FALSE}
+result.change  <- emmeans(result3, "time", by = "group")
+result.change.d <-pairs(result.change)
+result.change.d
+result.change.d1<-as.data.frame(result.change.d)
+result.change.d1<- result.change.d1 %>%
+  mutate(t1t2change=-1*estimate) %>%
+  mutate(quality=ifelse(t1t2change<0, "decreased t1 to t2", 
+                 ifelse(t1t2change>0, "increase t1 to t2", "did not change" )))
+
+result.change.d1 %>%
+  filter(contrast=="1 - 2") %>%
+  dplyr::select(contrast, group, t1t2change, quality, p.value ) %>%
+  kbl(digits=3) %>%
+  kable_styling()
+
+
+# ordering change.
+## Extract pvalue for evidence / no evidence
+orderincrease <- ifelse( result.change.d1$t1t2change[1]>result.change.d1$t1t2change[4] &
+                         result.change.d1$t1t2change[4]>result.change.d1$t1t2change[7] , 
+                 "PCITT > COS-P > Waitlist", "Order not satisfied" )
+# orderdecrease <- ifelse( result.change.d1$estimate[1]<result.change.d1$estimate[4],
+#          ifelse( result.change.d1$estimate[4]<result.change.d1$estimate[7] , 
+#                  "PCITT > COS-P > Waitlist", "Order not satisfied" ))
+
+
+
+```
+
+Is the ordering of change satisfied? 
+
+Greatest to least change from t1 to t2:  `r orderincrease`
+
+Note that I interpreted an increase in scores as being "better".  If a decrease in scores is "better" then these change values should be interpreted in that light.
+
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp1   <- matrix(c(0, 0,0, 0,0, 1,0,0 ),1)
+# Hyp2 is 1 df test, 
+hyp2   <- matrix(c(0, 0,0, 0,0, -1,1, 0 ),1)
+
+
+
+
+# hypF is combined 2df test. Yes!
+h<-rbind(hyp1,hyp2)
+hypF <- as.matrix(h)
+GlobalF <- glht(result3, linfct = hypF, test = Ftest())
+GlobalF$linfct
+summary(GlobalF, test = Ftest())
+F<-summary(GlobalF, test = Ftest())
+
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+
+## Extract pvalue for evidence / no evidence
+evidence = ifelse(F$test$pvalue<0.05, "evidence", "no evidence")
+
+```
+
+p= `r round(F$test$pvalue,3)`. We have `r evidence` that there is a difference in the change over from Baseline to Post amongst the groups.
+
+
+
+
+
+#### Hypothesis 2
+
+##### Change from T2-T3
+
+There will be a gradient of size of change from T2 to T3 such that the change in the PCIT-T group > the change in the CoS-P group.  This isn't really a gradient; it's just 1 hypothesis.
+
+First, the change in PCITT and COSP from time 2 to time 3:
+
+```{r, echo=FALSE}
+result.change
+
+      
+confint(result.change.d)
+or<-data.frame(result.change.d)
+```
+
+
+
+
+```{r}
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp2   <- matrix(c(0, 0,0, 0,0, -1,0,1 ),1)
+hyp2F <- glht(result3, linfct = hyp2)
+summary(hyp2F)
+s<-summary(hyp2F, test = Ftest())
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(s$test$pvalue<0.05, "evidence", "no evidence")
+
+```
+
+Change in G1 from T2 to T3: `r round(or[3,3],3)`
+
+Change in G2 from T2 to T3: `r round(or[6,3],3)`
+
+p=`r round(s$test$pvalue,4)`. We have `r evidence` that the change from T1 to T3 is different for G1 and G2 
+
+
+##### Change from T1-T3
+
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp2   <- matrix(c(0, 0,0, 0,0, 0,0,1 ),1)
+hyp2F <- glht(result3, linfct = hyp2, test = Ftest())
+summary(hyp2F, test = Ftest())
+s<-summary(hyp2F, test = Ftest())
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(s$test$pvalue<0.05, "evidence", "no evidence")
+
+```
+
+
+Change in G1 from T1 to T3: `r round(or[2,3],3)`
+
+Change in G2 from T1 to T3: `r round(or[5,3],3)`
+
+
+p=`r round(s$test$pvalue,4)`. We have `r evidence` that the change from T1 to T3 is different for G1 and G2 
+
+
+
+#### Residuals
+
+Assumptions of the model are met.
+
+```{r, echo=FALSE, warning=FALSE}
+plot(result3,form = resid(., type = "pearson") ~ predict(., re.form = NA) )
+
+
+qqnorm(residuals(result3))
+qqline(residuals(result3), col="red")
+
+# plot residuals against predictors
+dat <- na.omit(dat)
+ggplot(data.frame(x1=dat$group,pearson=residuals(result3,type="pearson")),
+       aes(x=x1,y=pearson)) +
+  geom_point() +
+  theme_bw()
+
+ggplot(data.frame(x2=dat$time,pearson=residuals(result3,type="pearson")),
+       aes(x=x2,y=pearson)) +
+  geom_point() +
+  theme_bw()
+
+
+```
+
+```{r}
+rm(list = ls())
+```
