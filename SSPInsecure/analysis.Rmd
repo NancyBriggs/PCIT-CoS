@@ -1,0 +1,314 @@
+---
+title: "PCIT-CoS-Waitlist RCT Paper 1: SSP Insecurity"
+author: "Nancy Briggs"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 6
+    toc_float: true
+---
+
+
+### SSP Insecurity {.tabset .tabset-fade .tabset-pills}
+
+Output run on `r Sys.Date()`
+
+
+variables are SSP_Pre_three_way_secure_or_insecure & SSP_Post_three_way_secure_or_insecure
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(warn=1)
+library(lme4)
+
+library(tidyverse)
+library(tidyselect)
+library(SASmarkdown)
+library(nlme)
+library(emmeans)
+library(multcomp)
+library(kableExtra)
+library(ggplot2)
+library(lmerTest)
+library(effectsize)
+library(boot)
+
+options(warnPartialMatchAttr = FALSE, 
+  warnPartialMatchDollar = FALSE,
+  warnPartialMatchArgs = FALSE)
+
+```
+
+
+```{r, echo=FALSE}
+# Data 
+# Import data
+# recoding for CBCL and totals done in SPSS before bringing data in to R
+
+data <- read.csv("../data_prep.csv", fileEncoding="UTF-8-BOM")
+names(data) <- tolower(names(data))
+
+# keep relevant demographic and outcome variables
+
+data <- data %>%
+  dplyr::select(id:treatment_time_mins, dobchild, sexchild, numbhousehold, incfamily,
+                #DPICS Labelled Praise
+                parent_lp_perc_total_time_1, parent_lp_perc_total_time_2, parent_lp_perc_total_time_3,
+                #DPICS Negative Talk
+                parent_nta_perc_total_time_1, parent_nta_perc_total_time_2, parent_nta_perc_total_time_3,
+                #BCAP
+                prebcap_risk, post_bcap_risk, fu_bcap_risk,
+                #BCAP Lie scale
+                prebcap_lie, post_bcap_lie, fu_bcap_lie,
+                
+                # Child Ext Behav
+                cbclext_pre_total,cbclext_post_total,cbclext_fu_total,
+
+                # CBCL Internalising Behav
+                cbclint_pre_total,cbclint_post_total,cbclint_fu_total,
+                
+                #Child Compliance
+                total_co_perc_time_1,total_co_perc_time_2,total_co_perc_time_3,
+                
+                # others, but not essential for paper
+                #3. Child Temperament (ECBQ)
+                #4. Child social-emotional functioning - 
+                #5. Child social-emotional functioning - #2: Child Devereux Early Childhood Assessment (DECA)
+                
+                #CQQ self Effic.
+                pre_ccq_a_topse_mean, post_ccq_a_topse_mean ,fu_ccq_a_topse_mean, 
+
+                # CCQ Caregiving Helplessness
+                pre_chqd_sum, post_chqd_sum, fu_chqd_sum,
+                
+                # CCQ Hostil Parenting
+                pre_ccqc_sum, post_ccqc_sum, fu_ccqc_sum,
+                
+                #1: Brief Infant Toddler Social Emotional Assessment (BITSEA)
+                # Problem
+                pre_bitseaprob_sum, post_bitseaprob_sum, fu_bitseaprob_sum,
+                # Competence
+                pre_bitseacomp_sum, post_bitseacomp_sum,fu_bitseacomp_sum,
+
+                #SSP attachemnt Insecurity
+                ssp_pre_three_way_secure_or_insecure , 
+                ssp_post_three_way_secure_or_insecure
+                )
+
+data <- data %>%
+  mutate(ssp_pre_three_way_secure_or_insecure=ifelse(ssp_pre_three_way_secure_or_insecure==999,NA,ssp_pre_three_way_secure_or_insecure)) %>%
+  mutate(ssp_post_three_way_secure_or_insecure=ifelse(ssp_post_three_way_secure_or_insecure==999,NA,ssp_post_three_way_secure_or_insecure))
+
+
+```
+
+
+
+
+#### Descriptives
+
+```{r, echo=FALSE, warning=F}
+#   ssp_pre_three_way_secure_or_insecure ,                 ssp_post_three_way_secure_or_insecure
+
+desctable <- data %>%
+  group_by(group,ssp_pre_three_way_secure_or_insecure) %>%
+  summarise(n1 = sum(!is.na(ssp_pre_three_way_secure_or_insecure)) ) %>%
+  filter(!is.na(ssp_pre_three_way_secure_or_insecure)) %>%
+  pivot_wider(id_cols=group, values_from=n1, 
+              names_from = ssp_pre_three_way_secure_or_insecure) %>%
+  ungroup() %>%
+  mutate(total=`0`+`1`) %>%
+  mutate(pct0=`0`/total) %>%
+  mutate(pct1=`1`/total) %>%
+  mutate(time="Pre") %>%
+  relocate(time, .after=group) %>%
+  relocate(pct0, .after=`0`) %>%
+  relocate(pct1, .after=`1`) 
+
+
+desctable1 <- data %>%
+  group_by(group,ssp_post_three_way_secure_or_insecure) %>%
+  summarise(n1 = sum(!is.na(ssp_post_three_way_secure_or_insecure)) ) %>%
+  filter(!is.na(ssp_post_three_way_secure_or_insecure)) %>%
+  pivot_wider(id_cols=group, values_from=n1, 
+              names_from = ssp_post_three_way_secure_or_insecure) %>%
+  ungroup() %>%
+  mutate(total=`0`+`1`) %>%
+  mutate(pct0=`0`/total) %>%
+  mutate(pct1=`1`/total) %>%
+  mutate(time="Post") %>%
+  relocate(time, .after=group) %>%
+  relocate(pct0, .after=`0`) %>%
+  relocate(pct1, .after=`1`) 
+
+desctable <- desctable %>%
+  bind_rows(desctable1)
+
+write.csv(desctable,"desctable.csv", row.names = TRUE)
+
+```
+
+
+
+```{r, echo=FALSE}
+desctable %>%
+           kbl(digits=3) %>%
+           kable_minimal()
+```
+
+
+#### Model & Results
+
+A generalized linear mixed model (GLMM) with random effect for individual and fixed effects of group, time and the interaction was run. A binomial distribution with logit link was specified. Odds ratios were obtained for group differences and change within group.
+
+```{r, echo=FALSE, warning=FALSE}
+#  analysis
+dat <- data %>%
+  dplyr::select(id,group,ssp_pre_three_way_secure_or_insecure,
+                ssp_post_three_way_secure_or_insecure) %>%
+  pivot_longer( cols = c("ssp_pre_three_way_secure_or_insecure", "ssp_post_three_way_secure_or_insecure"),  
+                names_prefix = "bitseaprob_", 
+                names_to="t", values_to="outcome") %>%
+  mutate(time = ifelse(t == "ssp_pre_three_way_secure_or_insecure",  
+                       1,2)) %>%
+  # replace with NA the one group 3 with a post value
+  mutate(outcome=ifelse(group==3 & time==2,NA,outcome)) %>%
+  filter(!is.na(outcome))
+
+
+
+dat$time<- as.factor(dat$time)
+dat$group<- as.factor(dat$group)
+
+result0<-glmer(outcome ~ (1 | id), family=binomial, dat)
+result1<-glmer(outcome ~ group + (1 | id), family=binomial, dat)
+result2<-glmer(outcome ~ group + time + (1 | id), family=binomial, dat)
+result3<-glmer(outcome ~ group*time + (1 | id), family=binomial, dat)
+
+```
+
+
+
+
+
+```{r, echo=FALSE}
+anovatab<-anova(result0,result1,result2,result3)
+
+anovatab <-anovatab %>%
+           mutate(Effect = ifelse(npar == 3, "Intercept",
+                           ifelse(npar == 5, "Group",
+                           ifelse(npar == 7, "Time",
+                           ifelse(npar == 10, "Group*Time",""))))) %>%
+           relocate(Effect) 
+anovatab %>%
+           kbl(digits=3) %>%
+           kable_styling()
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(anovatab[4,9]<0.05, "evidence", "no evidence")
+```
+
+
+
+This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is `r evidence` that the pattern of change over time is different among the groups (p=`r round(anovatab[4,9],3)`).
+
+
+
+
+```{r}
+summary(result3)
+```
+
+
+
+#### Estimated Means & Change
+
+Estimated means for each Treatment and Time are presented. In addition, within-group
+change between time points is presented with 95% CIs.
+
+
+```{r child='bootstrapped_es_CI.Rmd'}
+
+```
+
+<!-- ```{r child='TestingHypotheses.Rmd'}
+``` -->
+
+#### Hypothesis 2
+
+##### Difference between G1 and G2, change from T1 to T3
+
+
+```{r, echo=FALSE}
+result.change
+
+      
+confint(result.change.d)
+or<-data.frame(result.change.d)
+```
+
+
+
+
+```{r, echo=F, include=T, eval=T}
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp2   <- matrix(c(0, 0,  0,0,1 ),1)
+hyp2F <- glht(result3, linfct = hyp2)
+summary(hyp2F)
+s<-summary(hyp2F, test = Ftest())
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(s$test$pvalue<0.05, "evidence", "no evidence")
+
+```
+
+Change in G1 from T1 to T3: `r round(or[1,3],3)`
+
+Change in G2 from T1 to T3: `r round(or[2,3],3)`
+
+p=`r round(s$test$pvalue,4)`. We have `r evidence` that the change from T1 to T3 is different for G1 and G2 
+
+
+
+
+#### Residuals
+
+Assumptions of the model are met.
+
+```{r, echo=FALSE, warning=FALSE}
+library(DHARMa)
+sim= simulateResiduals(result3)
+resid = residuals(sim, quantileFunction = qnorm, outlierValues = c(-7,7))
+plot(resid~predict(result3, re.form = NA,type="response"))
+
+
+qqnorm(resid)
+qqline(resid, col="red")
+
+# plot residuals against predictors
+dat <- na.omit(dat)
+ggplot(data.frame(x1=dat$group,
+                  pearson=resid),
+       aes(x=x1,y=pearson)) +
+  geom_point() +
+  theme_bw()
+
+ggplot(data.frame(x2=dat$time,
+                  pearson=resid),
+       aes(x=x2,y=pearson)) +
+  geom_point() +
+  theme_bw()
+
+
+```
+
+```{r}
+rm(list = ls())
+```
