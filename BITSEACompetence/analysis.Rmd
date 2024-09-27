@@ -330,44 +330,52 @@ p= `r round(F$test$pvalue,3)`. We have `r evidence` that there is a difference i
 
 
 
+
 #### Hypothesis 2
+
+##### Change from T2-T3
 
 There will be a gradient of size of change from T2 to T3 such that the change in the PCIT-T group > the change in the CoS-P group.  This isn't really a gradient; it's just 1 hypothesis.
 
 First, the change in PCITT and COSP from time 2 to time 3:
 
 ```{r, echo=FALSE}
+result.change
 
-result.change.d1<-as.data.frame(result.change.d)
-result.change.d1<- result.change.d1 %>%
-  mutate(t2t3change=-1*estimate) %>%
-  mutate(quality=ifelse(t2t3change<0, "decreased t2 to t3", 
-                 ifelse(t2t3change>0, "increase t2 to t3", "did not change" )))
-
-result.change.d1 %>%
-  filter(contrast=="2 - 3") %>%
-  dplyr::select(contrast, group, t2t3change, quality, p.value ) %>%
-  kbl(digits=3) %>%
-  kable_styling()
+      
+confint(result.change.d)
+or<-data.frame(result.change.d)
+```
 
 
 
-# ordering change.
-## Extract pvalue for evidence / no evidence
-orderincrease <- ifelse(result.change.d1$t2t3change[3]>0 &
-                        result.change.d1$t2t3change[3]>result.change.d1$t2t3change[6],
-                 "PCITT > COS-P, increase was greater in PCITT", 
-                 "PCITT < COS-P, increase was not greater in PCITT" )
-orderdecrease <- ifelse(result.change.d1$t2t3change[3]<0 &
-                        result.change.d1$t2t3change[3]<result.change.d1$t2t3change[6],
-                 "PCITT > COS-P, decrease was greater in PCITT", 
-                 "PCITT < COS-P, decrease was not greater in PCITT" )
+
+```{r}
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp2   <- matrix(c(0, 0,0, 0,0, -1,0,1 ),1)
+hyp2F <- glht(result3, linfct = hyp2)
+summary(hyp2F)
+s<-summary(hyp2F, test = Ftest())
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(s$test$pvalue<0.05, "evidence", "no evidence")
 
 ```
 
-Assuming an increase in scores is better, `r orderincrease`
+Change in G1 from T2 to T3: `r round(or[3,3],3)`
 
-Assuming a decrease in scores is better,`r orderdecrease`
+Change in G2 from T2 to T3: `r round(or[6,3],3)`
+
+p=`r round(s$test$pvalue,4)`. We have `r evidence` that the change from T1 to T3 is different for G1 and G2 
+
+
+##### Change from T1-T3
+
 
 
 ```{r, echo=FALSE, warning=FALSE}
@@ -375,18 +383,25 @@ Assuming a decrease in scores is better,`r orderdecrease`
 ## Specify contrast matrices
 # Hyp1 is 1 df test
 # could use alternative="less" ir alternative="greater" in glht
-hyp2   <- matrix(c(0, 0,0, 0,0, -1,0,1 ),1)
-hyp2F <- glht(result3, linfct = hyp2)
-summary(hyp2F)
-F<-summary(hyp2F)
+hyp2   <- matrix(c(0, 0,0, 0,0, 0,0,1 ),1)
+hyp2F <- glht(result3, linfct = hyp2, test = Ftest())
+summary(hyp2F, test = Ftest())
+s<-summary(hyp2F, test = Ftest())
 #also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
 
+
 ## Extract pvaue for evidence / no evidence
-evidence = ifelse(F$test$pvalue<0.05, "evidence", "no evidence")
+evidence = ifelse(s$test$pvalue<0.05, "evidence", "no evidence")
+
 ```
 
-p>`r round(F$test$pvalue,3)`, so we have `r evidence` to suggest that the change from t2 to t3 in PCITT is greater than the change in COSP.
 
+Change in G1 from T1 to T3: `r round(or[2,3],3)`
+
+Change in G2 from T1 to T3: `r round(or[5,3],3)`
+
+
+p=`r round(s$test$pvalue,4)`. We have `r evidence` that the change from T1 to T3 is different for G1 and G2 
 
 
 

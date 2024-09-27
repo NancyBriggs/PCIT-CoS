@@ -249,7 +249,7 @@ change between time points is presented with 95% CIs.
 ```{r child='bootstrapped_es_CI.Rmd'}
 ```
 
-```{r child='TestingHypotheses.Rmd'}
+```{r child='TestingHypotheses_global.Rmd'}
 ```
 
 

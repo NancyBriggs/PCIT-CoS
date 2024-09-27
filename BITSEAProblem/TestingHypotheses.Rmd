@@ -13,7 +13,8 @@ receive no treatment will show the least gains. For the outcome, then, the
 null hypothesis is:
 
 $H_0:  \text {mean change}(\text{PCIT-T}) = \text {mean change}(\text{CoS-P}) = \text {mean change}(\text{Waitlist})$
-$H_A: \text {mean change}(\text{PCIT-T}) > \text {mean change}(\text{CoS-P}) \& \text {mean change}(\text{CoS-P}) > \text {mean change}(\text{Waitlist})$
+$H_A: \text {mean change}(\text{PCIT-T}) > \text {mean change}(\text{CoS-P})$ $\&$ 
+$\text {mean change}(\text{CoS-P}) > \text {mean change}(\text{Waitlist})$
 
 For this, we test two tests, and then look at the magnitude of change within each group.
 
@@ -160,24 +161,8 @@ result.change.d1 %>%
   kbl(digits=3) %>%
   kable_styling()
 
-
-
-# ordering change.
-## Extract pvalue for evidence / no evidence
-orderincrease <- ifelse(result.change.d1$t2t3change[3]>0 &
-                        result.change.d1$t2t3change[3]>result.change.d1$t2t3change[6],
-                 "PCITT > COS-P, increase was greater in PCITT", 
-                 "PCITT < COS-P, increase was not greater in PCITT" )
-orderdecrease <- ifelse(result.change.d1$t2t3change[3]<0 &
-                        result.change.d1$t2t3change[3]<result.change.d1$t2t3change[6],
-                 "PCITT > COS-P, decrease was greater in PCITT", 
-                 "PCITT < COS-P, decrease was not greater in PCITT" )
-
 ```
 
-Assuming an increase in scores is better, `r orderincrease`
-
-Assuming a decrease in scores is better,`r orderdecrease`
 
 
 ```{r, echo=FALSE, warning=FALSE}
@@ -195,7 +180,32 @@ ci
 
 ## Extract pvaue for evidence / no evidence
 evidence = ifelse(F$test$pvalue<0.05, "evidence", "no evidence")
+
 ```
 
-p=`r round(F$test$pvalue,3)`, so we have `r evidence` to suggest that the change from t2 to t3 in PCITT is greater than the change in COSP.
+p=`r round(F$test$pvalue,3)`, so we have `r evidence` to suggest that the change from t2 to t3 in PCITT is different than the change in COSP.
+
+
+
+
+```{r, echo=FALSE, warning=FALSE}
+# ordering change.
+## Extract pvalue for evidence / no evidence
+orderincrease <- ifelse(result.change.d1$t2t3change[3]>0 &
+
+
+result.change.d1$t2t3change[3]>result.change.d1$t2t3change[6],
+                 "PCITT > COS-P, increase was greater in PCITT", 
+                 "PCITT < COS-P, increase was not greater in PCITT" )
+orderdecrease <- ifelse(result.change.d1$t2t3change[3]<0 &
+                        result.change.d1$t2t3change[3]<result.change.d1$t2t3change[6],
+                 "PCITT > COS-P, decrease was greater in PCITT", 
+                 "PCITT < COS-P, decrease was not greater in PCITT" )
+
+```
+
+Assuming an increase in scores is better, `r orderincrease`
+
+Assuming a decrease in scores is better,`r orderdecrease`
+
 
