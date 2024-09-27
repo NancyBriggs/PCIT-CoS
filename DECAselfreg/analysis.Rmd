@@ -1,7 +1,7 @@
 ---
 title: "PCIT-CoS-Waitlist RCT Paper 1: DECA Self regulation"
 author: "Nancy Briggs"
-date: "05 JAN 2021"
+date: "`r Sys.Date()"
 output:
   html_document:
     toc: true
@@ -305,16 +305,51 @@ summary(GlobalF, test = Ftest())
 p>0.05
 
 
+
 #### Hypothesis 2
+
+##### Change from T2-T3
 
 There will be a gradient of size of change from T2 to T3 such that the change in the PCIT-T group > the change in the CoS-P group.  This isn't really a gradient; it's just 1 hypothesis.
 
 First, the change in PCITT and COSP from time 2 to time 3:
 
 ```{r, echo=FALSE}
-result.change.d
+result.change
+
+      
+confint(result.change.d)
+or<-data.frame(result.change.d)
 ```
 
+
+
+
+```{r}
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp2   <- matrix(c(0, 0,0, 0,0, -1,0,1 ),1)
+hyp2F <- glht(result3, linfct = hyp2)
+summary(hyp2F)
+s<-summary(hyp2F, test = Ftest())
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(s$test$pvalue<0.05, "evidence", "no evidence")
+
+```
+
+Change in G1 from T2 to T3: `r round(or[3,3],3)`
+
+Change in G2 from T2 to T3: `r round(or[6,3],3)`
+
+p=`r round(s$test$pvalue,4)`. We have `r evidence` that the change from T1 to T3 is different for G1 and G2 
+
+
+##### Change from T1-T3
 
 
 
@@ -323,14 +358,25 @@ result.change.d
 ## Specify contrast matrices
 # Hyp1 is 1 df test
 # could use alternative="less" ir alternative="greater" in glht
-hyp2   <- matrix(c(0, 0,0, 0,0, -1,0,1 ),1)
-hyp2F <- glht(result3, linfct = hyp2)
-summary(hyp2F)
+hyp2   <- matrix(c(0, 0,0, 0,0, 0,0,1 ),1)
+hyp2F <- glht(result3, linfct = hyp2, test = Ftest())
+summary(hyp2F, test = Ftest())
+s<-summary(hyp2F, test = Ftest())
 #also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(s$test$pvalue<0.05, "evidence", "no evidence")
 
 ```
 
-p>0.05, so we do not have enough evidence to suggest that the change from t2 to t3 in PCITT is greater than the change in COSP.
+
+Change in G1 from T1 to T3: `r round(or[2,3],3)`
+
+Change in G2 from T1 to T3: `r round(or[5,3],3)`
+
+
+p=`r round(s$test$pvalue,4)`. We have `r evidence` that the change from T1 to T3 is different for G1 and G2 
 
 
 
