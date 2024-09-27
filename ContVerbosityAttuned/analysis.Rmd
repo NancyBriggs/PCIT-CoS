@@ -1,0 +1,347 @@
+---
+title: "PCIT-CoS-Waitlist RCT Paper 1: Controlled Verbosity Attuned"
+author: "Nancy Briggs"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 6
+    toc_float: true
+---
+
+
+### Controlled Verbosity Attuned {.tabset .tabset-fade .tabset-pills}
+
+Output run on `r Sys.Date()`
+
+
+
+Variables: Attuned_controlled_verbosity Attuned_controlled_verbosity_t2 Attuned_controlled_verbosity_t3
+
+But these are percentages, created from 
+Attuned_controlled_verbosity = `Attuned` / `MM_total_codes`
+
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(warn=1)
+library(lme4)
+
+library(tidyverse)
+library(tidyselect)
+library(SASmarkdown)
+library(nlme)
+library(emmeans)
+library(multcomp)
+library(kableExtra)
+library(ggplot2)
+library(lmerTest)
+library(effectsize)
+library(boot)
+library(DHARMa)
+
+options(warnPartialMatchAttr = FALSE, 
+  warnPartialMatchDollar = FALSE,
+  warnPartialMatchArgs = FALSE)
+
+```
+
+
+```{r, echo=FALSE}
+# Data 
+# Import data
+# recoding for CBCL and totals done in SPSS before bringing data in to R
+
+data <- read.csv("../data_prep.csv", fileEncoding="UTF-8-BOM")
+names(data) <- tolower(names(data))
+
+# keep relevant demographic and outcome variables
+
+data <- data %>%
+  dplyr::select(id:treatment_time_mins, dobchild, sexchild, numbhousehold, incfamily,
+
+
+                #Controlled Verbosity Attuned
+                attuned_controlled_verbosity,
+                attuned_controlled_verbosity_t2,
+                attuned_controlled_verbosity_t3,
+                
+                # Attuned
+                mm_attuned, t2_attuned, t3_attuned,
+                # MM totals  
+                mm_total_codes, t2_mm_total_codes,t3_mm_total_codes
+                )
+
+
+```
+
+
+
+
+#### Descriptives
+
+```{r, echo=FALSE}
+#   attuned_controlled_verbosity,
+#                attuned_controlled_verbosity_t2,
+#                attuned_controlled_verbosity_t3
+
+desctable <- data %>%
+  group_by(group) %>%
+  summarise(n1 = sum(!is.na(attuned_controlled_verbosity)) , 
+            mean1=mean(attuned_controlled_verbosity, na.rm = T ),
+            sd1=sd(attuned_controlled_verbosity, na.rm = T ),
+            median1=median(attuned_controlled_verbosity, na.rm = T ),
+            min1=min(attuned_controlled_verbosity, na.rm = T ),
+            max1=max(attuned_controlled_verbosity, na.rm = T ),
+            
+            n2 = sum(!is.na(attuned_controlled_verbosity_t2)) , 
+            mean2=mean(attuned_controlled_verbosity_t2, na.rm = T ),
+            sd2=sd(attuned_controlled_verbosity_t2, na.rm = T ),
+            median2=median(attuned_controlled_verbosity_t2, na.rm = T ),
+            min2=min(attuned_controlled_verbosity_t2, na.rm = T ),
+            max2=max(attuned_controlled_verbosity_t2, na.rm = T ),
+            
+            n3 = sum(!is.na(attuned_controlled_verbosity_t3)) , 
+            mean3=mean(attuned_controlled_verbosity_t3, na.rm = T ),
+            sd3=sd(attuned_controlled_verbosity_t3, na.rm = T ),
+            median3=median(attuned_controlled_verbosity_t3, na.rm = T ),
+            min3=min(attuned_controlled_verbosity_t3, na.rm = T ),
+            max3=max(attuned_controlled_verbosity_t3, na.rm = T )  ) %>%
+  pivot_longer(cols = -group,  
+                names_to = c('.value', 'time'), 
+                    names_pattern = '(.*)(\\d+)')
+
+write.csv(desctable,"desctable.csv", row.names = TRUE)
+
+```
+
+```{r, echo=FALSE}
+desctable %>%
+           kbl(digits=3) %>%
+           kable_minimal()
+```
+
+Removing the G3 T3 observation
+
+
+```{r, echo=FALSE, warning=FALSE}
+#   attuned_controlled_verbosity,
+#                attuned_controlled_verbosity_t2,
+#                attuned_controlled_verbosity_t3
+
+data <- data %>%
+  mutate(attuned_controlled_verbosity_t3=ifelse(group==3,NA,attuned_controlled_verbosity_t3))
+
+desctable <- data %>%
+  group_by(group) %>%
+  summarise(n1 = sum(!is.na(attuned_controlled_verbosity)) , 
+            mean1=mean(attuned_controlled_verbosity, na.rm = T ),
+            sd1=sd(attuned_controlled_verbosity, na.rm = T ),
+            median1=median(attuned_controlled_verbosity, na.rm = T ),
+            min1=min(attuned_controlled_verbosity, na.rm = T ),
+            max1=max(attuned_controlled_verbosity, na.rm = T ),
+            
+            n2 = sum(!is.na(attuned_controlled_verbosity_t2)) , 
+            mean2=mean(attuned_controlled_verbosity_t2, na.rm = T ),
+            sd2=sd(attuned_controlled_verbosity_t2, na.rm = T ),
+            median2=median(attuned_controlled_verbosity_t2, na.rm = T ),
+            min2=min(attuned_controlled_verbosity_t2, na.rm = T ),
+            max2=max(attuned_controlled_verbosity_t2, na.rm = T ),
+            
+            n3 = sum(!is.na(attuned_controlled_verbosity_t3)) , 
+            mean3=mean(attuned_controlled_verbosity_t3, na.rm = T ),
+            sd3=sd(attuned_controlled_verbosity_t3, na.rm = T ),
+            median3=median(attuned_controlled_verbosity_t3, na.rm = T ),
+            min3=min(attuned_controlled_verbosity_t3, na.rm = T ),
+            max3=max(attuned_controlled_verbosity_t3, na.rm = T )  ) %>%
+  pivot_longer(cols = -group,  
+                names_to = c('.value', 'time'), 
+                    names_pattern = '(.*)(\\d+)')
+
+write.csv(desctable,"desctable_exclG3.csv", row.names = TRUE)
+
+```
+
+```{r, echo=FALSE}
+desctable %>%
+           kbl(digits=3) %>%
+           kable_minimal()
+```
+
+
+
+```{r, echo=FALSE}
+##   attuned_controlled_verbosity, attuned_controlled_verbosity_t2, attuned_controlled_verbosity_t3
+# Histograms
+# plot
+p <- data %>%
+  dplyr::select(id,group, attuned_controlled_verbosity, attuned_controlled_verbosity_t2, attuned_controlled_verbosity_t3) %>%
+  pivot_longer( cols = c("attuned_controlled_verbosity", "attuned_controlled_verbosity_t2", "attuned_controlled_verbosity_t3"),  names_prefix = "ders_", 
+                names_to="t", values_to="outcome") %>%
+  mutate(time = ifelse(t == "attuned_controlled_verbosity",  1,
+                ifelse(t == "attuned_controlled_verbosity_t2", 2, 3))) 
+  
+
+  
+hist<-ggplot(p, aes(x=outcome) )+
+  geom_histogram(alpha=0.6, binwidth = .01) +
+  xlab("Controlled Verbosity Attuned") +
+  ylab("Frequency") +
+  facet_wrap(group~time)
+
+group.labs <- c("PCIT-T", "COS-P", "Waitlist")
+names(group.labs) <- c("1", "2", "3")
+
+# New facet label names for group variable
+time.labs <- c("Pre", "Post","FollowUp")
+names(time.labs) <- c("1", "2","3")
+# Create the plot
+hist + theme_minimal() +
+  facet_grid(
+  group ~ time, 
+  labeller = labeller(group = group.labs, time = time.labs) )
+
+```
+
+#### Model & Results
+
+Controlled verbosity is a ratio of two values: Attuned and MM Total.  As such a binomial GLMM will be used.
+
+A generalized linear mixed model with binomial distribution and  random effect for individual and fixed effects of group, time and the interaction was run. Estimated marginal means were obtained, and contrasts specified to test Hypothesis 1 and Hypothesis 2.
+
+```{r, echo=FALSE, warning=FALSE}
+#  analysis
+data <- data %>%
+  mutate(attuned_controlled_verbosity_t3=ifelse(group==3,NA,attuned_controlled_verbosity_t3)) %>%
+    mutate(t3_mm_total_codes=ifelse(group==3,NA,t3_mm_total_codes))
+
+dat <- data %>%
+  dplyr::select(id,group,attuned_controlled_verbosity, attuned_controlled_verbosity_t2,
+                attuned_controlled_verbosity_t3) %>%
+  pivot_longer( cols = c("attuned_controlled_verbosity", "attuned_controlled_verbosity_t2", "attuned_controlled_verbosity_t3"),  names_prefix = "bitseaprob_", 
+                names_to="t", values_to="acv") %>%
+  mutate(time = ifelse(t == "attuned_controlled_verbosity",  1,
+                ifelse(t == "attuned_controlled_verbosity_t2", 2, 3)))
+dat1 <- data %>%
+  dplyr::select(id,group,mm_attuned, t2_attuned, t3_attuned) %>%
+  pivot_longer( cols = c("mm_attuned", "t2_attuned", "t3_attuned"),  names_prefix = "bitseaprob_", 
+                names_to="t", values_to="attuned") %>%
+  mutate(time = ifelse(t == "mm_attuned",  1,
+                ifelse(t == "t2_attuned", 2, 3)))
+dat2 <- data %>%
+  dplyr::select(id,group,mm_total_codes, t2_mm_total_codes,t3_mm_total_codes) %>%
+  pivot_longer( cols = c("mm_total_codes", "t2_mm_total_codes","t3_mm_total_codes"), 
+                names_prefix = "bitseaprob_", 
+                names_to="t", values_to="mm") %>%
+  mutate(time = ifelse(t == "mm_total_codes",  1,
+                ifelse(t == "t2_mm_total_codes", 2, 3)))
+dat <- dat %>%
+  left_join(.,dat1, by=c("id","time")) %>%
+  left_join(.,dat2, by=c("id","time"))%>%
+  filter(!is.na(acv) )
+
+
+dat$time<- as.factor(dat$time)
+dat$group<- as.factor(dat$group)
+
+# transform 0 values to (y * (n−1) + 0.5) / n
+dat <- dat %>%
+  mutate(acv=ifelse(acv==0, .5 / 88, acv)) 
+#  mutate(acv=ifelse(attuned<=1, .05, acv)) 
+
+
+result0<-glmer( acv ~ (1 | id), family="binomial",weight=mm, dat) 
+result1<-glmer( acv ~ group + (1 | id),family="binomial",weight=mm, dat) 
+result2<-glmer( acv ~ group + time + (1 | id), family="binomial",weight=mm, dat) 
+result3<-glmer( acv ~ group*time + (1 | id), family="binomial",weight=mm, dat) 
+
+```
+
+
+
+
+
+```{r, echo=FALSE}
+anovatab<-anova(result0,result1,result2,result3)
+
+anovatab <-anovatab %>%
+           mutate(Effect = ifelse(npar == 2, "Intercept",
+                           ifelse(npar == 4, "Group",
+                           ifelse(npar == 6, "Time",
+                           ifelse(npar == 9, "Group*Time",""))))) %>%
+           relocate(Effect) 
+anovatab %>%
+           kbl(digits=3) %>%
+           kable_styling()
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(anovatab[4,9]<0.05, "evidence", "no evidence")
+```
+
+
+
+This is the ANOVA table for the model. p-values are likelihood ratio tests for adding the new term to the model just before. A p-value <0.05 indicates that adding that term results in better model fit. The most important p-value is the interaction p-value. Here, there is `r evidence` that the pattern of change over time is different among the groups (p=`r round(anovatab[4,9],3)`).
+
+
+
+
+```{r}
+summary(result3)
+```
+
+
+
+#### Estimated Means & Change
+
+Estimated means for each Treatment and Time are presented. In addition, within-group
+change between time points is presented with 95% CIs.
+
+Note that the "effect size" is the OR.  Interpret the probabilities, and the tests of difference but note really the OR.
+
+
+```{r child='bootstrapped_es_CI.Rmd'}
+```
+
+```{r child='TestingHypotheses.Rmd'}
+```
+
+
+
+#### Residuals
+
+Assumptions of the model are met.
+
+```{r, echo=FALSE, warning=FALSE}
+sim= simulateResiduals(result3)
+resid = residuals(sim, quantileFunction = qnorm)
+
+
+# This line may have to be:
+plot(resid~predict(result3, re.form = NA,type="response", outliers=c(-7.7)))
+
+
+plot(result3,form = resid(., type = "pearson") ~ predict(., re.form = NA) )
+
+
+qqnorm(residuals(result3))
+qqline(residuals(result3), col="red")
+
+# plot residuals against predictors
+dat <- na.omit(dat)
+ggplot(data.frame(x1=dat$group,pearson=residuals(result3,type="pearson")),
+       aes(x=x1,y=pearson)) +
+  geom_point() +
+  theme_bw()
+
+ggplot(data.frame(x2=dat$time,pearson=residuals(result3,type="pearson")),
+       aes(x=x2,y=pearson)) +
+  geom_point() +
+  theme_bw()
+
+
+```
+
+```{r}
+rm(list = ls())
+```

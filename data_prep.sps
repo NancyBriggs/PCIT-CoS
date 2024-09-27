@@ -1,8 +1,10 @@
 ﻿* Encoding: UTF-8.
-GET
+ * GET
   FILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\PCITT RCT main dataset 4.1.22.sav'.
+ * DATASET NAME DataSet1 WINDOW=FRONT.
+GET 
+  FILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\_Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\PCITT RCT main dataset 26.7.23 - DPCIS & MM entered_1.sav'. 
 DATASET NAME DataSet1 WINDOW=FRONT.
-
 
 FILTER OFF.
 USE ALL.
@@ -464,6 +466,11 @@ EXECUTE.
 * 3. replace missing values with mean, unless all are missing then it's jst missing.
 * This is the same process as the CBCL above.
 
+* add in subscales for TOPSE empathy and TOPSE emotion.
+*Pre_TOPSE_empathy=  preCCQA1 + preCCQA2 +  preCCQA3 +  preCCQA4 +  preCCQA5 +  preCCQA6 
+*Pre_TOPSE_emotion = preCCQA7 +  preCCQA8 +  preCCQA9 +  preCCQA10 + preCCQA11 +  preCCQA12_R. .
+
+
 * 2. calculated means.
 
 DATASET ACTIVATE DataSet1.
@@ -589,6 +596,150 @@ COMPUTE post_CCQ_A_TOPSE_sum =sum(post_CCQA1, post_CCQA2,  post_CCQA3,  post_CCQ
 COMPUTE fu_CCQ_A_TOPSE_sum =sum(fu_CCQA1, fu_CCQA2,  fu_CCQA3,  fu_CCQA4, fu_CCQA5,  fu_CCQA6, fu_CCQA7,  
 fu_CCQA8,  fu_CCQA9,  fu_CCQA10, fu_CCQA11, fu_CCQA12_R).
 Execute.
+
+
+********************************************************************* TOPSE Empathy .
+* Empathy means .
+DATASET ACTIVATE DataSet1.
+COMPUTE pre_TOPSE_Empathy_mean =mean(preCCQA1, preCCQA2,  preCCQA3,  preCCQA4, preCCQA5,  preCCQA6).
+COMPUTE post_TOPSE_Empathy_mean =mean(post_CCQA1, post_CCQA2,  post_CCQA3,  post_CCQA4, post_CCQA5,  post_CCQA6).
+COMPUTE fu_TOPSE_Empathy_mean  =mean(fu_CCQA1, fu_CCQA2,  fu_CCQA3,  fu_CCQA4, fu_CCQA5,  fu_CCQA6).
+Execute.
+
+
+
+* Count the number of valid items.
+* If all items are missing, don't replace the indiviudal ones with the mean.
+* Those are jus missing values. 
+
+compute	ccq_count_pre	=0	.							
+if	~missing(	preCCQA1	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA2	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA3	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA4	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA5	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA6	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+
+compute	ccq_count_post	=0	.						
+if	~missing(	post_CCQA1	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA2	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA3	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA4	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA5	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA6	)	ccq_count_post	=	ccq_count_post	+	1	.
+
+compute	ccq_count_fu	=0	.						
+if	~missing(	FU_CCQA1	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA2	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA3	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA4	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA5	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA6	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+
+
+if (missing(	preCCQA1	) & 	ccq_count_pre	>0	)	preCCQA1	=	pre_TOPSE_Empathy_mean 	.
+if (missing(	preCCQA2	) & 	ccq_count_pre	>0	)	preCCQA2	=	pre_TOPSE_Empathy_mean 	.
+if (missing(	preCCQA3	) & 	ccq_count_pre	>0	)	preCCQA3	=	pre_TOPSE_Empathy_mean 	.
+if (missing(	preCCQA4	) & 	ccq_count_pre	>0	)	preCCQA4	=	pre_TOPSE_Empathy_mean 	.
+if (missing(	preCCQA5	) & 	ccq_count_pre	>0	)	preCCQA5	=	pre_TOPSE_Empathy_mean 	.
+if (missing(	preCCQA6	) & 	ccq_count_pre	>0	)	preCCQA6	=	pre_TOPSE_Empathy_mean 	.
+
+if (missing(	post_CCQA1	) & 	ccq_count_post	>0	)	post_CCQA1	=	post_TOPSE_Empathy_mean	.
+if (missing(	post_CCQA2	) & 	ccq_count_post	>0	)	post_CCQA2	=	post_TOPSE_Empathy_mean	.
+if (missing(	post_CCQA3	) & 	ccq_count_post	>0	)	post_CCQA3	=	post_TOPSE_Empathy_mean	.
+if (missing(	post_CCQA4	) & 	ccq_count_post	>0	)	post_CCQA4	=	post_TOPSE_Empathy_mean	.
+if (missing(	post_CCQA5	) & 	ccq_count_post	>0	)	post_CCQA5	=	post_TOPSE_Empathy_mean	.
+if (missing(	post_CCQA6	) & 	ccq_count_post	>0	)	post_CCQA6	=	post_TOPSE_Empathy_mean	.
+
+if (missing(	FU_CCQA1	) & 	ccq_count_fu	>0	)	FU_CCQA1	=	fu_TOPSE_Empathy_mean	.
+if (missing(	FU_CCQA2	) & 	ccq_count_fu	>0	)	FU_CCQA2	=	fu_TOPSE_Empathy_mean	.
+if (missing(	FU_CCQA3	) & 	ccq_count_fu	>0	)	FU_CCQA3	=	fu_TOPSE_Empathy_mean	.
+if (missing(	FU_CCQA4	) & 	ccq_count_fu	>0	)	FU_CCQA4	=	fu_TOPSE_Empathy_mean	.
+if (missing(	FU_CCQA5	) & 	ccq_count_fu	>0	)	FU_CCQA5	=	fu_TOPSE_Empathy_mean	.
+if (missing(	FU_CCQA6	) & 	ccq_count_fu	>0	)	FU_CCQA6	=	fu_TOPSE_Empathy_mean	.
+execute.
+
+
+
+* Compute subscale Sum.
+COMPUTE pre_TOPSE_Empathy_sum =sum(preCCQA1, preCCQA2,  preCCQA3,  preCCQA4, preCCQA5,  preCCQA6).
+COMPUTE post_TOPSE_Empathy_sum =sum(post_CCQA1, post_CCQA2,  post_CCQA3,  post_CCQA4, post_CCQA5,  post_CCQA6).
+COMPUTE fu_TOPSE_Empathy_sum =sum(fu_CCQA1, fu_CCQA2,  fu_CCQA3,  fu_CCQA4, fu_CCQA5,  fu_CCQA6).
+Execute.
+
+
+
+
+
+********************************************************************* TOPSE Emotion .
+* Emotion means .
+DATASET ACTIVATE DataSet1.
+COMPUTE pre_TOPSE_Emotion_mean =mean(preCCQA7,  preCCQA8, preCCQA9,  preCCQA10, preCCQA11, preCCQA12_R).
+COMPUTE post_TOPSE_Emotion_mean =mean( post_CCQA7,  post_CCQA8,  post_CCQA9,  post_CCQA10, post_CCQA11, post_CCQA12_R).
+COMPUTE fu_TOPSE_Emotion_mean  =mean(fu_CCQA7, fu_CCQA8,  fu_CCQA9,  fu_CCQA10, fu_CCQA11, fu_CCQA12_R).
+Execute.
+
+
+
+* Count the number of valid items.
+* If all items are missing, don't replace the indiviudal ones with the mean.
+* Those are jus missing values. 
+
+compute	ccq_count_pre	=0	.							
+if	~missing(	preCCQA7	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA8	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA9	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA10	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA11	)	ccq_count_pre	=	ccq_count_pre	+	1	.
+if	~missing(	preCCQA12_R)	ccq_count_pre	=	ccq_count_pre             +	1	.
+
+compute	ccq_count_post	=0	.						
+if	~missing(	post_CCQA7	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA8	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA9	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA10	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA11	)	ccq_count_post	=	ccq_count_post	+	1	.
+if	~missing(	post_CCQA12_R	)	ccq_count_post	=	ccq_count_post	+	1	.
+compute	ccq_count_fu	=0	.						
+if	~missing(	FU_CCQA7	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA8	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA9	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA10	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA11	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+if	~missing(	FU_CCQA12_R	)	ccq_count_fu	=	ccq_count_fu	+	1	.
+
+if (missing(	preCCQA7	) & 	ccq_count_pre	>0	)	preCCQA7	=	pre_TOPSE_Emotion_mean	.
+if (missing(	preCCQA8	) & 	ccq_count_pre	>0	)	preCCQA8	=	pre_TOPSE_Emotion_mean	.
+if (missing(	preCCQA9	) & 	ccq_count_pre	>0	)	preCCQA9	=	pre_TOPSE_Emotion_mean	.
+if (missing(	preCCQA10	) & 	ccq_count_pre	>0	)	preCCQA10	=	pre_TOPSE_Emotion_mean	.
+if (missing(	preCCQA11	) & 	ccq_count_pre	>0	)	preCCQA11	=	pre_TOPSE_Emotion_mean	.
+if (missing(	preCCQA12_R	) & 	ccq_count_pre	>0	)	preCCQA12_R	=	pre_TOPSE_Emotion_mean	.
+
+if (missing(	post_CCQA7	) & 	ccq_count_post	>0	)	post_CCQA7	=	post_TOPSE_Emotion_mean	.
+if (missing(	post_CCQA8	) & 	ccq_count_post	>0	)	post_CCQA8	=	post_TOPSE_Emotion_mean	.
+if (missing(	post_CCQA9	) & 	ccq_count_post	>0	)	post_CCQA9	=	post_TOPSE_Emotion_mean	.
+if (missing(	post_CCQA10	) & 	ccq_count_post	>0	)	post_CCQA10	=	post_TOPSE_Emotion_mean	.
+if (missing(	post_CCQA11	) & 	ccq_count_post	>0	)	post_CCQA11	=	post_TOPSE_Emotion_mean	.
+if (missing(	post_CCQA12_R	) & 	ccq_count_post	>0	)	post_CCQA12_R	=	post_TOPSE_Emotion_mean	.
+
+if (missing(	FU_CCQA7	) & 	ccq_count_fu	>0	)	FU_CCQA7	=	fu_TOPSE_Emotion_mean	.
+if (missing(	FU_CCQA8	) & 	ccq_count_fu	>0	)	FU_CCQA8	=	fu_TOPSE_Emotion_mean	.
+if (missing(	FU_CCQA9	) & 	ccq_count_fu	>0	)	FU_CCQA9	=	fu_TOPSE_Emotion_mean	.
+if (missing(	FU_CCQA10	) & 	ccq_count_fu	>0	)	FU_CCQA10	=	fu_TOPSE_Emotion_mean	.
+if (missing(	FU_CCQA11	) & 	ccq_count_fu	>0	)	FU_CCQA11	=	fu_TOPSE_Emotion_mean	.
+if (missing(	FU_CCQA12_R	) & 	ccq_count_fu	>0	)	FU_CCQA12_R	=	fu_TOPSE_Emotion_mean	.
+
+execute.
+
+
+
+* Compute subscale Sum.
+COMPUTE pre_TOPSE_Emotion_sum =sum(preCCQA7,  preCCQA8,  preCCQA9,  preCCQA10, preCCQA11, preCCQA12_R).
+COMPUTE post_TOPSE_Emotion_sum =sum(post_CCQA7,  post_CCQA8,  post_CCQA9,  post_CCQA10, post_CCQA11, post_CCQA12_R).
+COMPUTE fu_TOPSE_Emotion_sum =sum(fu_CCQA7, fu_CCQA8,  fu_CCQA9,  fu_CCQA10, fu_CCQA11, fu_CCQA12_R).
+Execute.
+
+
 
 
 
@@ -987,13 +1138,261 @@ execute.
 
 
 
-SAVE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep.sav'
+**************************** 
+*    DERS.
+
+ * Reverse-scored items (place a subtraction sign in front of them) are numbered 1, 2, 6, 7, 8, 10, 17, 20, 22, 24 and 34.
+ * Calculate total score by adding everything up. Higher scores suggest greater problems with emotion regulation.
+ * SUBSCALE SCORING**: The measure yields a total score (SUM) as well as scores on six sub-scales:
+1. Nonacceptance of emotional responses (NONACCEPT): 11, 12, 21, 23, 25, 29
+2. Difficulty engaging in Goal-directed behavior (GOALS): 13, 18, 20R, 26, 33
+3. Impulse control difficulties (IMPULSE): 3, 14, 19, 24R, 27, 32
+4. Lack of emotional awareness (AWARENESS): 2R, 6R, 8R, 10R, 17R, 34R
+5. Limited access to emotion regulation strategies (STRATEGIES): 15, 16, 22R, 28, 30, 31, 35, 36
+6. Lack of emotional clarity (CLARITY): 1R, 4, 5, 7R, 9
+Total score: sum of all subscales
+**”R” indicates reverse scored item
+REFERENCE:
+Gratz, K. L. & Roemer, L. (2004). Multidimensional assessment of emotion regulation and dysregulation:
+Development, factor structure, and initial validation of the Difficulties in Emotion Regulation Scale.
+ * Journal of Psychopathology and Behavioral Assessment, 26, 41-54.
+
+* Checking max value (if there is a 6, recode to missing ) .
+ * DESCRIPTIVES VARIABLES=preDERSI1 preDERSI2 preDERSI3 preDERSI4 preDERSI5 preDERSI6 preDERSI7 
+    preDERSI8 preDERSI9 preDERSI10 preDERSI11 preDERSI12 preDERSI13 preDERSI14 preDERSI15 preDERSI16 
+    preDERSI17 preDERSI18 preDERSI19 preDERSI20 preDERSI21 preDERSI22 preDERSI23 preDERSI24 preDERSI25 
+    preDERSI26 preDERSI27 preDERSI28 preDERSI29 preDERSI30 preDERSI31 preDERSI32 preDERSI33 preDERSI34 
+    preDERSI35 preDERSI36 
+  /STATISTICS=MAX.
+
+ *     DESCRIPTIVES VARIABLES=post_DERSI1 post_DERSI2 post_DERSI3 post_DERSI4 post_DERSI5 post_DERSI6 
+    post_DERSI7 post_DERSI8 post_DERSI9 post_DERSI10 post_DERSI11 post_DERSI12 post_DERSI13 
+    post_DERSI14 post_DERSI15 post_DERSI16 post_DERSI17 post_DERSI18 post_DERSI19 post_DERSI20 
+    post_DERSI21 post_DERSI22 post_DERSI23 post_DERSI24 post_DERSI25 post_DERSI26 post_DERSI27 
+    post_DERSI28 post_DERSI29 post_DERSI30 post_DERSI31 post_DERSI32 post_DERSI33 post_DERSI34 
+    post_DERSI35 post_DERSI36 
+  /STATISTICS=MAX..
+
+ * ID12 has a value of 14 for FU_DERSI13.  fix before final analysis .  
+* Change to 1.
+DO IF (ID=12). 
+RECODE FU_DERSI13 (14=1). 
+END IF.
+
+*DESCRIPTIVES VARIABLES=FU_DERSI1 FU_DERSI2 FU_DERSI3 FU_DERSI4 FU_DERSI5 FU_DERSI6 FU_DERSI7 
+    FU_DERSI8 FU_DERSI9 FU_DERSI10 FU_DERSI11 FU_DERSI12 FU_DERSI13 FU_DERSI14 FU_DERSI15 FU_DERSI16 
+    FU_DERSI17 FU_DERSI18 FU_DERSI19 FU_DERSI20 FU_DERSI21 FU_DERSI22 FU_DERSI23 FU_DERSI24 FU_DERSI25 
+    FU_DERSI26 FU_DERSI27 FU_DERSI28 FU_DERSI29 FU_DERSI30 FU_DERSI31 FU_DERSI32 FU_DERSI33 FU_DERSI34 
+    FU_DERSI35 FU_DERSI36 
+  /STATISTICS=MAX.
+
+
+* Calculate totals with reverse coding.
+ * Compute pre_ders_sum=sum(-1*preDERSI1,-1*preDERSI2,preDERSI3,preDERSI4,preDERSI5,-1*preDERSI6,-1*preDERSI7,-1*preDERSI8,
+preDERSI9,-1*preDERSI10,preDERSI11,preDERSI12,preDERSI13,preDERSI14,preDERSI15,preDERSI16,
+-1*preDERSI17,preDERSI18,preDERSI19,-1*preDERSI20,preDERSI21,-1*preDERSI22,preDERSI23,-1*preDERSI24,
+preDERSI25,preDERSI26,preDERSI27,preDERSI28,preDERSI29,preDERSI30,preDERSI31,preDERSI32,
+preDERSI33,-1*preDERSI34,preDERSI35,preDERSI36) .
+ * COMPUTE post_ders_sum=sum(-1*post_DERSI1,-1*post_DERSI2,post_DERSI3,post_DERSI4,post_DERSI5,-1*post_DERSI6,-1*post_DERSI7,-1*post_DERSI8,
+post_DERSI9,-1*post_DERSI10,post_DERSI11,post_DERSI12,post_DERSI13,post_DERSI14,post_DERSI15,post_DERSI16,
+-1*post_DERSI17,post_DERSI18,post_DERSI19,-1*post_DERSI20,post_DERSI21,-1*post_DERSI22,post_DERSI23,-1*post_DERSI24,
+post_DERSI25,post_DERSI26,post_DERSI27,post_DERSI28,post_DERSI29,post_DERSI30,post_DERSI31,post_DERSI32,
+post_DERSI33,-1*post_DERSI34,post_DERSI35,post_DERSI36).
+ * COMPUTE fu_ders_sum=sum(-1*fu_DERSI1,-1*fu_DERSI2,fu_DERSI3,fu_DERSI4,fu_DERSI5,-1*fu_DERSI6,-1*fu_DERSI7,-1*fu_DERSI8,
+fu_DERSI9,-1*fu_DERSI10,fu_DERSI11,fu_DERSI12,fu_DERSI13,fu_DERSI14,fu_DERSI15,fu_DERSI16,
+-1*fu_DERSI17,fu_DERSI18,fu_DERSI19,-1*fu_DERSI20,fu_DERSI21,-1*fu_DERSI22,fu_DERSI23,-1*fu_DERSI24,
+fu_DERSI25,fu_DERSI26,fu_DERSI27,fu_DERSI28,fu_DERSI29,fu_DERSI30,fu_DERSI31,fu_DERSI32,
+fu_DERSI33,-1*fu_DERSI34,fu_DERSI35,fu_DERSI36).
+ * execute.
+
+ * SUBSCALE SCORING**: The measure yields a total score (SUM) as well as scores on six sub-scales:
+1. Nonacceptance of emotional responses (NONACCEPT): 11, 12, 21, 23, 25, 29 .
+ * Compute pre_ders_nonacc=sum(preDERSI11,preDERSI12,preDERSI21,preDERSI23,
+preDERSI25,preDERSI29) .
+ * COMPUTE post_ders_nonacc=sum(post_DERSI11,post_DERSI12,post_DERSI21,post_DERSI23,
+post_DERSI25,post_DERSI29).
+ * COMPUTE fu_ders_nonacc=sum(fu_DERSI11,fu_DERSI12,fu_DERSI21,fu_DERSI23,
+fu_DERSI25,fu_DERSI29).
+ * execute.
+
+*2. Difficulty engaging in Goal-directed behavior (GOALS): 13, 18, 20R, 26, 33 .
+ * Compute pre_ders_goal=sum(preDERSI13,preDERSI18,-1*preDERSI20,preDERSI26,preDERSI33) .
+ * COMPUTE post_ders_goal=sum(post_DERSI13,post_DERSI18,-1*post_DERSI20,post_DERSI26,post_DERSI33).
+ * COMPUTE fu_ders_goal=sum(fu_DERSI13,fu_DERSI18,-1*fu_DERSI20,fu_DERSI26,fu_DERSI33).
+ * execute.
+
+*3. Impulse control difficulties (IMPULSE): 3, 14, 19, 24R, 27, 32 .
+ * Compute pre_ders_impulse=sum(preDERSI3,preDERSI14,preDERSI19,-1*preDERSI24,preDERSI27,preDERSI32) .
+ * COMPUTE post_ders_impulse=sum(post_DERSI3,post_DERSI14,post_DERSI19,-1*post_DERSI24,post_DERSI27,post_DERSI32).
+ * COMPUTE fu_ders_impulse=sum(fu_DERSI3,fu_DERSI14,fu_DERSI19,-1*fu_DERSI24,fu_DERSI27,fu_DERSI32).
+ * execute.
+
+*4. Lack of emotional awareness (AWARENESS): 2R, 6R, 8R, 10R, 17R, 34R.
+ * Compute pre_ders_aware=sum(-1*preDERSI2,-1*preDERSI6,-1*preDERSI8,-1*preDERSI10,-1*preDERSI17,-1*preDERSI34) .
+ * COMPUTE post_ders_aware=sum(-1*post_DERSI2,-1*post_DERSI6,-1*post_DERSI8,-1*post_DERSI10,-1*post_DERSI17,-1*post_DERSI34).
+ * COMPUTE fu_ders_aware=sum(-1*fu_DERSI2,-1*fu_DERSI6,-1*fu_DERSI8,-1*fu_DERSI10,-1*fu_DERSI17,-1*fu_DERSI34).
+ * execute.
+
+*5. Limited access to emotion regulation strategies (STRATEGIES): 15, 16, 22R, 28, 30, 31, 35, 36 .
+ * Compute pre_ders_strat=sum(preDERSI15,preDERSI16,-1*preDERSI22,preDERSI28,preDERSI30,preDERSI31,preDERSI35,preDERSI36) .
+ * COMPUTE post_ders_strat=sum(post_DERSI15,post_DERSI16,-1*post_DERSI22,post_DERSI28,post_DERSI30,post_DERSI31,post_DERSI35,post_DERSI36).
+ * COMPUTE fu_ders_strat=sum(fu_DERSI15,fu_DERSI16,-1*fu_DERSI22,fu_DERSI28,fu_DERSI30,fu_DERSI31,fu_DERSI35,fu_DERSI36).
+ * execute.
+
+
+*6. Lack of emotional clarity (CLARITY): 1R, 4, 5, 7R, 9.
+ * Compute pre_ders_clar=sum(-1*preDERSI1,preDERSI4,preDERSI5,-1*preDERSI7,preDERSI9) .
+ * COMPUTE post_ders_clar=sum(-1*post_DERSI1,post_DERSI4,post_DERSI5,-1*post_DERSI7,post_DERSI9).
+ * COMPUTE fu_ders_clar=sum(-1*fu_DERSI1,fu_DERSI4,fu_DERSI5,-1*fu_DERSI7,fu_DERSI9).
+ * execute.
+
+
+
+
+* reverse coding items 1,2,6,7,8,17,20,22,24,34.
+compute preDERSI1r = (-1*preDERSI1 ) +6 .
+compute preDERSI2r = (-1*preDERSI2 ) +6 .
+compute preDERSI6r = (-1*preDERSI6 ) +6 .
+compute preDERSI7r = (-1*preDERSI7 ) +6 .
+compute preDERSI8r = (-1*preDERSI8 ) +6 .
+compute preDERSI10r = (-1*preDERSI10 ) +6 .
+compute preDERSI17r = (-1*preDERSI17 ) +6 .
+compute preDERSI20r = (-1*preDERSI20 ) +6 .
+compute preDERSI22r = (-1*preDERSI22 ) +6 .
+compute preDERSI24r = (-1*preDERSI24 ) +6 .
+compute preDERSI34r = (-1*preDERSI34 ) +6 .
+compute post_DERSI1r = (-1*post_DERSI1 ) +6 .
+compute post_DERSI2r = (-1*post_DERSI2 ) +6 .
+compute post_DERSI6r = (-1*post_DERSI6 ) +6 .
+compute post_DERSI7r = (-1*post_DERSI7 ) +6 .
+compute post_DERSI8r = (-1*post_DERSI8 ) +6 .
+compute post_DERSI10r = (-1*post_DERSI10 ) +6 .
+compute post_DERSI17r = (-1*post_DERSI17 ) +6 .
+compute post_DERSI20r = (-1*post_DERSI20 ) +6 .
+compute post_DERSI22r = (-1*post_DERSI22 ) +6 .
+compute post_DERSI24r = (-1*post_DERSI24 ) +6 .
+compute post_DERSI34r = (-1*post_DERSI34 ) +6 .
+compute fu_DERSI1r = (-1*fu_DERSI1 ) +6 .
+compute fu_DERSI2r = (-1*fu_DERSI2 ) +6 .
+compute fu_DERSI6r = (-1*fu_DERSI6 ) +6 .
+compute fu_DERSI7r = (-1*fu_DERSI7 ) +6 .
+compute fu_DERSI8r = (-1*fu_DERSI8 ) +6 .
+compute fu_DERSI10r = (-1*fu_DERSI10 ) +6 .
+compute fu_DERSI17r = (-1*fu_DERSI17 ) +6 .
+compute fu_DERSI20r = (-1*fu_DERSI20 ) +6 .
+compute fu_DERSI22r = (-1*fu_DERSI22 ) +6 .
+compute fu_DERSI24r = (-1*fu_DERSI24 ) +6 .
+compute fu_DERSI34r = (-1*fu_DERSI34 ) +6 .
+execute.
+compute preDERSI1r = (-1*preDERSI1 ) +6 .
+compute preDERSI2r = (-1*preDERSI2 ) +6 .
+compute preDERSI6r = (-1*preDERSI6 ) +6 .
+compute preDERSI7r = (-1*preDERSI7 ) +6 .
+compute preDERSI8r = (-1*preDERSI8 ) +6 .
+compute preDERSI10r = (-1*preDERSI10 ) +6 .
+compute preDERSI17r = (-1*preDERSI17 ) +6 .
+compute preDERSI20r = (-1*preDERSI20 ) +6 .
+compute preDERSI22r = (-1*preDERSI22 ) +6 .
+compute preDERSI24r = (-1*preDERSI24 ) +6 .
+compute preDERSI34r = (-1*preDERSI34 ) +6 .
+compute post_DERSI1r = (-1*post_DERSI1 ) +6 .
+compute post_DERSI2r = (-1*post_DERSI2 ) +6 .
+compute post_DERSI6r = (-1*post_DERSI6 ) +6 .
+compute post_DERSI7r = (-1*post_DERSI7 ) +6 .
+compute post_DERSI8r = (-1*post_DERSI8 ) +6 .
+compute post_DERSI10r = (-1*post_DERSI10 ) +6 .
+compute post_DERSI17r = (-1*post_DERSI17 ) +6 .
+compute post_DERSI20r = (-1*post_DERSI20 ) +6 .
+compute post_DERSI22r = (-1*post_DERSI22 ) +6 .
+compute post_DERSI24r = (-1*post_DERSI24 ) +6 .
+compute post_DERSI34r = (-1*post_DERSI34 ) +6 .
+compute fu_DERSI1r = (-1*fu_DERSI1 ) +6 .
+compute fu_DERSI2r = (-1*fu_DERSI2 ) +6 .
+compute fu_DERSI6r = (-1*fu_DERSI6 ) +6 .
+compute fu_DERSI7r = (-1*fu_DERSI7 ) +6 .
+compute fu_DERSI8r = (-1*fu_DERSI8 ) +6 .
+compute fu_DERSI10r = (-1*fu_DERSI10 ) +6 .
+compute fu_DERSI17r = (-1*fu_DERSI17 ) +6 .
+compute fu_DERSI20r = (-1*fu_DERSI20 ) +6 .
+compute fu_DERSI22r = (-1*fu_DERSI22 ) +6 .
+compute fu_DERSI24r = (-1*fu_DERSI24 ) +6 .
+compute fu_DERSI34r = (-1*fu_DERSI34 ) +6 .
+
+execute.
+
+
+* Calculate totals with reverse coding.
+Compute pre_ders_sum=sum(preDERSI1r,preDERSI2r,preDERSI3,preDERSI4,preDERSI5,preDERSI6r,preDERSI7r,preDERSI8r,
+preDERSI9,preDERSI10r,preDERSI11,preDERSI12,preDERSI13,preDERSI14,preDERSI15,preDERSI16,
+preDERSI17r,preDERSI18,preDERSI19,preDERSI20r,preDERSI21,preDERSI22r,preDERSI23,preDERSI24r,
+preDERSI25,preDERSI26,preDERSI27,preDERSI28,preDERSI29,preDERSI30,preDERSI31,preDERSI32,
+preDERSI33,preDERSI34r,preDERSI35,preDERSI36) .
+COMPUTE post_ders_sum=sum(post_DERSI1r,post_DERSI2r,post_DERSI3,post_DERSI4,post_DERSI5,post_DERSI6r,post_DERSI7r,post_DERSI8r,
+post_DERSI9,post_DERSI10r,post_DERSI11,post_DERSI12,post_DERSI13,post_DERSI14,post_DERSI15,post_DERSI16,
+post_DERSI17r,post_DERSI18,post_DERSI19,post_DERSI20r,post_DERSI21,post_DERSI22r,post_DERSI23,post_DERSI24r,
+post_DERSI25,post_DERSI26,post_DERSI27,post_DERSI28,post_DERSI29,post_DERSI30,post_DERSI31,post_DERSI32,
+post_DERSI33,post_DERSI34r,post_DERSI35,post_DERSI36).
+COMPUTE fu_ders_sum=sum(fu_DERSI1r,fu_DERSI2r,fu_DERSI3,fu_DERSI4,fu_DERSI5,fu_DERSI6r,fu_DERSI7r,fu_DERSI8r,
+fu_DERSI9,fu_DERSI10r,fu_DERSI11,fu_DERSI12,fu_DERSI13,fu_DERSI14,fu_DERSI15,fu_DERSI16,
+fu_DERSI17r,fu_DERSI18,fu_DERSI19,fu_DERSI20r,fu_DERSI21,fu_DERSI22r,fu_DERSI23,fu_DERSI24r,
+fu_DERSI25,fu_DERSI26,fu_DERSI27,fu_DERSI28,fu_DERSI29,fu_DERSI30,fu_DERSI31,fu_DERSI32,
+fu_DERSI33,fu_DERSI34r,fu_DERSI35,fu_DERSI36).
+execute.
+
+ * SUBSCALE SCORING**: The measure yields a total score (SUM) as well as scores on six sub-scales:
+1. Nonacceptance of emotional responses (NONACCEPT): 11, 12, 21, 23, 25, 29 .
+Compute pre_ders_nonacc=sum(preDERSI11,preDERSI12,preDERSI21,preDERSI23,
+preDERSI25,preDERSI29) .
+COMPUTE post_ders_nonacc=sum(post_DERSI11,post_DERSI12,post_DERSI21,post_DERSI23,
+post_DERSI25,post_DERSI29).
+COMPUTE fu_ders_nonacc=sum(fu_DERSI11,fu_DERSI12,fu_DERSI21,fu_DERSI23,
+fu_DERSI25,fu_DERSI29).
+execute.
+
+*2. Difficulty engaging in Goal-directed behavior (GOALS): 13, 18, 20R, 26, 33 .
+Compute pre_ders_goal=sum(preDERSI13,preDERSI18,preDERSI20r,preDERSI26,preDERSI33) .
+COMPUTE post_ders_goal=sum(post_DERSI13,post_DERSI18,post_DERSI20r,post_DERSI26,post_DERSI33).
+COMPUTE fu_ders_goal=sum(fu_DERSI13,fu_DERSI18,fu_DERSI20r,fu_DERSI26,fu_DERSI33).
+execute.
+
+*3. Impulse control difficulties (IMPULSE): 3, 14, 19, 24R, 27, 32 .
+Compute pre_ders_impulse=sum(preDERSI3,preDERSI14,preDERSI19,preDERSI24r,preDERSI27,preDERSI32) .
+COMPUTE post_ders_impulse=sum(post_DERSI3,post_DERSI14,post_DERSI19,post_DERSI24r,post_DERSI27,post_DERSI32).
+COMPUTE fu_ders_impulse=sum(fu_DERSI3,fu_DERSI14,fu_DERSI19,fu_DERSI24r,fu_DERSI27,fu_DERSI32).
+execute.
+
+*4. Lack of emotional awareness (AWARENESS): 2R, 6R, 8R, 10R, 17R, 34R.
+Compute pre_ders_aware=sum(preDERSI2r,preDERSI6r,preDERSI8r,preDERSI10r,preDERSI17r,preDERSI34r) .
+COMPUTE post_ders_aware=sum(post_DERSI2r,post_DERSI6r,post_DERSI8r,post_DERSI10r,post_DERSI17r,post_DERSI34r).
+COMPUTE fu_ders_aware=sum(fu_DERSI2r,fu_DERSI6r,fu_DERSI8r,fu_DERSI10r,fu_DERSI17r,fu_DERSI34r).
+execute.
+
+*5. Limited access to emotion regulation strategies (STRATEGIES): 15, 16, 22R, 28, 30, 31, 35, 36 .
+Compute pre_ders_strat=sum(preDERSI15,preDERSI16,preDERSI22r,preDERSI28,preDERSI30,preDERSI31,preDERSI35,preDERSI36) .
+COMPUTE post_ders_strat=sum(post_DERSI15,post_DERSI16,post_DERSI22r,post_DERSI28,post_DERSI30,post_DERSI31,post_DERSI35,post_DERSI36).
+COMPUTE fu_ders_strat=sum(fu_DERSI15,fu_DERSI16,fu_DERSI22r,fu_DERSI28,fu_DERSI30,fu_DERSI31,fu_DERSI35,fu_DERSI36).
+execute.
+
+
+*6. Lack of emotional clarity (CLARITY): 1R, 4, 5, 7R, 9.
+Compute pre_ders_clar=sum(preDERSI1r,preDERSI4,preDERSI5,preDERSI7r,preDERSI9) .
+COMPUTE post_ders_clar=sum(post_DERSI1r,post_DERSI4,post_DERSI5,post_DERSI7r,post_DERSI9).
+COMPUTE fu_ders_clar=sum(fu_DERSI1r,fu_DERSI4,fu_DERSI5,fu_DERSI7r,fu_DERSI9).
+execute.
+
+
+VARIABLE LEVEL pre_ders_nonacc TO fu_ders_clar (scale). 
+
+
+
+
+SAVE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\_Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep.sav'
   /COMPRESSED.
 
 
 
 
-SAVE TRANSLATE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep.csv'
+SAVE TRANSLATE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\_Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep.csv'
   /TYPE=CSV
   /ENCODING='UTF8'
   /MAP
@@ -1006,13 +1405,13 @@ SAVE TRANSLATE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\
 *** getting totaltimefor DPICS .
 
 GET
-  FILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\PCITT RCT main dataset 24.1.22.sav'.
+  FILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\_Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\PCITT RCT main dataset 24.1.22.sav'.
 DATASET NAME DataSet1 WINDOW=FRONT.
 
 
 
 
-SAVE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep_DPICStime.sav'
+SAVE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\_Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep_DPICStime.sav'
   /KEEP id 
   PARENT_total_verbalisations_TIME_1
 PARENT_total_LP_TIME_1
@@ -1047,16 +1446,40 @@ TOTAL_NC_perc_TIME_3
       /COMPRESSED.
 
 GET
-  FILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep_DPICStime.sav'.
+  FILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\_Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep_DPICStime.sav'.
 DATASET NAME DataSet1 WINDOW=FRONT.
 
 
-SAVE TRANSLATE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep_DPICStime.csv'
+SAVE TRANSLATE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\_Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep_DPICStime.csv'
   /TYPE=CSV
   /ENCODING='UTF8'
   /MAP
   /REPLACE
   /FIELDNAMES
   /CELLS=VALUES.
+
+
+
+
+
+
+SAVE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\_Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep_ders.sav'
+  /KEEP id pre_ders_sum, post_ders_sum, fu_ders_sum
+    preDERSI1 preDERSI2 preDERSI3 preDERSI4 preDERSI5 preDERSI6 preDERSI7 
+    preDERSI8 preDERSI9 preDERSI10 preDERSI11 preDERSI12 preDERSI13 preDERSI14 preDERSI15 preDERSI16 
+    preDERSI17 preDERSI18 preDERSI19 preDERSI20 preDERSI21 preDERSI22 preDERSI23 preDERSI24 preDERSI25 
+    preDERSI26 preDERSI27 preDERSI28 preDERSI29 preDERSI30 preDERSI31 preDERSI32 preDERSI33 preDERSI34 
+    preDERSI35 preDERSI36 post_DERSI1 post_DERSI2 post_DERSI3 post_DERSI4 post_DERSI5 post_DERSI6 
+    post_DERSI7 post_DERSI8 post_DERSI9 post_DERSI10 post_DERSI11 post_DERSI12 post_DERSI13 
+    post_DERSI14 post_DERSI15 post_DERSI16 post_DERSI17 post_DERSI18 post_DERSI19 post_DERSI20 
+    post_DERSI21 post_DERSI22 post_DERSI23 post_DERSI24 post_DERSI25 post_DERSI26 post_DERSI27 
+    post_DERSI28 post_DERSI29 post_DERSI30 post_DERSI31 post_DERSI32 post_DERSI33 post_DERSI34 
+    post_DERSI35 post_DERSI36 FU_DERSI1 FU_DERSI2 FU_DERSI3 FU_DERSI4 FU_DERSI5 FU_DERSI6 FU_DERSI7 
+    FU_DERSI8 FU_DERSI9 FU_DERSI10 FU_DERSI11 FU_DERSI12 FU_DERSI13 FU_DERSI14 FU_DERSI15 FU_DERSI16 
+    FU_DERSI17 FU_DERSI18 FU_DERSI19 FU_DERSI20 FU_DERSI21 FU_DERSI22 FU_DERSI23 FU_DERSI24 FU_DERSI25 
+    FU_DERSI26 FU_DERSI27 FU_DERSI28 FU_DERSI29 FU_DERSI30 FU_DERSI31 FU_DERSI32 FU_DERSI33 FU_DERSI34 
+    FU_DERSI35 FU_DERSI36 .
+
+
 
 
