@@ -50,45 +50,7 @@ names(data) <- tolower(names(data))
 
 data <- data %>%
   dplyr::select(id:treatment_time_mins, dobchild, sexchild, numbhousehold, incfamily,
-                #DPICS Labelled Praise
-                parent_lp_perc_total_time_1, parent_lp_perc_total_time_2, parent_lp_perc_total_time_3,
-                #DPICS Negative Talk
-                parent_nta_perc_total_time_1, parent_nta_perc_total_time_2, parent_nta_perc_total_time_3,
-                #BCAP
-                prebcap_risk, post_bcap_risk, fu_bcap_risk,
-                #BCAP Lie scale
-                prebcap_lie, post_bcap_lie, fu_bcap_lie,
-                
-                # Child Ext Behav
-                cbclext_pre_total,cbclext_post_total,cbclext_fu_total,
-
-                # CBCL Internalising Behav
-                cbclint_pre_total,cbclint_post_total,cbclint_fu_total,
-                
-                #Child Compliance
-                total_co_perc_time_1,total_co_perc_time_2,total_co_perc_time_3,
-                
-                # others, but not essential for paper
-                #3. Child Temperament (ECBQ)
-                #4. Child social-emotional functioning - 
-                #5. Child social-emotional functioning - #2: Child Devereux Early Childhood Assessment (DECA)
-                
-                #CQQ self Effic.
-                pre_ccq_a_topse_mean, post_ccq_a_topse_mean ,fu_ccq_a_topse_mean, 
-
-                # CCQ Caregiving Helplessness
-                pre_chqd_mean, post_chqd_mean, fu_chqd_mean,
-                
-                # CCQ Hostil Parenting
-                pre_ccqc_mean, post_ccqc_mean, fu_ccqc_mean,
-
-                # Maternal reflective functioning 
-                pre_ccq_e_ref_fun, post_ccq_e_ref_fun, fu_ccq_e_ref_fun,
-                
-                #1: Brief Infant Toddler Social Emotional Assessment (BITSEA)
-                # Problem
-                pre_bitseaprob_mean, post_bitseaprob_mean, fu_bitseaprob_mean,
-
+ 
                 #NICHD
                 #Observed maternal negativity
                 nichd_negative_total, post_nichd_negative_total, fu_nichd_negative_total,
@@ -297,15 +259,49 @@ pvalue>0.08. We do not have evidence that there is a difference in the change ov
 
 #### Hypothesis 2
 
+##### Change from T2-T3
+
 There will be a gradient of size of change from T2 to T3 such that the change in the PCIT-T group > the change in the CoS-P group.  This isn't really a gradient; it's just 1 hypothesis.
 
 First, the change in PCITT and COSP from time 2 to time 3:
 
 ```{r, echo=FALSE}
-result.change.d
+result.change
+
+      
+confint(result.change.d)
+or<-data.frame(result.change.d)
 ```
 
-There is not as much change in PCITT(3.85) as in COSP (6.77).
+
+
+
+```{r}
+## Specify contrast matrices
+# Hyp1 is 1 df test
+# could use alternative="less" ir alternative="greater" in glht
+hyp2   <- matrix(c(0, 0,0, 0,0, -1,0,1 ),1)
+hyp2F <- glht(result3, linfct = hyp2)
+summary(hyp2F)
+s<-summary(hyp2F, test = Ftest())
+#also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(s$test$pvalue<0.05, "evidence", "no evidence")
+
+```
+
+Change in G1 from T2 to T3: `r round(or[3,3],3)`
+
+Change in G2 from T2 to T3: `r round(or[6,3],3)`
+
+p=`r round(s$test$pvalue,4)`. We have `r evidence` that the change from T1 to T3 is different for G1 and G2 
+
+
+##### Change from T1-T3
+
 
 
 ```{r, echo=FALSE, warning=FALSE}
@@ -313,16 +309,25 @@ There is not as much change in PCITT(3.85) as in COSP (6.77).
 ## Specify contrast matrices
 # Hyp1 is 1 df test
 # could use alternative="less" ir alternative="greater" in glht
-hyp2   <- matrix(c(0, 0,0, 0,0, -1,0,1 ),1)
-hyp2F <- glht(result3, linfct = hyp2)
-summary(hyp2F)
+hyp2   <- matrix(c(0, 0,0, 0,0, 0,0,1 ),1)
+hyp2F <- glht(result3, linfct = hyp2, test = Ftest())
+summary(hyp2F, test = Ftest())
+s<-summary(hyp2F, test = Ftest())
 #also see this webpage for more on contrasts https://rcompanion.org/rcompanion/h_01.html
+
+
+## Extract pvaue for evidence / no evidence
+evidence = ifelse(s$test$pvalue<0.05, "evidence", "no evidence")
 
 ```
 
-p>0.05, so we do not have enough evidence to suggest that the change from t2 to t3 in PCITT is greater than the change in COSP.
+
+Change in G1 from T1 to T3: `r round(or[2,3],3)`
+
+Change in G2 from T1 to T3: `r round(or[5,3],3)`
 
 
+p=`r round(s$test$pvalue,4)`. We have `r evidence` that the change from T1 to T3 is different for G1 and G2 
 
 
 #### Residuals
