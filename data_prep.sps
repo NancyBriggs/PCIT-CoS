@@ -1386,6 +1386,13 @@ VARIABLE LEVEL pre_ders_nonacc TO fu_ders_clar (scale).
 
 
 
+** Compute ages.
+COMPUTE agechild=DATEDIFF(Date_Pre_questionnaires,DOBchild,"days") /365.25.
+COMPUTE agemo=DATEDIFF(Date_Pre_questionnaires,dobmo,"days") /365.25.
+COMPUTE agefa=DATEDIFF(Date_Pre_questionnaires,dobfa,"days") /365.25.
+EXECUTE.
+
+
 SAVE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\_Faculty\Jane Kohloff\PCIT CoS RCT\Primary\PCIT-CoS\data_prep.sav'
   /COMPRESSED.
 
@@ -1479,7 +1486,6 @@ SAVE OUTFILE='C:\Users\Nancy Briggs\OneDrive - UNSW\Documents\_Faculty\Jane Kohl
     FU_DERSI17 FU_DERSI18 FU_DERSI19 FU_DERSI20 FU_DERSI21 FU_DERSI22 FU_DERSI23 FU_DERSI24 FU_DERSI25 
     FU_DERSI26 FU_DERSI27 FU_DERSI28 FU_DERSI29 FU_DERSI30 FU_DERSI31 FU_DERSI32 FU_DERSI33 FU_DERSI34 
     FU_DERSI35 FU_DERSI36 .
-
 
 
 
