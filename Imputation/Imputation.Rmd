@@ -1,0 +1,421 @@
+---
+title: "Imputation"
+author: "Nancy Briggs"
+date: "`r Sys.Date()`"
+params:
+  response : "ptsd"
+---
+
+Imputation for 
+
+1.	Sensitivity Parenting sensitivity 	NICHD-
+Sensitivity
+
+2.	Positive parenting verbalizations Positive parenting verbalizations	DPICS – LP 
+3.	Negative parenting verbalizations Negative parenting verbalizations 	DPICS – NTA
+4.	Parental reflectiveness Parental reflectiveness	DRFQ  CCQE
+5.	BITSEA-competence
+6.	CBCL-externalizing
+7.	BITSEA-problem
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message=FALSE , warnings=FALSE)
+options(warnPartialMatchAttr = FALSE, 
+  warnPartialMatchDollar = FALSE,
+  warnPartialMatchArgs = FALSE)
+```
+
+```{r, message=FALSE, echo=F, warnings=F}
+library(lme4)
+library(mice)
+library(tidyverse)
+library(tidyselect)
+library(emmeans)
+library(kableExtra)
+library(ggplot2)
+library(lmerTest)
+library(effectsize)
+library(boot)
+library(VIM)
+library(emmeans)
+library(broom.mixed)
+library(huxtable)
+
+```
+
+
+```{r, eval=F, warning=F , message=FALSE}
+
+library(lme4)
+library(mice)
+library(tidyverse)
+library(tidyselect)
+library(emmeans)
+library(kableExtra)
+library(ggplot2)
+library(lmerTest)
+library(effectsize)
+library(boot)
+library(VIM)
+library(emmeans)
+library(broom.mixed)
+library(huxtable)
+
+```
+
+
+
+```{r, echo=FALSE}
+# Data 
+# Import data
+# recoding for CBCL and totals done in SPSS before bringing data in to R
+
+data <- read.csv("../data_prep.csv", fileEncoding="UTF-8-BOM")
+names(data) <- tolower(names(data))
+
+
+# keep relevant demographic and outcome variables
+data <- data %>%
+  dplyr::select(id, agechild, sexchild, numbhousehold, incfamily,group,
+        agemo, edumo, ethnicitymo,
+        agefa, edufa, ethnicityfa, marpa, incfamily,
+                      # Maternal reflective functioning 
+                pre_ccqe_sum, post_ccqe_sum, fu_ccqe_sum,          
+                
+                                # Child Ext Behav
+                cbclext_pre_total,cbclext_post_total,cbclext_fu_total,
+                                #Observed maternal sensitivity 
+                nichd_total_sensitivity, post_nichd_total_sensitivity, fu_nichd_total_sensitivity,
+                    # Problem
+                pre_bitseaprob_sum, post_bitseaprob_sum, fu_bitseaprob_sum,
+                # Competence
+                pre_bitseacomp_sum, post_bitseacomp_sum,fu_bitseacomp_sum
+                )  %>%
+  # set some 999 & 888 values to NA
+  mutate_at(vars(sexchild, numbhousehold, incfamily, edumo, edufa, ethnicitymo, ethnicityfa, marpa), 
+            .funs = function(x) replace(x, which(x == 999 | x == 888), NA)) 
+
+
+### import total time
+time <- read.csv("../data_prep_DPiCStime.csv", fileEncoding="UTF-8-BOM")
+names(time) <- tolower(names(time))
+time <- time %>%
+  #DPICS Labelled Praise DPICS Negative Talk
+  dplyr::select(id, parent_total_verbalisations_time_1, parent_total_lp_time_1, 
+                  parent_total_nta_time_1,
+                  parent_total_verbalisations_time_2,  parent_total_lp_time_2, 
+                  parent_total_nta_time_2,
+                  parent_total_verbalisations_time_3,parent_total_lp_time_3, 
+                  parent_total_nta_time_3)
+# total verbalisations goes with lp & nta in GLMM
+
+
+
+# Join
+data <- left_join(data, time, by="id")
+
+
+# nichd_total_sensitivity, post_nichd_total_sensitivity, fu_nichd_total_sensitivity
+# One person on Waitlist has a value for FU.  set to NA
+data$fu_nichd_total_sensitivity[data$group==3] <- NA
+```
+
+
+```{r, eval=F, echo=F, include=F}
+
+
+
+```
+
+```{r}
+mi<-data %>%
+  relocate(group, .after="id") %>%
+  relocate(parent_total_verbalisations_time_2, .after="parent_total_verbalisations_time_1") %>%
+  relocate(parent_total_verbalisations_time_3, .after="parent_total_verbalisations_time_2") %>%
+  relocate(parent_total_nta_time_2, .after="parent_total_nta_time_1") %>%
+  relocate(parent_total_nta_time_3, .after="parent_total_nta_time_2") %>%
+  relocate(parent_total_lp_time_2, .after="parent_total_lp_time_1") %>%
+  relocate(parent_total_lp_time_3, .after="parent_total_lp_time_2") 
+```
+
+
+
+# Multiple Imputation
+
+
+```{r, echo=F, include=F, eval=T}
+
+# create 
+#mi <- mi %>% 
+#  mutate(time_group_int = interaction(rc_trial_time,group_type_id)) 
+
+## now we impute
+# initialise
+ini <- mice(mi, maxit = 0)
+# check for problems with variables, e.g. multicoliniarity etc
+ini$loggedEvents
+
+# remove problem variables
+# mi_forimp <- mi %>% 
+#   select(-ini$loggedEvents$out) 
+mi_forimp <- mi
+
+# re - initialize and check
+# ini <- mice(mi_forimp, maxit = 0)
+# ini$loggedEvents
+ 
+```
+
+## Checking correlations
+
+Look at correlations among the variables. 
+
+```{r}
+# check correlations
+mcl_dat = mi %>%
+  dplyr::select(-id)
+Xmat <- model.matrix(~., data = mcl_dat )
+corrplot::corrplot(cor(Xmat[,-1]))
+
+```
+
+
+## Checking missing data patterns
+
+```{r, echo=F}
+
+# Plotting the missing data patterns
+
+temp1<- data %>%
+  dplyr::select(-id)
+aggr =   aggr(temp1, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(temp1), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
+aggr
+
+
+```
+
+
+
+```{r, echo=F}
+
+
+
+
+# make id cluster variable
+pred <- ini$pred
+pred[-which(colnames(pred) == "id"), "id"] = 0  #check this is correct each time
+#pred[-which(colnames(pred) == "time"), "time"] = 0  #we have an interaction that covers these
+#pred[-which(colnames(pred) == "group"), "group"] = 0  #we have an interaction that covers these
+# Make demographic vars predictors of all others, and no outcomes as predictors
+pred[,c(14:37)]<-0
+
+
+
+```
+
+
+
+
+
+## Imputation details
+
+Multiple imputation by chained equations was performed using the `mice` package in R. For the primary outcome DERS, there was 11% missing data at post and 16% at follow up.
+
+The imputation model included as predictors: group, time, group*time, age and sex.  Missing values for the following outcomes were imputed:
+
+  - DERS
+  - Pain
+  - PROMIS T
+  - BDI
+  - STAI
+  - Well Being
+  - PTSD
+  - Stress T
+  - Sleep Index 2
+
+
+Twenty-five datasets were imputed, using the "2l.pan" method in `mice` to account for repeated measures within person.
+
+The unadjusted mixed model was run on each imputed dataset, and all results, including the group difference in change (primary outcome) and effect size were aggregated using Rubin's Rules (1987).
+
+
+```{r, eval=F}
+
+# Create custom imputation for waitlist==3 & time 3 measures
+# make a logical vector to say where you do and
+# don't want imputing to occur
+here <- mi_forimp %>% 
+  mutate(across(c(fu_ccqe_sum,cbclext_fu_total,fu_nichd_total_sensitivity,fu_bitseaprob_sum,fu_bitseacomp_sum,
+                  parent_total_verbalisations_time_3,parent_total_lp_time_3,parent_total_nta_time_3), 
+                ~ case_when(group==3  ~ FALSE,
+                            group!=3  ~ TRUE))) %>%
+  mutate(across(c(pre_ccqe_sum,cbclext_pre_total,nichd_total_sensitivity,pre_bitseaprob_sum,pre_bitseacomp_sum,
+                  parent_total_verbalisations_time_1,parent_total_lp_time_1,parent_total_nta_time_1),
+                ~ case_when(group<=3  ~ TRUE))) %>%
+  mutate(across(c(post_ccqe_sum,cbclext_post_total,post_nichd_total_sensitivity,post_bitseaprob_sum,post_bitseacomp_sum,
+                  parent_total_verbalisations_time_2,parent_total_lp_time_2,parent_total_nta_time_2) ,
+                ~ case_when(group<=3  ~ TRUE))) %>%
+  mutate(across(c(agechild,sexchild, numbhousehold,incfamily, agemo, agefa, edumo, edufa, ethnicitymo, ethnicityfa, marpa) ,
+                ~ case_when(group<=3  ~ TRUE))) %>%
+  mutate(group = FALSE)
+
+
+meth <- ini$meth
+# normal for most outcomes
+meth[c(14:28)] <- "norm"
+# PMM for NTA and LP
+meth[c(29:37)] <- "pmm"
+# pmm
+meth[c(3:13)] <- "pmm"
+ 
+# impute
+imp <- mice(mi_forimp, m = 25,  where = here, meth=meth, pred = pred, visit = "monotone",
+            print = TRUE, maxit = 20)
+save(imp, file ="imputed_full_allvars_long_pan") #
+```
+
+
+
+
+### Evaluation of imputations
+
+```{r}
+ 
+ # load previously imputed data
+load(file ="imputed_full_allvars_long_pan")
+
+# check for problems
+imp$loggedEvents
+
+# plot convergence diagnostic
+plot(imp)
+```
+
+
+
+There were no problems with the imputations, and all imputations converged.
+
+
+```{r}
+# density plots
+ densityplot(imp)
+```
+
+
+
+Imputed distributions look similar to the observed distributions.  This is good.
+
+
+
+## Imputed Estimate of group difference in change in DERS to Follow up
+
+
+Summary of two of the imputed datasets
+
+```{r, echo=F}
+load( file ="imputed_full_allvars_long_pan") # loads imp_mids
+
+imputed_data<-complete(imp, action = "long", include = TRUE)
+group <- imputed_data %>%
+  filter(.imp==0) %>%
+  dplyr::select(.id:group)
+imputed_data<-imputed_data %>%
+  dplyr::select(!c(id, group)) %>%
+  left_join(group, by=c(".id")) %>%
+  relocate(id, .after=".id") %>%
+  relocate(group, .after="id")
+
+
+# Make long
+long1 <- imputed_data %>%
+  dplyr::select(.imp,.id, id, pre_ccqe_sum, post_ccqe_sum, fu_ccqe_sum) %>%
+  pivot_longer(cols=c(pre_ccqe_sum, post_ccqe_sum, fu_ccqe_sum),
+                names_to="t", values_to="ccqe")%>%
+  mutate(time = ifelse(t == "pre_ccqe_sum",  1,
+                ifelse(t == "post_ccqe_sum", 2, 3))) %>%
+  dplyr::select(!t)
+long2 <- imputed_data %>%
+  dplyr::select(.imp,.id, id, nichd_total_sensitivity, post_nichd_total_sensitivity, fu_nichd_total_sensitivity) %>%
+  pivot_longer(cols=c( nichd_total_sensitivity, post_nichd_total_sensitivity, fu_nichd_total_sensitivity),
+                names_to="t", values_to="sensitivity")%>%
+  mutate(time = ifelse(t == "nichd_total_sensitivity",  1,
+                ifelse(t == "post_nichd_total_sensitivity", 2, 3))) %>%
+  dplyr::select(!t) %>%
+  full_join(long1, by=c(".imp", ".id", "id","time") )
+long1 <- imputed_data %>%
+  dplyr::select(.imp,.id, id,  pre_bitseaprob_sum, post_bitseaprob_sum, fu_bitseaprob_sum) %>%
+  pivot_longer(cols=c( pre_bitseaprob_sum, post_bitseaprob_sum, fu_bitseaprob_sum),
+                names_to="t", values_to="bitseaprob")%>%
+  mutate(time = ifelse(t == "pre_bitseaprob_sum",  1,
+                ifelse(t == "post_bitseaprob_sum", 2, 3))) %>%
+  dplyr::select(!t) %>%
+  full_join(long2, by=c(".imp", ".id", "id","time") )
+long2 <- imputed_data %>%
+  dplyr::select(.imp,.id, id, pre_bitseacomp_sum, post_bitseacomp_sum,fu_bitseacomp_sum) %>%
+  pivot_longer(cols=c( pre_bitseacomp_sum, post_bitseacomp_sum,fu_bitseacomp_sum),
+                names_to="t", values_to="bitseacomp")%>%
+  mutate(time = ifelse(t == "pre_bitseacomp_sum",  1,
+                ifelse(t == "post_bitseacomp_sum", 2, 3))) %>%
+  dplyr::select(!t) %>%
+  full_join(long1, by=c(".imp", ".id", "id","time") )
+long1 <- imputed_data %>%
+  dplyr::select(.imp,.id, id,  parent_total_nta_time_1, parent_total_nta_time_2, parent_total_nta_time_3) %>%
+  pivot_longer(cols=c( parent_total_nta_time_1, parent_total_nta_time_2, parent_total_nta_time_3),
+                names_to="t", values_to="parent_nta")%>%
+  mutate(time = ifelse(t == "parent_total_nta_time_1",  1,
+                ifelse(t == "parent_total_nta_time_2", 2, 3))) %>%
+  dplyr::select(!t) %>%
+  full_join(long2,  by=c(".imp", ".id", "id","time") )
+long2 <- imputed_data %>%
+  dplyr::select(.imp,.id, id,   parent_total_lp_time_1, parent_total_lp_time_2, parent_total_lp_time_3) %>%
+  pivot_longer(cols=c( parent_total_lp_time_1, parent_total_lp_time_2, parent_total_lp_time_3),
+                names_to="t", values_to="parent_lp")%>%
+  mutate(time = ifelse(t == "parent_total_lp_time_1",  1,
+                ifelse(t == "parent_total_lp_time_2", 2, 3))) %>%
+  dplyr::select(!t) %>%
+  full_join(long1,  by=c(".imp", ".id", "id","time") )
+long1 <- imputed_data %>%
+  dplyr::select(.imp,.id, id,   parent_total_verbalisations_time_1, parent_total_verbalisations_time_2, parent_total_verbalisations_time_3) %>%
+  pivot_longer(cols=c( parent_total_verbalisations_time_1, parent_total_verbalisations_time_2, parent_total_verbalisations_time_3),
+                names_to="t", values_to="verbal")%>%
+  mutate(time = ifelse(t == "parent_total_verbalisations_time_1",  1,
+                ifelse(t == "parent_total_verbalisations_time_2", 2, 3))) %>%
+  dplyr::select(!t) %>%
+  full_join(long2, by=c(".imp", ".id", "id","time")  )
+
+long <- imputed_data %>%
+  dplyr::select(.imp,.id, id,  agechild, sexchild, numbhousehold, incfamily,group,
+        agemo, edumo, ethnicitymo,
+        agefa, edufa, ethnicityfa, marpa, incfamily,
+                cbclext_pre_total,cbclext_post_total,cbclext_fu_total) %>%
+  pivot_longer(cols=c(  cbclext_pre_total,cbclext_post_total,cbclext_fu_total),
+                names_to="t", values_to="cbclext")%>%
+  mutate(time = ifelse(t == "cbclext_pre_total",  1,
+                ifelse(t == "cbclext_post_total", 2, 3))) %>%
+  dplyr::select(!t) %>%
+  full_join(long1,  by=c(".imp", ".id", "id","time") )  %>%
+  #create  id variable in putting data back into mids object
+  mutate(time_id = paste(time,.id,id, sep="_")) 
+
+
+rm(long1, long2)
+
+
+
+# now convert back to a mids object for modelling
+imp_mids <- as.mids(long, .id="time_id")
+
+# and save
+save(imp_mids, file ="imputed_long") # 
+
+# 
+# long %>% 
+#   filter(.imp %in% 1:2) %>% 
+#   group_by(.imp, group, time ) %>% 
+#    summarize_at(vars(cbclext, ccqe), 
+#                 .funs = list(Mean = mean, Sd = sd, N_obs = ~length(.)), na.rm=T)
+
+
+
+```
+
