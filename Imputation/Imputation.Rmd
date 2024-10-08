@@ -2,21 +2,42 @@
 title: "Imputation"
 author: "Nancy Briggs"
 date: "`r Sys.Date()`"
-params:
-  response : "ptsd"
 ---
 
-Imputation for 
 
-1.	Sensitivity Parenting sensitivity 	NICHD-
-Sensitivity
 
-2.	Positive parenting verbalizations Positive parenting verbalizations	DPICS – LP 
-3.	Negative parenting verbalizations Negative parenting verbalizations 	DPICS – NTA
-4.	Parental reflectiveness Parental reflectiveness	DRFQ  CCQE
+
+Imputation for:
+
+1.	Sensitivity 	(NICHD-Sensitivity)
+2.	Positive parenting verbalizations 	(DPICS – LP) 
+3.	Negative parenting verbalizations (DPICS – NTA)
+4.	Parental reflectiveness   (CCQE)
 5.	BITSEA-competence
 6.	CBCL-externalizing
 7.	BITSEA-problem
+
+
+
+
+## Imputation details
+
+Multiple imputation by chained equations was performed using the `mice` package in R. The imputation model included as predictors: group, time, group*time, age and sex.  Missing values for the following outcomes were imputed:
+
+  - Parenting sensitivity
+  - Positive parenting verbalizations
+  - Negative parenting verbalizations
+  - Parental reflectiveness
+  - BITSEA-competence
+  - BITSEA-problem
+  - CBCL-externalizing
+
+Predictors in the imputation model were randomisation group, child age and sex, mother age, education and ethnicity, father age, education and ethnicity, number of people in the household, family income and marital status of the parents.
+
+Twenty-five datasets were imputed, using the normal method for continuous, normal outcomes, and predictive mean matching for positive and negative verbalisations and predictor variables. No values for the Follow up time point were imputed for the Waitlist group. 
+
+The unadjusted mixed model was run on each imputed dataset, and all results and effect size were aggregated using Rubin's Rules (1987).
+
 
 ```{r setup, include=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE,message=FALSE , warnings=FALSE)
@@ -127,7 +148,7 @@ data$fu_nichd_total_sensitivity[data$group==3] <- NA
 
 ```
 
-```{r}
+```{r, echo=F}
 mi<-data %>%
   relocate(group, .after="id") %>%
   relocate(parent_total_verbalisations_time_2, .after="parent_total_verbalisations_time_1") %>%
@@ -216,29 +237,6 @@ pred[,c(14:37)]<-0
 
 
 
-
-## Imputation details
-
-Multiple imputation by chained equations was performed using the `mice` package in R. For the primary outcome DERS, there was 11% missing data at post and 16% at follow up.
-
-The imputation model included as predictors: group, time, group*time, age and sex.  Missing values for the following outcomes were imputed:
-
-  - DERS
-  - Pain
-  - PROMIS T
-  - BDI
-  - STAI
-  - Well Being
-  - PTSD
-  - Stress T
-  - Sleep Index 2
-
-
-Twenty-five datasets were imputed, using the "2l.pan" method in `mice` to account for repeated measures within person.
-
-The unadjusted mixed model was run on each imputed dataset, and all results, including the group difference in change (primary outcome) and effect size were aggregated using Rubin's Rules (1987).
-
-
 ```{r, eval=F}
 
 # Create custom imputation for waitlist==3 & time 3 measures
@@ -267,10 +265,12 @@ meth[c(14:28)] <- "norm"
 meth[c(29:37)] <- "pmm"
 # pmm
 meth[c(3:13)] <- "pmm"
- 
+
 # impute
 imp <- mice(mi_forimp, m = 25,  where = here, meth=meth, pred = pred, visit = "monotone",
             print = TRUE, maxit = 20)
+summary(imp)
+
 save(imp, file ="imputed_full_allvars_long_pan") #
 ```
 
@@ -306,11 +306,6 @@ There were no problems with the imputations, and all imputations converged.
 Imputed distributions look similar to the observed distributions.  This is good.
 
 
-
-## Imputed Estimate of group difference in change in DERS to Follow up
-
-
-Summary of two of the imputed datasets
 
 ```{r, echo=F}
 load( file ="imputed_full_allvars_long_pan") # loads imp_mids
@@ -419,3 +414,31 @@ save(imp_mids, file ="imputed_long") #
 
 ```
 
+
+# Imputation details
+
+
+Multiple imputation by chained equations was performed using the mice package in R.
+
+The imputation model included as predictors: groupand demographics variables of age and sex of child, age, education and ethnicity of mother and of father, family income, number of people in household, marital status of parents. Missing values for the following outcomes were imputed:
+
+1.	Sensitivity 	(NICHD-Sensitivity)
+2.	Positive parenting verbalizations 	(DPICS – LP) 
+3.	Negative parenting verbalizations (DPICS – NTA)
+4.	Parental reflectiveness   (CCQE)
+5.	BITSEA-competence
+6.	CBCL-externalizing
+7.	BITSEA-problem
+
+
+Twenty-five datasets were imputed, using normal Bayesian linear regression for normal continuous variables, and predictive mean matching for count variables. No values were imputed for the waitlist group at follow up.
+
+The unadjusted mixed model was run on each imputed dataset, and all results, including the group difference in change (primary outcome) and effect size were aggregated using Rubin’s Rules (1987).
+
+References
+
+Rubin, D.B. (1987) Multiple Imputation for Nonresponse in Surveys. John Wiley & Sons Inc., New York. http://dx.doi.org/10.1002/9780470316696
+
+R Core Team (2024). R: A Language and Environment for Statistical Computing. R Foundation for Statistical Computing, Vienna, Austria. https://www.R-project.org/.
+
+Stef van Buuren, Karin Groothuis-Oudshoorn (2011). mice: Multivariate Imputation by Chained Equations in R. Journal of Statistical Software, 45(3), 1-67. DOI 10.18637/jss.v045.i03.

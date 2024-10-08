@@ -1,0 +1,339 @@
+---
+title: "PCIT-CoS-Waitlist RCT Paper 1: Imputation Analysis" 
+subtitle: "Negative parenting verbalizations (DPICS – NTA)"
+author: "Nancy Briggs"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 6
+    toc_float: true
+params: 
+    response : "parent_nta"
+---
+
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message=FALSE , warnings=FALSE)
+options(warnPartialMatchAttr = FALSE, 
+  warnPartialMatchDollar = FALSE,
+  warnPartialMatchArgs = FALSE)
+```
+
+```{r, message=FALSE, echo=F, warnings=F}
+library(lme4)
+library(mice)
+library(tidyverse)
+library(tidyselect)
+library(emmeans)
+library(kableExtra)
+library(ggplot2)
+library(lmerTest)
+library(effectsize)
+library(boot)
+library(VIM)
+library(emmeans)
+library(broom.mixed)
+library(huxtable)
+library(multcomp)
+library(miceadds)
+```
+
+
+
+```{r, echo=FALSE}
+# Data 
+# Import data
+# recoding for CBCL and totals done in SPSS before bringing data in to R
+
+data <- read.csv("../data_prep.csv", fileEncoding="UTF-8-BOM")
+names(data) <- tolower(names(data))
+
+
+# keep relevant demographic and outcome variables
+data <- data %>%
+  dplyr::select(id, agechild, sexchild, numbhousehold, incfamily,group,
+        agemo, edumo, ethnicitymo,
+        agefa, edufa, ethnicityfa, marpa, incfamily,
+                      # Maternal reflective functioning 
+                pre_ccqe_sum, post_ccqe_sum, fu_ccqe_sum,          
+                
+                                # Child Ext Behav
+                cbclext_pre_total,cbclext_post_total,cbclext_fu_total,
+                                #Observed maternal sensitivity 
+                nichd_total_sensitivity, post_nichd_total_sensitivity, fu_nichd_total_sensitivity,
+                    # Problem
+                pre_bitseaprob_sum, post_bitseaprob_sum, fu_bitseaprob_sum,
+                # Competence
+                pre_bitseacomp_sum, post_bitseacomp_sum,fu_bitseacomp_sum
+                )  %>%
+  # set some 999 & 888 values to NA
+  mutate_at(vars(sexchild, numbhousehold, incfamily, edumo, edufa, ethnicitymo, ethnicityfa, marpa), 
+            .funs = function(x) replace(x, which(x == 999 | x == 888), NA)) 
+
+
+### import total time
+time <- read.csv("../data_prep_DPiCStime.csv", fileEncoding="UTF-8-BOM")
+names(time) <- tolower(names(time))
+time <- time %>%
+  #DPICS Labelled Praise DPICS Negative Talk
+  dplyr::select(id, parent_total_verbalisations_time_1, parent_total_lp_time_1, 
+                  parent_total_nta_time_1,
+                  parent_total_verbalisations_time_2,  parent_total_lp_time_2, 
+                  parent_total_nta_time_2,
+                  parent_total_verbalisations_time_3,parent_total_lp_time_3, 
+                  parent_total_nta_time_3)
+# total verbalisations goes with lp & nta in GLMM
+
+
+
+# Join
+data <- left_join(data, time, by="id")
+
+
+# nichd_total_sensitivity, post_nichd_total_sensitivity, fu_nichd_total_sensitivity
+# One person on Waitlist has a value for FU.  set to NA
+data$fu_nichd_total_sensitivity[data$group==3] <- NA
+```
+
+
+## Descriptives
+
+### Aggregated mean and SD by group
+
+```{r, echo=F, include=T}
+#load imputed data as mids object, not long format 
+load(file ="imputed_full_allvars_long_pan")
+#summary(imp)
+
+complete(imp, "long") %>% 
+    mutate(preperc = 100*parent_total_nta_time_1 / parent_total_verbalisations_time_1,
+           pstperc = 100*parent_total_nta_time_2 / parent_total_verbalisations_time_2,
+           fuperc  = 100*parent_total_nta_time_3 / parent_total_verbalisations_time_3) %>%
+    group_by(.imp,group) %>% 
+    summarize(
+        premean = mean(preperc),
+        presd = sd(preperc),
+        pstmean = mean(pstperc),
+        pstsd = sd(pstperc),
+        fumean = mean(fuperc),
+        fusd = sd(fuperc)
+    ) %>%
+  ungroup() %>%
+  group_by(group) %>%
+  summarise(pre.mean = mean(premean), pre.sd = mean(presd),
+            pst.mean = mean(pstmean), pst.sd = mean(pstsd),
+            fu.mean = mean(fumean), fu.sd = mean(fusd)
+            )
+```
+
+Compare to observed data:
+
+```{r, echo=F}
+
+data %>%
+      mutate(preperc = 100*parent_total_nta_time_1 / parent_total_verbalisations_time_1,
+           pstperc = 100*parent_total_nta_time_2 / parent_total_verbalisations_time_2,
+           fuperc  = 100*parent_total_nta_time_3 / parent_total_verbalisations_time_3) %>%
+  group_by(group) %>%
+    mutate(counter1=ifelse(!is.na(preperc),1,0)) %>%
+    mutate(counter2=ifelse(!is.na(pstperc),1,0)) %>%
+    mutate(counter3=ifelse(!is.na(fuperc),1,0)) %>%
+    summarize(
+        pren=sum(counter1),
+        premean = mean(preperc, na.rm=T),
+        presd = sd(preperc, na.rm=T),
+        postn=sum(counter2),
+        pstmean = mean(pstperc, na.rm=T),
+        pstsd = sd(pstperc, na.rm=T),
+        fun=sum(counter3),
+        fumean = mean(fuperc, na.rm=T),
+        fusd = sd(fuperc, na.rm=T)  )
+  
+```
+
+
+
+
+
+```{r, read-data, echo=F}
+
+load("imputed_long")
+# set "outcome" as relevant variable
+imp_long <-complete(imp_mids, action = "long", include = TRUE)
+imp_long<- imp_long %>% mutate(outcome= !!as.name(params$response))
+
+ 
+```
+
+
+
+## Results
+
+### P-values for mixed model effects
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+
+
+
+mod_imp_0 <- with(data = as.mids(imp_long), exp = lme4::glmer(cbind(parent_nta,verbal-parent_nta) ~  (1|id), family=binomial))  #unadjust
+mod_imp_1 <- with(data = as.mids(imp_long), exp = lme4::glmer(cbind(parent_nta,verbal-parent_nta) ~  #unadjusted
+                      as.factor(group) + (1|id), family=binomial))
+mod_imp_2 <- with(data = as.mids(imp_long), exp = lme4::glmer(cbind(parent_nta,verbal-parent_nta) ~  #unadjusted
+                      as.factor(group) + as.factor(time) + (1|id), family=binomial))
+mod_imp_3 <- with(data = as.mids(imp_long), exp = lme4::glmer(cbind(parent_nta,verbal-parent_nta) ~ #unadjusted
+                      as.factor(group) * as.factor(time) + (1|id), family=binomial))
+
+anovatab<- data.frame(summary(anova(mod_imp_0,mod_imp_1,mod_imp_2,mod_imp_3) )$comparisons)
+anovatab <-anovatab %>%
+  arrange(test) %>%
+  mutate(Effect = ifelse(test == "2 ~~ 1", "Group",
+    ifelse(test == "3 ~~ 2", "Time",
+    "Group*Time"))) %>%
+    relocate(Effect) 
+anovatab %>%
+  dplyr::select(!c(riv,test)) %>%
+           kbl(digits=3) %>%
+           kable_styling()
+
+```
+
+
+
+### Group Differences at each Timepoint
+
+```{r inference-unadjusted, echo=F , message=F, warning=F}
+mod_imp <- with(data = as.mids(imp_long), exp = lme4::glmer(cbind(parent_nta,verbal-parent_nta) ~ #unadjusted
+                      as.factor(group) * as.factor(time) + (1|id), family=binomial))
+
+mod_imp_0 <- with(data = as.mids(imp_long), exp = lme4::glmer(cbind(parent_nta,verbal-parent_nta) ~  #unadjusted
+                      as.factor(group) + as.factor(time) + (1|id), family=binomial))
+
+## anova pools the model fits
+aov = anova(mod_imp,mod_imp_0)
+
+
+result.mean  <- emmeans(mod_imp, "group", by = "time", type="response")
+result.mean.d <-pairs(result.mean)
+result.mean.d.adj <-pairs(result.mean, adjust="bonferroni")
+
+# get baseline pooled SD
+
+# save each T1 measure for each group as a vector (pull)
+t1_1 <- imp_long %>%
+  filter(group==1 & time==1) %>%
+  dplyr::select(outcome) %>%
+  pull(outcome)
+t1_2 <- imp_long %>%
+  filter(group==2 & time==1) %>%
+  dplyr::select(outcome) %>%
+  pull(outcome)
+t1_3 <- imp_long %>%
+  filter(group==3 & time==1) %>%
+  dplyr::select(outcome) %>%
+  pull(outcome)
+pooledsd<- sd_pooled(t1_1, t1_2, t1_3)
+# save summary of differences as dataset
+s_groupdiffs<-summary(result.mean.d)
+ci<-confint(result.mean.d)
+s_groupdiffsadj<-summary(result.mean.d.adj)
+s_groupdiffsadj <- s_groupdiffsadj %>%
+  rename(p.value.adj=p.value)
+
+s_groupdiffs<- left_join(s_groupdiffs,s_groupdiffsadj)
+s_groupdiffs<- left_join(s_groupdiffs,ci)
+# calculate effect sizes
+#s_groupdiffs$es=s_groupdiffs$estimate/pooledsd
+
+
+
+s_groupdiffs %>%
+  dplyr::select(!c(df, SE, null)) %>%
+  relocate(c(lower.CL, upper.CL), .after=odds.ratio) %>%
+  kbl(digits=3,caption = "Imputed Group Differences at Each Time Point", 
+      col.names = c("Contrast", "Time","Ratio", "Lower CL","Upper CL", 
+                     "t","p","adj p") )  %>%
+  kable_styling() 
+
+```
+
+### Change within Groups 
+
+```{r, echo=F}
+
+
+# Change within groups
+result.change  <- emmeans(mod_imp, "time", by = "group", type="response")
+result.change.d <-pairs(result.change,reverse = TRUE)
+result.change.d.adj <-pairs(result.change, adjust="bonferroni")
+
+# already got baseline pooled SD
+
+# save summary of differences as dataset
+s<-summary(result.change.d)
+ci<-confint(result.change.d)
+sadj<-summary(result.change.d.adj)
+sadj <- sadj %>%
+        rename(p.value.adj=p.value)
+
+s<- left_join(s,sadj)
+s<- left_join(s,ci)
+# calculate effect sizes
+#s$es=(s$estimate/pooledsd)
+
+
+
+s %>%
+  dplyr::select(c(-df, -SE, -null)) %>%    
+  relocate(c(lower.CL, upper.CL), .after=odds.ratio) %>%
+  kbl(digits=3,caption = "Imputed Within-Group Change and Effect Sizes", 
+  col.names = c("Change", "Group","Ratio","Lower CL","Upper CL", 
+                "t","p","adj p") )  %>%
+  kable_styling()
+```
+
+
+```{r, echo=FALSE, include=F, eval=F}
+
+
+result.emm <- emmeans(mod_imp, ~group * time)
+result.means <- as.data.frame(result.emm)
+result.means <-  
+  result.means %>%
+  mutate(time1= ifelse(group==1 & time==1,  .9,   ## jitter on x axis
+                ifelse(group==1 & time==2, 1.9,       
+                ifelse(group==1 & time==3, 2.9,       
+                ifelse(group==2 & time==1, 1.0,
+                ifelse(group==2 & time==2, 2.0,       
+                ifelse(group==2 & time==3, 3.0,
+                ifelse(group==3 & time==1, 1.1,
+                ifelse(group==3 & time==2, 2.1,       
+                3.1)))))))))
+
+
+lp1 <- ggplot(data=result.means, aes(x=time1, y=emmean, group=as.factor(group), shape=as.factor(group), colour=as.factor(group))) +
+  geom_line(aes(linetype=as.factor(group))) +
+  geom_point(size=2) +
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL, 
+                      color=as.factor(group)))+
+  #must define these the same so that only 1 legend is shown
+  scale_colour_discrete(name  ="Group",
+                            breaks=c(1,2,3),
+                            labels=c("PCIT-T", "CoS-P","Waitlist")) +
+  scale_shape_discrete(name  ="Group",
+                            breaks=c(1,2,3),
+                            labels=c("PCIT-T", "CoS-P","Waitlist")) +   
+  scale_linetype_manual(name="Group",
+                      values =c("solid","dashed","dotted"),
+                      breaks=c(1,2,3),
+                      labels=c("PCIT-T", "CoS-P","Waitlist")) +
+scale_x_continuous("Measurement",breaks = c(1, 2, 3)) +
+  scale_y_continuous("Estimated Means (95% CI)") +
+theme_classic() 
+
+lp1
+```
+
+
+
